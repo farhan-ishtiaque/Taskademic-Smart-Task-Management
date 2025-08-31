@@ -1,0 +1,220 @@
+{% extends 'base.html' %}
+
+{% block title %}Welcome to Taskademic{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center px-4">
+    <div class="max-w-4xl w-full">
+        <!-- Welcome Header -->
+        <div class="text-center mb-12">
+            <h1 class="text-4xl font-bold text-gray-900 mb-4">Welcome to Taskademic!</h1>
+            <p class="text-xl text-gray-600">Your journey to better productivity starts here</p>
+        </div>
+
+        <!-- Onboarding Steps -->
+        <div class="bg-white rounded-lg shadow-lg p-8" x-data="onboardingFlow()">
+            <!-- Progress Bar -->
+            <div class="mb-8">
+                <div class="flex items-center justify-between mb-4">
+                    <span class="text-sm font-medium text-gray-700">Step <span x-text="currentStep"></span> of 4</span>
+                    <span class="text-sm text-gray-500" x-text="Math.round((currentStep / 4) * 100) + '%'">25%</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2">
+                    <div class="bg-blue-600 h-2 rounded-full transition-all duration-300" 
+                         :style="`width: ${(currentStep / 4) * 100}%`"></div>
+                </div>
+            </div>
+
+            <!-- Step 1: Introduction -->
+            <div x-show="currentStep === 1" class="text-center">
+                <div class="mb-6">
+                    <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span class="text-2xl">👋</span>
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-900 mb-4">Hello there!</h2>
+                    <p class="text-gray-600 mb-6">Taskademic helps you organize, track, and complete your tasks efficiently. Let's get you set up in just a few steps.</p>
+                </div>
+                <button @click="nextStep()" 
+                        class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors">
+                    Get Started
+                </button>
+            </div>
+
+            <!-- Step 2: Features Overview -->
+            <div x-show="currentStep === 2">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6 text-center">What you can do with Taskademic</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <div class="flex items-start space-x-4">
+                        <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <span class="text-xl">📋</span>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-gray-900 mb-2">Kanban Board</h3>
+                            <p class="text-gray-600 text-sm">Visualize your workflow with drag-and-drop task management</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start space-x-4">
+                        <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <span class="text-xl">📊</span>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-gray-900 mb-2">Analytics</h3>
+                            <p class="text-gray-600 text-sm">Track your productivity with detailed insights and reports</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start space-x-4">
+                        <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <span class="text-xl">📅</span>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-gray-900 mb-2">Calendar View</h3>
+                            <p class="text-gray-600 text-sm">Schedule and view tasks by due date in a calendar format</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start space-x-4">
+                        <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <span class="text-xl">🏷️</span>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-gray-900 mb-2">Categories & Priorities</h3>
+                            <p class="text-gray-600 text-sm">Organize tasks with custom categories and priority levels</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex justify-between">
+                    <button @click="previousStep()" 
+                            class="bg-gray-300 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-400 transition-colors">
+                        Previous
+                    </button>
+                    <button @click="nextStep()" 
+                            class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors">
+                        Continue
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 3: Create First Task -->
+            <div x-show="currentStep === 3">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6 text-center">Create Your First Task</h2>
+                <div class="max-w-md mx-auto">
+                    <form @submit.prevent="createFirstTask()">
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Task Title</label>
+                            <input type="text" x-model="firstTask.title" 
+                                   placeholder="e.g., Complete project proposal"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Description (optional)</label>
+                            <textarea x-model="firstTask.description" rows="3"
+                                      placeholder="Add some details about this task..."
+                                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                        </div>
+                        <div class="mb-6">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Priority</label>
+                            <select x-model="firstTask.priority"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="low">Low</option>
+                                <option value="medium">Medium</option>
+                                <option value="high">High</option>
+                                <option value="urgent">Urgent</option>
+                            </select>
+                        </div>
+                        <div class="flex justify-between">
+                            <button type="button" @click="previousStep()" 
+                                    class="bg-gray-300 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-400 transition-colors">
+                                Previous
+                            </button>
+                            <button type="submit" 
+                                    class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors">
+                                Create Task
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Step 4: Completion -->
+            <div x-show="currentStep === 4" class="text-center">
+                <div class="mb-6">
+                    <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span class="text-2xl">🎉</span>
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-900 mb-4">You're all set!</h2>
+                    <p class="text-gray-600 mb-6">Welcome to Taskademic! You've successfully created your first task. Now you can explore all the features and start boosting your productivity.</p>
+                </div>
+                <div class="flex justify-center space-x-4">
+                    <a href="{% url 'dashboard:home' %}" 
+                       class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors">
+                        Go to Dashboard
+                    </a>
+                    <a href="{% url 'tasks:kanban_board' %}" 
+                       class="bg-gray-300 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-400 transition-colors">
+                        View Kanban Board
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Skip Option -->
+        <div class="text-center mt-6" x-show="currentStep < 4">
+            <a href="{% url 'dashboard:home' %}" class="text-gray-500 hover:text-gray-700 text-sm">
+                Skip onboarding and go to dashboard
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+function onboardingFlow() {
+    return {
+        currentStep: 1,
+        firstTask: {
+            title: '',
+            description: '',
+            priority: 'medium'
+        },
+
+        nextStep() {
+            if (this.currentStep < 4) {
+                this.currentStep++;
+            }
+        },
+
+        previousStep() {
+            if (this.currentStep > 1) {
+                this.currentStep--;
+            }
+        },
+
+        async createFirstTask() {
+            if (!this.firstTask.title.trim()) {
+                alert('Please enter a task title');
+                return;
+            }
+
+            try {
+                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+                const response = await fetch('/tasks/api/tasks/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    },
+                    body: JSON.stringify(this.firstTask)
+                });
+
+                if (response.ok) {
+                    this.nextStep();
+                } else {
+                    alert('Error creating task. Please try again.');
+                }
+            } catch (error) {
+                console.error('Error creating task:', error);
+                alert('Error creating task. Please try again.');
+            }
+        }
+    }
+}
+</script>
+{% endblock %}

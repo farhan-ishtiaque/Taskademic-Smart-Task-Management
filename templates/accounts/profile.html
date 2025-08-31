@@ -1,0 +1,159 @@
+{% extends 'base.html' %}
+
+{% block title %}Profile - Taskademic{% endblock %}
+
+{% block content %}
+<div class="px-4 py-6 sm:px-0">
+    <!-- Page Header -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">My Profile</h1>
+        <p class="mt-2 text-gray-600">Manage your personal information and preferences</p>
+    </div>
+
+    <!-- Profile Information -->
+    <div class="bg-white shadow rounded-lg mb-6">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-medium text-gray-900">Profile Information</h3>
+        </div>
+        <div class="p-6">
+            <div class="flex items-center space-x-6">
+                <!-- Avatar -->
+                <div class="flex-shrink-0">
+                    <div class="h-20 w-20 rounded-full bg-blue-600 flex items-center justify-center">
+                        <span class="text-white text-2xl font-medium">
+                            {{ user.first_name|first|default:user.username|first|upper }}{{ user.last_name|first|upper }}
+                        </span>
+                    </div>
+                </div>
+                
+                <!-- User Details -->
+                <div class="flex-1">
+                    <h4 class="text-xl font-medium text-gray-900">
+                        {% if user.first_name and user.last_name %}
+                            {{ user.first_name }} {{ user.last_name }}
+                        {% else %}
+                            {{ user.username }}
+                        {% endif %}
+                    </h4>
+                    <p class="text-gray-600">{{ user.email }}</p>
+                    <p class="text-sm text-gray-500">Member since {{ user.date_joined|date:"F Y" }}</p>
+                </div>
+                
+                <!-- Edit Button -->
+                <div>
+                    <a href="{% url 'dashboard:settings' %}" 
+                       class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        Edit Profile
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Activity Overview -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-blue-500 rounded-md flex items-center justify-center">
+                            <span class="text-white text-sm font-medium">📋</span>
+                        </div>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Total Tasks</dt>
+                            <dd class="text-lg font-medium text-gray-900">{{ user.tasks.count }}</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-green-500 rounded-md flex items-center justify-center">
+                            <span class="text-white text-sm font-medium">✓</span>
+                        </div>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Completed</dt>
+                            <dd class="text-lg font-medium text-gray-900">{{ user.tasks.filter:status='done'|length }}</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-yellow-500 rounded-md flex items-center justify-center">
+                            <span class="text-white text-sm font-medium">⏳</span>
+                        </div>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">In Progress</dt>
+                            <dd class="text-lg font-medium text-gray-900">{{ user.tasks.filter:status='in_progress'|length }}</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="bg-white shadow rounded-lg">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-medium text-gray-900">Recent Activity</h3>
+        </div>
+        <div class="p-6">
+            {% with recent_tasks=user.tasks.all|slice:":10" %}
+                {% if recent_tasks %}
+                    <ul class="space-y-3">
+                        {% for task in recent_tasks %}
+                        <li class="flex items-center space-x-3">
+                            <div class="flex-shrink-0">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
+                                    {% if task.status == 'done' %}bg-green-100 text-green-800
+                                    {% elif task.status == 'in_progress' %}bg-blue-100 text-blue-800
+                                    {% elif task.status == 'review' %}bg-yellow-100 text-yellow-800
+                                    {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                    {{ task.get_status_display }}
+                                </span>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-medium text-gray-900 truncate">{{ task.title }}</p>
+                                <p class="text-sm text-gray-500">
+                                    {% if task.status == 'done' and task.completed_at %}
+                                        Completed {{ task.completed_at|timesince }} ago
+                                    {% else %}
+                                        Created {{ task.created_at|timesince }} ago
+                                    {% endif %}
+                                </p>
+                            </div>
+                            <div class="flex-shrink-0">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
+                                    {% if task.priority == 'urgent' %}bg-red-100 text-red-800
+                                    {% elif task.priority == 'high' %}bg-orange-100 text-orange-800
+                                    {% elif task.priority == 'medium' %}bg-yellow-100 text-yellow-800
+                                    {% else %}bg-green-100 text-green-800{% endif %}">
+                                    {{ task.get_priority_display }}
+                                </span>
+                            </div>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="text-gray-500 text-sm">No tasks yet. <a href="{% url 'tasks:kanban_board' %}" class="text-blue-600 hover:text-blue-500">Create your first task</a></p>
+                {% endif %}
+            {% endwith %}
+        </div>
+    </div>
+</div>
+{% endblock %}

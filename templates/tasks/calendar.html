@@ -1,0 +1,338 @@
+{% extends 'base.html' %}
+
+{% block title %}Calendar - Taskademic{% endblock %}
+
+{% block content %}
+<div class="px-4 py-6 sm:px-0" x-data="taskCalendar()">
+    <!-- Page Header -->
+    <div class="flex justify-between items-center mb-8">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">Calendar</h1>
+            <p class="mt-2 text-gray-600">View your tasks by due date</p>
+        </div>
+        <button @click="showAddTaskModal = true" 
+                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700">
+            Add Task
+        </button>
+    </div>
+
+    <!-- Calendar Navigation -->
+    <div class="bg-white shadow rounded-lg mb-6">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <div class="flex items-center justify-between">
+                <button @click="previousMonth()" 
+                        class="p-2 text-gray-400 hover:text-gray-600">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                    </svg>
+                </button>
+                <h2 class="text-xl font-semibold text-gray-900" x-text="currentMonthYear"></h2>
+                <button @click="nextMonth()" 
+                        class="p-2 text-gray-400 hover:text-gray-600">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Calendar Grid -->
+        <div class="p-6">
+            <!-- Days of Week Header -->
+            <div class="grid grid-cols-7 gap-1 mb-4">
+                <template x-for="day in daysOfWeek" :key="day">
+                    <div class="p-3 text-center text-sm font-medium text-gray-500" x-text="day"></div>
+                </template>
+            </div>
+
+            <!-- Calendar Days -->
+            <div class="grid grid-cols-7 gap-1">
+                <template x-for="day in calendarDays" :key="day.date">
+                    <div class="min-h-[120px] p-2 border border-gray-100 rounded-lg"
+                         :class="day.isCurrentMonth ? 'bg-white' : 'bg-gray-50'">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-sm font-medium"
+                                  :class="day.isToday ? 'bg-blue-600 text-white px-2 py-1 rounded-full' : 'text-gray-900'"
+                                  x-text="day.dayNumber"></span>
+                        </div>
+                        
+                        <!-- Tasks for this day -->
+                        <div class="space-y-1">
+                            <template x-for="task in getTasksForDay(day.date)" :key="task.id">
+                                <div class="text-xs p-1 rounded cursor-pointer hover:opacity-80"
+                                     :class="getPriorityClass(task.priority)"
+                                     @click="selectTask(task)"
+                                     :title="task.description">
+                                    <span x-text="task.title.substring(0, 20) + (task.title.length > 20 ? '...' : '')"></span>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upcoming Tasks Sidebar -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Today's Tasks -->
+        <div class="bg-white shadow rounded-lg">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-medium text-gray-900">Today's Tasks</h3>
+            </div>
+            <div class="p-6">
+                <template x-for="task in todayTasks" :key="task.id">
+                    <div class="flex items-center space-x-3 py-2">
+                        <div class="flex-shrink-0">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                                  :class="getPriorityClass(task.priority)" x-text="task.priority"></span>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-medium text-gray-900 truncate" x-text="task.title"></p>
+                            <p class="text-sm text-gray-500" x-text="task.category?.name || 'No category'"></p>
+                        </div>
+                    </div>
+                </template>
+                <div x-show="todayTasks.length === 0" class="text-gray-500 text-sm">No tasks for today</div>
+            </div>
+        </div>
+
+        <!-- This Week -->
+        <div class="bg-white shadow rounded-lg">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-medium text-gray-900">This Week</h3>
+            </div>
+            <div class="p-6">
+                <template x-for="task in thisWeekTasks" :key="task.id">
+                    <div class="flex items-center space-x-3 py-2">
+                        <div class="flex-shrink-0">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                                  :class="getPriorityClass(task.priority)" x-text="task.priority"></span>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-medium text-gray-900 truncate" x-text="task.title"></p>
+                            <p class="text-sm text-gray-500" x-text="formatDate(task.due_date)"></p>
+                        </div>
+                    </div>
+                </template>
+                <div x-show="thisWeekTasks.length === 0" class="text-gray-500 text-sm">No tasks this week</div>
+            </div>
+        </div>
+
+        <!-- Overdue -->
+        <div class="bg-white shadow rounded-lg">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-medium text-gray-900">Overdue Tasks</h3>
+            </div>
+            <div class="p-6">
+                <template x-for="task in overdueTasks" :key="task.id">
+                    <div class="flex items-center space-x-3 py-2">
+                        <div class="flex-shrink-0">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                Overdue
+                            </span>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-medium text-gray-900 truncate" x-text="task.title"></p>
+                            <p class="text-sm text-red-600" x-text="'Due: ' + formatDate(task.due_date)"></p>
+                        </div>
+                    </div>
+                </template>
+                <div x-show="overdueTasks.length === 0" class="text-gray-500 text-sm">No overdue tasks</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Task Modal (reusing from kanban) -->
+    <div x-show="showAddTaskModal" 
+         class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50"
+         @click.away="showAddTaskModal = false">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <h3 class="text-lg font-bold text-gray-900 mb-4">Add New Task</h3>
+            <form @submit.prevent="addTask()">
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Title</label>
+                    <input type="text" x-model="newTask.title" required
+                           class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Description</label>
+                    <textarea x-model="newTask.description" rows="3"
+                              class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"></textarea>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Priority</label>
+                    <select x-model="newTask.priority"
+                            class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                        <option value="low">Low</option>
+                        <option value="medium">Medium</option>
+                        <option value="high">High</option>
+                        <option value="urgent">Urgent</option>
+                    </select>
+                </div>
+                <div class="mb-6">
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Due Date</label>
+                    <input type="datetime-local" x-model="newTask.due_date"
+                           class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                </div>
+                <div class="flex items-center justify-between">
+                    <button type="submit"
+                            class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                        Add Task
+                    </button>
+                    <button type="button" @click="showAddTaskModal = false"
+                            class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function taskCalendar() {
+    return {
+        currentDate: new Date(),
+        tasks: [],
+        showAddTaskModal: false,
+        newTask: {
+            title: '',
+            description: '',
+            priority: 'medium',
+            due_date: ''
+        },
+        daysOfWeek: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+
+        async init() {
+            await this.loadTasks();
+        },
+
+        async loadTasks() {
+            try {
+                const response = await fetch('/tasks/api/tasks/');
+                this.tasks = await response.json();
+            } catch (error) {
+                console.error('Error loading tasks:', error);
+            }
+        },
+
+        get currentMonthYear() {
+            return this.currentDate.toLocaleDateString('en-US', { 
+                month: 'long', 
+                year: 'numeric' 
+            });
+        },
+
+        get calendarDays() {
+            const year = this.currentDate.getFullYear();
+            const month = this.currentDate.getMonth();
+            
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const startDate = new Date(firstDay);
+            startDate.setDate(startDate.getDate() - firstDay.getDay());
+            
+            const days = [];
+            const today = new Date();
+            
+            for (let i = 0; i < 42; i++) {
+                const date = new Date(startDate);
+                date.setDate(startDate.getDate() + i);
+                
+                days.push({
+                    date: date.toISOString().split('T')[0],
+                    dayNumber: date.getDate(),
+                    isCurrentMonth: date.getMonth() === month,
+                    isToday: date.toDateString() === today.toDateString()
+                });
+            }
+            
+            return days;
+        },
+
+        get todayTasks() {
+            const today = new Date().toISOString().split('T')[0];
+            return this.tasks.filter(task => 
+                task.due_date && task.due_date.startsWith(today) && task.status !== 'done'
+            );
+        },
+
+        get thisWeekTasks() {
+            const today = new Date();
+            const weekFromNow = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
+            
+            return this.tasks.filter(task => {
+                if (!task.due_date || task.status === 'done') return false;
+                const dueDate = new Date(task.due_date);
+                return dueDate >= today && dueDate <= weekFromNow;
+            });
+        },
+
+        get overdueTasks() {
+            const today = new Date();
+            return this.tasks.filter(task => {
+                if (!task.due_date || task.status === 'done') return false;
+                return new Date(task.due_date) < today;
+            });
+        },
+
+        getTasksForDay(date) {
+            return this.tasks.filter(task => 
+                task.due_date && task.due_date.startsWith(date)
+            );
+        },
+
+        previousMonth() {
+            this.currentDate = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth() - 1, 1);
+        },
+
+        nextMonth() {
+            this.currentDate = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth() + 1, 1);
+        },
+
+        getPriorityClass(priority) {
+            const classes = {
+                low: 'bg-green-100 text-green-800',
+                medium: 'bg-yellow-100 text-yellow-800',
+                high: 'bg-orange-100 text-orange-800',
+                urgent: 'bg-red-100 text-red-800'
+            };
+            return classes[priority] || classes.medium;
+        },
+
+        formatDate(dateString) {
+            if (!dateString) return '';
+            return new Date(dateString).toLocaleDateString();
+        },
+
+        async addTask() {
+            try {
+                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+                const response = await fetch('/tasks/api/tasks/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    },
+                    body: JSON.stringify(this.newTask)
+                });
+                
+                if (response.ok) {
+                    this.showAddTaskModal = false;
+                    this.newTask = { title: '', description: '', priority: 'medium', due_date: '' };
+                    await this.loadTasks();
+                }
+            } catch (error) {
+                console.error('Error adding task:', error);
+            }
+        },
+
+        selectTask(task) {
+            // Could implement task detail modal here
+            console.log('Selected task:', task);
+        }
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Status - Taskademic</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+    <div class="min-h-screen py-6">
+        <div class="max-w-4xl mx-auto px-4">
+            <h1 class="text-3xl font-bold text-gray-900 mb-8">System Status</h1>
+            
+            <!-- User Info -->
+            <div class="bg-white rounded-lg shadow p-6 mb-6">
+                <h2 class="text-xl font-semibold mb-4">User Information</h2>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <span class="font-medium">Username:</span> {{ user.username }}
+                    </div>
+                    <div>
+                        <span class="font-medium">Email:</span> {{ user.email }}
+                    </div>
+                    <div>
+                        <span class="font-medium">Authenticated:</span> 
+                        <span class="px-2 py-1 rounded text-sm {{ system_info.is_authenticated|yesno:'bg-green-100 text-green-800,bg-red-100 text-red-800' }}">
+                            {{ system_info.is_authenticated|yesno:"Yes,No" }}
+                        </span>
+                    </div>
+                    <div>
+                        <span class="font-medium">Session:</span> {{ system_info.session_key|slice:":8" }}...
+                    </div>
+                </div>
+            </div>
+            
+            <!-- System Stats -->
+            <div class="bg-white rounded-lg shadow p-6 mb-6">
+                <h2 class="text-xl font-semibold mb-4">System Statistics</h2>
+                <div class="grid grid-cols-3 gap-4">
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-blue-600">{{ system_info.total_users }}</div>
+                        <div class="text-sm text-gray-500">Total Users</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-green-600">{{ system_info.total_tasks }}</div>
+                        <div class="text-sm text-gray-500">Total Tasks</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-purple-600">{{ system_info.user_tasks }}</div>
+                        <div class="text-sm text-gray-500">Your Tasks</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- API Tests -->
+            <div class="bg-white rounded-lg shadow p-6 mb-6">
+                <h2 class="text-xl font-semibold mb-4">API Tests</h2>
+                <div class="space-y-3">
+                    <button onclick="testAnalyticsAPI()" 
+                            class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                        Test Analytics API
+                    </button>
+                    <div id="apiResults" class="mt-4 p-3 bg-gray-50 rounded min-h-[100px]">
+                        Click the button above to test the Analytics API
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Navigation -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-xl font-semibold mb-4">Quick Navigation</h2>
+                <div class="space-x-4">
+                    <a href="/dashboard/" class="text-blue-600 hover:text-blue-800">Dashboard</a>
+                    <a href="/analytics/" class="text-blue-600 hover:text-blue-800">Analytics</a>
+                    <a href="/tasks/" class="text-blue-600 hover:text-blue-800">Tasks</a>
+                    <a href="/accounts/logout/" class="text-red-600 hover:text-red-800">Logout</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        async function testAnalyticsAPI() {
+            const resultsDiv = document.getElementById('apiResults');
+            resultsDiv.innerHTML = '<div class="text-blue-600">Testing API...</div>';
+            
+            try {
+                // Get CSRF token
+                const csrfToken = '{{ csrf_token }}';
+                
+                const response = await fetch('/analytics/api/', {
+                    method: 'GET',
+                    credentials: 'same-origin',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRFToken': csrfToken
+                    }
+                });
+                
+                const data = await response.json();
+                
+                resultsDiv.innerHTML = `
+                    <div class="text-green-600 font-medium">✅ API Success!</div>
+                    <div class="mt-2 text-sm">
+                        <strong>Status:</strong> ${response.status}<br>
+                        <strong>Data keys:</strong> ${Object.keys(data).join(', ')}<br>
+                        <strong>Total tasks:</strong> ${data.overview?.total_tasks || 'N/A'}<br>
+                        <strong>Completed:</strong> ${data.overview?.completed_tasks || 'N/A'}
+                    </div>
+                    <details class="mt-2">
+                        <summary class="cursor-pointer text-blue-600">View full response</summary>
+                        <pre class="mt-2 text-xs bg-gray-100 p-2 rounded overflow-x-auto">${JSON.stringify(data, null, 2)}</pre>
+                    </details>
+                `;
+            } catch (error) {
+                resultsDiv.innerHTML = `
+                    <div class="text-red-600 font-medium">❌ API Error!</div>
+                    <div class="mt-2 text-sm">
+                        <strong>Error:</strong> ${error.message}
+                    </div>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

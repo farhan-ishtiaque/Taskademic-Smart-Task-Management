@@ -1,0 +1,196 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Daily Routine - Taskademic{% endblock %}
+
+{% block content %}
+<div class="flex h-screen bg-gray-50">
+    <!-- Sidebar -->
+    <div class="w-64 bg-white shadow-lg">
+        <div class="p-6">
+            <div class="flex items-center">
+                <div class="w-8 h-8 bg-black rounded-lg flex items-center justify-center">
+                    <span class="text-white font-bold text-sm">T</span>
+                </div>
+                <span class="ml-3 text-xl font-semibold">Taskademic</span>
+            </div>
+        </div>
+        
+        <!-- Navigation -->
+        <nav class="mt-6">
+            <a href="{% url 'dashboard:home' %}" class="flex items-center px-6 py-3 text-gray-600 hover:bg-gray-100">
+                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
+                </svg>
+                Overview
+            </a>
+            <a href="{% url 'tasks:kanban_board' %}" class="flex items-center px-6 py-3 text-gray-600 hover:bg-gray-100">
+                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
+                </svg>
+                Kanban Board
+            </a>
+            <a href="{% url 'tasks:calendar' %}" class="flex items-center px-6 py-3 text-gray-600 hover:bg-gray-100">
+                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2v16a2 2 0 002 2z"></path>
+                </svg>
+                Calendar
+            </a>
+            <a href="{% url 'dashboard:daily_routine' %}" class="flex items-center px-6 py-3 text-gray-900 bg-gray-100 border-r-2 border-blue-500">
+                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                Daily Routine
+            </a>
+            <a href="{% url 'analytics:dashboard' %}" class="flex items-center px-6 py-3 text-gray-600 hover:bg-gray-100">
+                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2-2v6a2 2 0 002 2h2a2 2 0 002 2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                </svg>
+                Analytics
+            </a>
+            <a href="{% url 'dashboard:moscow_matrix' %}" class="flex items-center px-6 py-3 text-gray-600 hover:bg-gray-100">
+                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                MoScow Matrix
+            </a>
+            <a href="{% url 'dashboard:focus_timer' %}" class="flex items-center px-6 py-3 text-gray-600 hover:bg-gray-100">
+                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                Focus Timer
+            </a>
+        </nav>
+    </div>
+
+    <!-- Main content -->
+    <div class="flex-1 flex flex-col overflow-hidden">
+        <!-- Header -->
+        <header class="bg-white shadow-sm border-b border-gray-200">
+            <div class="flex items-center justify-between px-6 py-4">
+                <h1 class="text-2xl font-semibold text-gray-900">Daily Routine</h1>
+                <div class="flex items-center space-x-4">
+                    <button class="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors">
+                        + New Task
+                    </button>
+                    <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                        <span class="text-white text-sm font-medium">{{ user.first_name.0|default:user.username.0 }}{{ user.last_name.0|default:'' }}</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Content -->
+        <main class="flex-1 overflow-y-auto p-6">
+            <div class="max-w-6xl mx-auto">
+                
+                <!-- Today's Tasks -->
+                <div class="mb-8">
+                    <h2 class="text-xl font-semibold text-gray-900 mb-4">Today's Focus</h2>
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <div class="text-sm text-gray-500 mb-4">{{ today|date:"F d, Y" }}</div>
+                        {% if todays_tasks %}
+                            <div class="space-y-3">
+                                {% for task in todays_tasks %}
+                                    <div class="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50">
+                                        <input type="checkbox" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                        <div class="ml-3 flex-1">
+                                            <div class="text-sm font-medium text-gray-900">{{ task.title }}</div>
+                                            <div class="text-sm text-gray-500">{{ task.description|truncatechars:60 }}</div>
+                                        </div>
+                                        <div class="flex items-center space-x-2">
+                                            {% if task.priority == 'urgent' %}
+                                                <span class="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded">Urgent</span>
+                                            {% elif task.priority == 'high' %}
+                                                <span class="px-2 py-1 text-xs font-medium bg-orange-100 text-orange-800 rounded">High</span>
+                                            {% elif task.priority == 'medium' %}
+                                                <span class="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded">Medium</span>
+                                            {% else %}
+                                                <span class="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded">Low</span>
+                                            {% endif %}
+                                            <div class="text-xs text-gray-500">{{ task.due_date|date:"g:i A" }}</div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="text-center py-8">
+                                <div class="text-gray-400 mb-2">
+                                    <svg class="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                </div>
+                                <p class="text-gray-500">No tasks scheduled for today</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Overdue Tasks -->
+                {% if overdue_tasks %}
+                <div class="mb-8">
+                    <h2 class="text-xl font-semibold text-red-600 mb-4">Overdue Tasks</h2>
+                    <div class="bg-red-50 border border-red-200 rounded-lg p-6">
+                        <div class="space-y-3">
+                            {% for task in overdue_tasks %}
+                                <div class="flex items-center p-3 bg-white border border-red-200 rounded-lg">
+                                    <input type="checkbox" class="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded">
+                                    <div class="ml-3 flex-1">
+                                        <div class="text-sm font-medium text-gray-900">{{ task.title }}</div>
+                                        <div class="text-sm text-gray-500">{{ task.description|truncatechars:60 }}</div>
+                                    </div>
+                                    <div class="text-xs text-red-600 font-medium">
+                                        Due {{ task.due_date|date:"M d" }}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Upcoming Tasks -->
+                <div class="mb-8">
+                    <h2 class="text-xl font-semibold text-gray-900 mb-4">Upcoming This Week</h2>
+                    <div class="bg-white rounded-lg shadow p-6">
+                        {% if upcoming_tasks %}
+                            <div class="space-y-3">
+                                {% for task in upcoming_tasks %}
+                                    <div class="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50">
+                                        <div class="flex-1">
+                                            <div class="text-sm font-medium text-gray-900">{{ task.title }}</div>
+                                            <div class="text-sm text-gray-500">{{ task.description|truncatechars:60 }}</div>
+                                        </div>
+                                        <div class="flex items-center space-x-2">
+                                            {% if task.priority == 'urgent' %}
+                                                <span class="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded">Urgent</span>
+                                            {% elif task.priority == 'high' %}
+                                                <span class="px-2 py-1 text-xs font-medium bg-orange-100 text-orange-800 rounded">High</span>
+                                            {% elif task.priority == 'medium' %}
+                                                <span class="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded">Medium</span>
+                                            {% else %}
+                                                <span class="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded">Low</span>
+                                            {% endif %}
+                                            <div class="text-xs text-gray-500">{{ task.due_date|date:"M d" }}</div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="text-center py-8">
+                                <div class="text-gray-400 mb-2">
+                                    <svg class="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2v16a2 2 0 002 2z"></path>
+                                    </svg>
+                                </div>
+                                <p class="text-gray-500">No upcoming tasks this week</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+</div>
+{% endblock %}
