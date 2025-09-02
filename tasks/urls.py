@@ -4,13 +4,20 @@ from . import views
 
 router = DefaultRouter()
 router.register(r'tasks', views.TaskViewSet, basename='task')
-router.register(r'categories', views.CategoryViewSet, basename='category')
-router.register(r'comments', views.TaskCommentViewSet, basename='comment')
+router.register(r'timeblocks', views.TimeBlockViewSet, basename='timeblock')
 
 app_name = 'tasks'
 
 urlpatterns = [
-    path('api/', include(router.urls)),
+    # Web views
+    path('', views.task_list, name='list'),
+    path('create/', views.task_create, name='create'),
+    path('complete/<int:task_id>/', views.task_complete, name='complete'),
     path('kanban/', views.kanban_board, name='kanban_board'),
     path('calendar/', views.task_calendar, name='calendar'),
+    
+    # API endpoints
+    path('api/', include(router.urls)),
+    path('api/statistics/', views.task_statistics, name='api_statistics'),
+    path('api/schedule/suggestions/', views.smart_schedule_suggestion, name='api_schedule_suggestions'),
 ]

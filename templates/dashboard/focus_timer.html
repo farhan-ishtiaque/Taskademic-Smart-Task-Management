@@ -3,8 +3,658 @@
 
 {% block title %}Focus Timer - Taskademic{% endblock %}
 
+{% block extra_css %}
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+    * {
+        font-family: 'Inter', sans-serif;
+    }
+    
+    body {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+    }
+    
+    .main-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+    
+    .page-header {
+        text-align: center;
+        margin-bottom: 3rem;
+        color: white;
+    }
+    
+    .page-title {
+        font-size: 3rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    }
+    
+    .page-subtitle {
+        font-size: 1.2rem;
+        opacity: 0.9;
+        font-weight: 300;
+    }
+    
+    .content-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 2rem;
+    }
+    
+    .glass-box {
+        background: rgba(255, 255, 255, 0.25);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        padding: 2rem;
+        transition: all 0.3s ease;
+    }
+    
+    .glass-box:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+    }
+    
+    .section-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: white;
+        margin-bottom: 1.5rem;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+    }
+    
+    .task-category {
+        margin-bottom: 2rem;
+    }
+    
+    .category-header {
+        display: flex;
+        justify-content: between;
+        align-items: center;
+        margin-bottom: 1rem;
+        background: rgba(255, 255, 255, 0.2);
+        padding: 1rem;
+        border-radius: 12px;
+    }
+    
+    .category-title {
+        font-weight: 600;
+        color: white;
+        font-size: 1.1rem;
+    }
+    
+    .category-count {
+        background: rgba(255, 255, 255, 0.3);
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+    
+    .task-item {
+        background: rgba(255, 255, 255, 0.9);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    
+    .task-item:hover {
+        background: rgba(255, 255, 255, 1);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+    
+    .task-checkbox {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .task-checkbox input[type="checkbox"] {
+        width: 1.2rem;
+        height: 1.2rem;
+        border-radius: 6px;
+        border: 2px solid #ddd;
+    }
+    
+    .task-content {
+        flex: 1;
+    }
+    
+    .task-title {
+        font-weight: 600;
+        color: #1f2937;
+        margin-bottom: 0.5rem;
+    }
+    
+    .task-description {
+        color: #6b7280;
+        font-size: 0.9rem;
+        line-height: 1.4;
+    }
+    
+    .empty-state {
+        background: rgba(255, 255, 255, 0.1);
+        border: 2px dashed rgba(255, 255, 255, 0.3);
+        border-radius: 12px;
+        padding: 2rem;
+        text-align: center;
+        color: white;
+        opacity: 0.8;
+    }
+    
+    .timer-section {
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+    }
+    
+    .timer-setup {
+        background: rgba(255, 255, 255, 0.25);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        padding: 2rem;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+    
+    .timer-display {
+        background: rgba(255, 255, 255, 0.25);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        padding: 2rem;
+        text-align: center;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+    
+    .timer-clock {
+        font-size: 4rem;
+        font-weight: 700;
+        color: white;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        margin-bottom: 1rem;
+    }
+    
+    .timer-label {
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .progress-ring {
+        width: 200px;
+        height: 200px;
+        margin: 0 auto 2rem;
+        position: relative;
+    }
+    
+    .progress-circle {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        background: conic-gradient(from 0deg, #3b82f6 0%, #3b82f6 0%, rgba(255, 255, 255, 0.2) 0%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+    }
+    
+    .progress-circle::after {
+        content: '';
+        width: 160px;
+        height: 160px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+        backdrop-filter: blur(10px);
+    }
+    
+    .timer-controls {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        margin-bottom: 2rem;
+    }
+    
+    .control-btn {
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        padding: 1rem 2rem;
+        border-radius: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .control-btn:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: translateY(-2px);
+    }
+    
+    .control-btn.primary {
+        background: #3b82f6;
+        border-color: #3b82f6;
+    }
+    
+    .control-btn.primary:hover {
+        background: #2563eb;
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-label {
+        display: block;
+        color: white;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+    }
+    
+    .form-select {
+        width: 100%;
+        padding: 1rem;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.9);
+        color: #1f2937;
+        font-weight: 500;
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+    
+    .stat-box {
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 12px;
+        padding: 1.5rem;
+        text-align: center;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+        color: white;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+    }
+    
+    .stat-label {
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 0.9rem;
+        margin-top: 0.5rem;
+    }
+    
+    .add-task-btn {
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        padding: 1rem 2rem;
+        border-radius: 12px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+        margin-bottom: 2rem;
+    }
+    
+    .add-task-btn:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: translateY(-2px);
+        color: white;
+        text-decoration: none;
+    }
+    
+    @media (max-width: 1024px) {
+        .content-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .main-container {
+            padding: 1rem;
+        }
+        
+        .page-title {
+            font-size: 2rem;
+        }
+        
+        .timer-clock {
+            font-size: 3rem;
+        }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="flex h-screen bg-gray-50">
+<div class="main-container">
+    <div class="page-header">
+        <h1 class="page-title">Focus Timer</h1>
+        <p class="page-subtitle">Boost your productivity with the 1-3-5 method and Pomodoro technique</p>
+    </div>
+    
+    <div class="content-grid">
+        <!-- Left Column - Task Management -->
+        <div class="task-management">
+            <a href="{% url 'tasks:create' %}" class="add-task-btn">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                </svg>
+                Add New Task
+            </a>
+            
+            <div class="glass-box">
+                <h2 class="section-title">1-3-5 Daily Method</h2>
+                <p style="color: rgba(255, 255, 255, 0.8); margin-bottom: 2rem;">
+                    Focus on 1 big thing, 3 medium things, and 5 small things each day
+                </p>
+                
+                <!-- 1 Big Thing -->
+                <div class="task-category">
+                    <div class="category-header">
+                        <div class="category-title">🎯 1 Big Thing</div>
+                        <div class="category-count">{{ big_tasks|length }}/1</div>
+                    </div>
+                    
+                    {% for task in big_tasks %}
+                        <div class="task-item">
+                            <div class="task-checkbox">
+                                <input type="checkbox" id="big-{{ task.id }}" data-task-id="{{ task.id }}">
+                                <div class="task-content">
+                                    <div class="task-title">{{ task.title }}</div>
+                                    <div class="task-description">{{ task.description|truncatechars:60 }}</div>
+                                </div>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <div class="empty-state">
+                            <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin: 0 auto 1rem;">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                            </svg>
+                            <p>Choose your most important task for today</p>
+                        </div>
+                    {% endfor %}
+                </div>
+                
+                <!-- 3 Medium Things -->
+                <div class="task-category">
+                    <div class="category-header">
+                        <div class="category-title">📋 3 Medium Things</div>
+                        <div class="category-count">{{ medium_tasks|length }}/3</div>
+                    </div>
+                    
+                    {% for task in medium_tasks %}
+                        <div class="task-item">
+                            <div class="task-checkbox">
+                                <input type="checkbox" id="medium-{{ task.id }}" data-task-id="{{ task.id }}">
+                                <div class="task-content">
+                                    <div class="task-title">{{ task.title }}</div>
+                                    <div class="task-description">{{ task.description|truncatechars:50 }}</div>
+                                </div>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <div class="empty-state">
+                            <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin: 0 auto 1rem;">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                            </svg>
+                            <p>Select 3 important tasks to accomplish</p>
+                        </div>
+                    {% endfor %}
+                </div>
+                
+                <!-- 5 Small Things -->
+                <div class="task-category">
+                    <div class="category-header">
+                        <div class="category-title">✅ 5 Small Things</div>
+                        <div class="category-count">{{ small_tasks|length }}/5</div>
+                    </div>
+                    
+                    {% for task in small_tasks %}
+                        <div class="task-item">
+                            <div class="task-checkbox">
+                                <input type="checkbox" id="small-{{ task.id }}" data-task-id="{{ task.id }}">
+                                <div class="task-content">
+                                    <div class="task-title">{{ task.title }}</div>
+                                    <div class="task-description">{{ task.description|truncatechars:40 }}</div>
+                                </div>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <div class="empty-state">
+                            <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin: 0 auto 1rem;">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                            <p>Add 5 quick tasks to complete</p>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Right Column - Timer Section -->
+        <div class="timer-section">
+            <!-- Timer Setup -->
+            <div class="timer-setup">
+                <h3 class="section-title" style="font-size: 1.2rem; margin-bottom: 1.5rem;">Timer Setup</h3>
+                
+                <div class="form-group">
+                    <label class="form-label">Select Task</label>
+                    <select class="form-select" id="task-selector">
+                        <option value="">Choose a task to focus on</option>
+                        {% for task in big_tasks %}
+                            <option value="{{ task.id }}">🎯 {{ task.title }}</option>
+                        {% endfor %}
+                        {% for task in medium_tasks %}
+                            <option value="{{ task.id }}">📋 {{ task.title }}</option>
+                        {% endfor %}
+                        {% for task in small_tasks %}
+                            <option value="{{ task.id }}">✅ {{ task.title }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Technique</label>
+                    <select class="form-select" id="technique-selector">
+                        <option value="pomodoro">🍅 Pomodoro (25min/5min)</option>
+                        <option value="52-17">⏰ 52/17 (52min/17min)</option>
+                        <option value="custom">⚙️ Custom Timer</option>
+                    </select>
+                </div>
+            </div>
+            
+            <!-- Timer Display -->
+            <div class="timer-display">
+                <div class="progress-ring">
+                    <div class="progress-circle" id="progress-circle">
+                        <div class="timer-clock" id="timer-display">25:00</div>
+                    </div>
+                </div>
+                
+                <div class="timer-label" id="timer-phase">Ready to focus</div>
+                
+                <div class="timer-controls">
+                    <button class="control-btn primary" id="start-btn" onclick="toggleTimer()">
+                        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h8m-9-4h10a2 2 0 012 2v8a2 2 0 01-2 2H7a2 2 0 01-2-2v-8a2 2 0 012-2z"/>
+                        </svg>
+                        Start Focus
+                    </button>
+                    <button class="control-btn" id="reset-btn" onclick="resetTimer()">
+                        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                        </svg>
+                        Reset
+                    </button>
+                </div>
+                
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <div class="stat-number" id="sessions-count">0</div>
+                        <div class="stat-label">Sessions</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-number" id="total-time">0h</div>
+                        <div class="stat-label">Total Time</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Enhanced timer functionality with visual effects
+let timeLeft = 25 * 60; // 25 minutes in seconds
+let totalTime = 25 * 60;
+let timerInterval = null;
+let isRunning = false;
+let sessions = 0;
+let totalTimeSpent = 0;
+
+function updateDisplay() {
+    const minutes = Math.floor(timeLeft / 60);
+    const seconds = timeLeft % 60;
+    document.getElementById('timer-display').textContent = 
+        `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    
+    // Update circular progress
+    const progress = ((totalTime - timeLeft) / totalTime) * 100;
+    const progressCircle = document.getElementById('progress-circle');
+    progressCircle.style.background = `conic-gradient(from 0deg, #3b82f6 ${progress * 3.6}deg, rgba(255, 255, 255, 0.2) ${progress * 3.6}deg)`;
+}
+
+function toggleTimer() {
+    const startBtn = document.getElementById('start-btn');
+    const phaseLabel = document.getElementById('timer-phase');
+    
+    if (!isRunning) {
+        isRunning = true;
+        phaseLabel.textContent = 'Focus time - Stay concentrated!';
+        startBtn.innerHTML = `
+            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            Pause
+        `;
+        
+        timerInterval = setInterval(() => {
+            timeLeft--;
+            updateDisplay();
+            
+            if (timeLeft <= 0) {
+                completeSession();
+            }
+        }, 1000);
+    } else {
+        pauseTimer();
+    }
+}
+
+function pauseTimer() {
+    isRunning = false;
+    clearInterval(timerInterval);
+    document.getElementById('timer-phase').textContent = 'Paused - Click to continue';
+    document.getElementById('start-btn').innerHTML = `
+        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h8m-9-4h10a2 2 0 012 2v8a2 2 0 01-2 2H7a2 2 0 01-2-2v-8a2 2 0 012-2z"/>
+        </svg>
+        Resume
+    `;
+}
+
+function resetTimer() {
+    isRunning = false;
+    clearInterval(timerInterval);
+    
+    const technique = document.getElementById('technique-selector').value;
+    if (technique === 'pomodoro') {
+        timeLeft = 25 * 60;
+        totalTime = 25 * 60;
+    } else if (technique === '52-17') {
+        timeLeft = 52 * 60;
+        totalTime = 52 * 60;
+    } else {
+        timeLeft = 25 * 60;
+        totalTime = 25 * 60;
+    }
+    
+    updateDisplay();
+    document.getElementById('timer-phase').textContent = 'Ready to focus';
+    document.getElementById('start-btn').innerHTML = `
+        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h8m-9-4h10a2 2 0 012 2v8a2 2 0 01-2 2H7a2 2 0 01-2-2v-8a2 2 0 012-2z"/>
+        </svg>
+        Start Focus
+    `;
+}
+
+function completeSession() {
+    isRunning = false;
+    clearInterval(timerInterval);
+    sessions++;
+    totalTimeSpent += (totalTime / 60); // Convert to minutes
+    
+    // Update stats
+    document.getElementById('sessions-count').textContent = sessions;
+    document.getElementById('total-time').textContent = Math.floor(totalTimeSpent / 60) + 'h ' + (totalTimeSpent % 60) + 'm';
+    
+    // Show completion message
+    document.getElementById('timer-phase').textContent = '🎉 Session completed!';
+    
+    // Reset for next session
+    setTimeout(() => {
+        resetTimer();
+    }, 3000);
+    
+    // Play notification sound (if supported)
+    if ('Notification' in window) {
+        new Notification('Focus Session Complete!', {
+            body: 'Great job! Time for a break.',
+            icon: '/static/images/timer-icon.png'
+        });
+    }
+}
+
+// Technique selector change handler
+document.getElementById('technique-selector').addEventListener('change', function() {
+    const technique = this.value;
+    if (technique === 'pomodoro') {
+        timeLeft = 25 * 60;
+        totalTime = 25 * 60;
+    } else if (technique === '52-17') {
+        timeLeft = 52 * 60;
+        totalTime = 52 * 60;
+    }
+    updateDisplay();
+});
+
+// Initialize display
+updateDisplay();
+
+// Request notification permission
+if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission();
+}
+</script>
     <!-- Sidebar -->
     <div class="w-64 bg-white shadow-lg">
         <div class="p-6">

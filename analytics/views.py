@@ -4,191 +4,291 @@ from django.http import JsonResponse
 from django.db.models import Count, Q
 from django.utils import timezone
 from datetime import datetime, timedelta
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 from tasks.models import Task
 from django.contrib.auth.models import User
-from django.db import connection
 
 
 @login_required
 def analytics_dashboard(request):
     """Enhanced analytics dashboard view"""
+    return render(request, 'analytics/dashboard.html')
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def daily_progress(request):
+    """Get daily progress data for charts"""
     user = request.user
-    user_tasks = Task.objects.filter(user=user)
+    days = int(request.GET.get('days', 7))  # Default to 7 days
     
-    # Current month data
-    now = timezone.now()
-    current_month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-    last_month_start = (current_month_start - timedelta(days=1)).replace(day=1)
+    end_date = timezone.now().date()
+    start_date = end_date - timedelta(days=days-1)
     
-    # Basic statistics
-    total_tasks = user_tasks.count()
-    completed_tasks = user_tasks.filter(status='done').count()
-    in_progress_tasks = user_tasks.filter(status='in_progress').count()
-    overdue_tasks = user_tasks.filter(
-        due_date__lt=now,
-        status__in=['todo', 'in_progress']
-    ).count()
+    daily_data = []
+    current_date = start_date
     
-    # Monthly comparison
-    current_month_completed = user_tasks.filter(
-        status='done',
-        updated_at__gte=current_month_start
-    ).count()
+    while current_date <= end_date:
+        # Tasks due on this date
+        tasks_due = Task.objects.filter(
+            user=user,
+            due_date__date=current_date
+        )
+        
+        # Tasks completed on this date
+        tasks_completed = tasks_due.filter(status='done')
+        
+        daily_data.append({
+            'date': current_date.strftime('%Y-%m-%d'),
+            'day_name': current_date.strftime('%a'),
+            'total_due': tasks_due.count(),
+            'completed': tasks_completed.count(),
+            'percentage': (tasks_completed.count() / tasks_due.count() * 100) if tasks_due.count() > 0 else 0
+        })
+        
+        current_date += timedelta(days=1)
     
-    last_month_completed = user_tasks.filter(
-        status='done',
-        updated_at__gte=last_month_start,
-        updated_at__lt=current_month_start
-    ).count()
+    return Response({
+        'period': f"{start_date} to {end_date}",
+        'daily_progress': daily_data
+    })
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def weekly_category_stats(request):
+    """Get weekly category completion statistics for pie chart"""
+    user = request.user
+    week_ago = timezone.now() - timedelta(days=7)
     
-    # Calculate percentage changes
-    def calculate_percentage_change(current, previous):
-        if previous == 0:
-            return "+100%" if current > 0 else "0%"
-        change = ((current - previous) / previous) * 100
-        return f"{'+' if change >= 0 else ''}{change:.0f}%"
-    
-    # Priority distribution
-    priority_distribution = user_tasks.values('priority').annotate(
+    # Get completed tasks in the last week by category
+    stats = Task.objects.filter(
+        user=user,
+        completed_at__gte=week_ago,
+        status='done'
+    ).values('category').annotate(
         count=Count('id')
-    ).order_by('priority')
+    ).order_by('-count')
     
-    # User performance (mock data for individual user)
-    user_performance = [
-        {
-            'name': f"{user.first_name} {user.last_name}" if user.first_name else user.username,
-            'initials': f"{user.first_name[0] if user.first_name else user.username[0]}{user.last_name[0] if user.last_name else ''}",
-            'tasks_completed': completed_tasks,
-            'rank': 1
-        }
-    ]
+    # Calculate total for percentages
+    total_completed = sum(item['count'] for item in stats)
     
-    context = {
-        'total_tasks': total_tasks,
-        'completed_tasks': completed_tasks, 
-        'in_progress_tasks': in_progress_tasks,
-        'overdue_tasks': overdue_tasks,
-        'current_month_completed': current_month_completed,
-        'last_month_completed': last_month_completed,
-        'total_change': calculate_percentage_change(total_tasks, total_tasks - 10),  # Mock previous data
-        'completed_change': calculate_percentage_change(current_month_completed, last_month_completed),
-        'in_progress_change': calculate_percentage_change(in_progress_tasks, in_progress_tasks - 3),
-        'overdue_change': calculate_percentage_change(overdue_tasks, overdue_tasks + 2),
-        'priority_distribution': priority_distribution,
-        'user_performance': user_performance,
-    }
+    # Add percentage and category labels
+    category_labels = dict(Task.CATEGORY_CHOICES)
+    for item in stats:
+        item['label'] = category_labels.get(item['category'], item['category'])
+        item['percentage'] = (item['count'] / total_completed * 100) if total_completed > 0 else 0
     
-    return render(request, 'analytics/dashboard.html', context)
+    return Response({
+        'period': 'Last 7 days',
+        'total_completed': total_completed,
+        'category_stats': list(stats)
+    })
 
 
-@login_required
-def analytics_api(request):
-    """API endpoint for analytics data"""
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def priority_breakdown(request):
+    """Get task breakdown by MoSCoW priority"""
     user = request.user
-    user_tasks = Task.objects.filter(user=user)
     
-    # Time range filter
-    time_range = request.GET.get('range', '30')  # days
-    try:
-        days = int(time_range)
-    except ValueError:
-        days = 30
+    priority_data = []
+    priority_labels = dict(Task.PRIORITY_CHOICES)
     
-    start_date = timezone.now() - timedelta(days=days)
-    filtered_tasks = user_tasks.filter(created_at__gte=start_date)
-    
-    # Task completion over time (based on updated_at for completed tasks)
-    completion_data = []
-    for i in range(days):
-        date = start_date + timedelta(days=i)
-        completed_count = user_tasks.filter(
-            status='done',
-            updated_at__date=date.date()
-        ).count()
-        completion_data.append({
-            'date': date.strftime('%Y-%m-%d'),
-            'completed': completed_count
+    for priority_key, priority_label in Task.PRIORITY_CHOICES:
+        total = Task.objects.filter(user=user, priority=priority_key).count()
+        completed = Task.objects.filter(user=user, priority=priority_key, status='done').count()
+        pending = total - completed
+        
+        priority_data.append({
+            'priority': priority_key,
+            'label': priority_label,
+            'total': total,
+            'completed': completed,
+            'pending': pending,
+            'completion_rate': (completed / total * 100) if total > 0 else 0
         })
     
-    # Task distribution by status
-    status_distribution = dict(
-        user_tasks.values('status').annotate(count=Count('id')).values_list('status', 'count')
-    )
+    return Response(priority_data)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def productivity_trends(request):
+    """Get productivity trends over time"""
+    user = request.user
+    days = int(request.GET.get('days', 30))
     
-    # Task distribution by priority
-    priority_distribution = dict(
-        user_tasks.values('priority').annotate(count=Count('id')).values_list('priority', 'count')
-    )
+    end_date = timezone.now().date()
+    start_date = end_date - timedelta(days=days-1)
     
-    # Task distribution by category
-    category_distribution = list(
-        user_tasks.exclude(category__isnull=True)
-        .values('category__name', 'category__color')
-        .annotate(count=Count('id'))
-    )
+    # Weekly aggregation for better visualization
+    weekly_data = []
+    current_week_start = start_date
     
-    # Productivity metrics
-    total_tasks = user_tasks.count()
-    completed_tasks = user_tasks.filter(status='done').count()
-    overdue_tasks = user_tasks.filter(
-        due_date__lt=timezone.now(),
-        status__in=['todo', 'in_progress']
+    while current_week_start <= end_date:
+        week_end = min(current_week_start + timedelta(days=6), end_date)
+        
+        # Tasks completed in this week
+        week_completed = Task.objects.filter(
+            user=user,
+            completed_at__date__gte=current_week_start,
+            completed_at__date__lte=week_end,
+            status='done'
+        ).count()
+        
+        # Total points earned in this week
+        week_points = Task.objects.filter(
+            user=user,
+            completed_at__date__gte=current_week_start,
+            completed_at__date__lte=week_end,
+            status='done'
+        ).aggregate(total_points=Count('points_awarded'))['total_points'] or 0
+        
+        weekly_data.append({
+            'week_start': current_week_start.strftime('%Y-%m-%d'),
+            'week_end': week_end.strftime('%Y-%m-%d'),
+            'tasks_completed': week_completed,
+            'points_earned': week_points * 10,  # 10 points per completed task
+            'week_label': f"Week of {current_week_start.strftime('%b %d')}"
+        })
+        
+        current_week_start = week_end + timedelta(days=1)
+    
+    return Response({
+        'period': f"{start_date} to {end_date}",
+        'weekly_trends': weekly_data
+    })
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def user_points_level(request):
+    """Get user points and level information"""
+    user = request.user
+    profile = user.userprofile
+    
+    # Calculate points needed for next level
+    current_level_points = (profile.level - 1) * 100
+    next_level_points = profile.level * 100
+    points_to_next_level = next_level_points - profile.total_points
+    
+    # Recent achievements
+    recent_completed = Task.objects.filter(
+        user=user,
+        status='done',
+        completed_at__gte=timezone.now() - timedelta(days=7)
     ).count()
     
-    # Average completion time (using creation to last update for done tasks)
-    completed_with_times = user_tasks.filter(status='done')
-    
-    avg_completion_time = None
-    if completed_with_times.exists():
-        total_time = sum([
-            (task.updated_at - task.created_at).total_seconds()
-            for task in completed_with_times
-        ])
-        avg_completion_time = total_time / completed_with_times.count() / 3600  # hours
-    
-    analytics_data = {
-        'overview': {
-            'total_tasks': total_tasks,
-            'completed_tasks': completed_tasks,
-            'completion_rate': (completed_tasks / total_tasks * 100) if total_tasks > 0 else 0,
-            'overdue_tasks': overdue_tasks,
-            'avg_completion_time': round(avg_completion_time, 2) if avg_completion_time else None
-        },
-        'completion_trend': completion_data,
-        'status_distribution': status_distribution,
-        'priority_distribution': priority_distribution,
-        'category_distribution': category_distribution,
-        'time_range': days
-    }
-    
-    return JsonResponse(analytics_data)
+    return Response({
+        'total_points': profile.total_points,
+        'current_level': profile.level,
+        'points_to_next_level': max(0, points_to_next_level),
+        'progress_percentage': ((profile.total_points - current_level_points) / 100 * 100),
+        'recent_completed_tasks': recent_completed,
+        'streak_count': profile.streak_count,
+        'preferred_technique': profile.preferred_technique
+    })
 
 
-@login_required
-def system_status(request):
-    """System status page for debugging"""
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def overdue_analysis(request):
+    """Analyze overdue tasks patterns"""
+    user = request.user
+    now = timezone.now()
+    
+    # Current overdue tasks
+    overdue_tasks = Task.objects.filter(
+        user=user,
+        due_date__lt=now,
+        status__in=['todo', 'in_progress']
+    )
+    
+    # Overdue by category
+    overdue_by_category = overdue_tasks.values('category').annotate(
+        count=Count('id')
+    ).order_by('-count')
+    
+    # Overdue by priority
+    overdue_by_priority = overdue_tasks.values('priority').annotate(
+        count=Count('id')
+    ).order_by('-count')
+    
+    # Average days overdue
+    overdue_days = []
+    for task in overdue_tasks:
+        days_overdue = (now.date() - task.due_date.date()).days
+        overdue_days.append(days_overdue)
+    
+    avg_days_overdue = sum(overdue_days) / len(overdue_days) if overdue_days else 0
+    
+    return Response({
+        'total_overdue': overdue_tasks.count(),
+        'average_days_overdue': round(avg_days_overdue, 1),
+        'overdue_by_category': list(overdue_by_category),
+        'overdue_by_priority': list(overdue_by_priority),
+        'overdue_tasks': [{
+            'id': task.id,
+            'title': task.title,
+            'due_date': task.due_date,
+            'days_overdue': (now.date() - task.due_date.date()).days,
+            'priority': task.priority,
+            'category': task.category
+        } for task in overdue_tasks[:10]]  # Limit to 10 most recent
+    })
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def analytics_summary(request):
+    """Get comprehensive analytics summary"""
     user = request.user
     
-    # Get database info
-    with connection.cursor() as cursor:
-        cursor.execute("SELECT COUNT(*) FROM auth_user")
-        user_count = cursor.fetchone()[0]
-        
-        cursor.execute("SELECT COUNT(*) FROM tasks_task")
-        task_count = cursor.fetchone()[0]
+    # Basic stats
+    total_tasks = Task.objects.filter(user=user).count()
+    completed_tasks = Task.objects.filter(user=user, status='done').count()
+    pending_tasks = Task.objects.filter(user=user, status__in=['todo', 'in_progress']).count()
     
-    # User's tasks
-    user_tasks = Task.objects.filter(user=user).count()
+    # This month stats
+    now = timezone.now()
+    month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     
-    context = {
-        'user': user,
-        'system_info': {
-            'total_users': user_count,
-            'total_tasks': task_count,
-            'user_tasks': user_tasks,
-            'is_authenticated': user.is_authenticated,
-            'session_key': request.session.session_key,
+    month_completed = Task.objects.filter(
+        user=user,
+        status='done',
+        completed_at__gte=month_start
+    ).count()
+    
+    month_created = Task.objects.filter(
+        user=user,
+        created_at__gte=month_start
+    ).count()
+    
+    # User profile data
+    profile = user.userprofile
+    
+    return Response({
+        'user_stats': {
+            'total_tasks': total_tasks,
+            'completed_tasks': completed_tasks,
+            'pending_tasks': pending_tasks,
+            'completion_rate': (completed_tasks / total_tasks * 100) if total_tasks > 0 else 0
+        },
+        'monthly_stats': {
+            'completed_this_month': month_completed,
+            'created_this_month': month_created,
+            'month_name': now.strftime('%B %Y')
+        },
+        'gamification': {
+            'total_points': profile.total_points,
+            'current_level': profile.level,
+            'streak_count': profile.streak_count
+        },
+        'preferences': {
+            'preferred_technique': profile.preferred_technique,
+            'study_hours_per_day': profile.study_hours_per_day
         }
-    }
-    
-    return render(request, 'debug/status.html', context)
+    })
