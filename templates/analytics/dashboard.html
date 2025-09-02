@@ -30,14 +30,8 @@
                     <div class="ml-5 w-0 flex-1">
                         <dl>
                             <dt class="text-sm font-medium text-gray-500 truncate">Total Tasks</dt>
-                            <dd class="text-lg font-medium text-gray-900">{{ total_tasks }}</dd>
+                            <dd class="text-lg font-medium text-gray-900" x-text="analytics.overview?.total_tasks || {{ total_tasks }}"></dd>
                         </dl>
-                    </div>
-                </div>
-                <div class="mt-5">
-                    <div class="text-sm">
-                        <span class="text-green-600 font-medium">{{ total_change }}</span>
-                        <span class="text-gray-500">from last month</span>
                     </div>
                 </div>
             </div>
@@ -56,14 +50,8 @@
                     <div class="ml-5 w-0 flex-1">
                         <dl>
                             <dt class="text-sm font-medium text-gray-500 truncate">Completed</dt>
-                            <dd class="text-lg font-medium text-gray-900">{{ completed_tasks }}</dd>
+                            <dd class="text-lg font-medium text-gray-900" x-text="analytics.overview?.completed_tasks || {{ completed_tasks }}"></dd>
                         </dl>
-                    </div>
-                </div>
-                <div class="mt-5">
-                    <div class="text-sm">
-                        <span class="text-green-600 font-medium">{{ completed_change }}</span>
-                        <span class="text-gray-500">from last month</span>
                     </div>
                 </div>
             </div>
@@ -81,15 +69,9 @@
                     </div>
                     <div class="ml-5 w-0 flex-1">
                         <dl>
-                            <dt class="text-sm font-medium text-gray-500 truncate">In Progress</dt>
-                            <dd class="text-lg font-medium text-gray-900">{{ in_progress_tasks }}</dd>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Completion Rate</dt>
+                            <dd class="text-lg font-medium text-gray-900" x-text="(analytics.overview?.completion_rate || {{ completion_rate }}).toFixed(1) + '%'"></dd>
                         </dl>
-                    </div>
-                </div>
-                <div class="mt-5">
-                    <div class="text-sm">
-                        <span class="text-green-600 font-medium">{{ in_progress_change }}</span>
-                        <span class="text-gray-500">from last month</span>
                     </div>
                 </div>
             </div>
@@ -108,14 +90,8 @@
                     <div class="ml-5 w-0 flex-1">
                         <dl>
                             <dt class="text-sm font-medium text-gray-500 truncate">Overdue</dt>
-                            <dd class="text-lg font-medium text-gray-900">{{ overdue_tasks }}</dd>
+                            <dd class="text-lg font-medium text-gray-900" x-text="analytics.overview?.overdue_tasks || {{ overdue_tasks }}"></dd>
                         </dl>
-                    </div>
-                </div>
-                <div class="mt-5">
-                    <div class="text-sm">
-                        <span class="text-red-600 font-medium">{{ overdue_change }}</span>
-                        <span class="text-gray-500">from last month</span>
                     </div>
                 </div>
             </div>
@@ -129,21 +105,21 @@
         <div class="bg-white overflow-hidden shadow rounded-lg">
             <div class="px-6 py-4 border-b border-gray-200">
                 <h3 class="text-lg leading-6 font-medium text-gray-900">Task Completion Trend</h3>
-                <p class="mt-1 text-sm text-gray-500">Monthly completed vs pending tasks</p>
+                <p class="mt-1 text-sm text-gray-500">Daily completed tasks over time</p>
             </div>
             <div class="p-6">
-                <canvas id="completionTrendChart" width="400" height="200"></canvas>
+                <canvas id="completionChart" width="400" height="200"></canvas>
             </div>
         </div>
 
-        <!-- Weekly Productivity -->
+        <!-- Status Distribution -->
         <div class="bg-white overflow-hidden shadow rounded-lg">
             <div class="px-6 py-4 border-b border-gray-200">
-                <h3 class="text-lg leading-6 font-medium text-gray-900">Weekly Productivity</h3>
-                <p class="mt-1 text-sm text-gray-500">Tasks completed per day this week</p>
+                <h3 class="text-lg leading-6 font-medium text-gray-900">Task Status Distribution</h3>
+                <p class="mt-1 text-sm text-gray-500">Current status breakdown</p>
             </div>
             <div class="p-6">
-                <canvas id="weeklyProductivityChart" width="400" height="200"></canvas>
+                <canvas id="statusChart" width="400" height="200"></canvas>
             </div>
         </div>
 
@@ -155,241 +131,26 @@
         <!-- Task Priority Distribution -->
         <div class="bg-white overflow-hidden shadow rounded-lg">
             <div class="px-6 py-4 border-b border-gray-200">
-                <h3 class="text-lg leading-6 font-medium text-gray-900">Task Priority Distribution</h3>
-                <p class="mt-1 text-sm text-gray-500">Breakdown of tasks by priority level</p>
+                <h3 class="text-lg leading-6 font-medium text-gray-900">Priority Distribution</h3>
+                <p class="mt-1 text-sm text-gray-500">Tasks by priority level</p>
             </div>
             <div class="p-6">
-                <canvas id="priorityDistributionChart" width="400" height="200"></canvas>
-            </div>
-        </div>
-
-        <!-- User Performance -->
-        <div class="bg-white overflow-hidden shadow rounded-lg">
-            <div class="px-6 py-4 border-b border-gray-200">
-                <h3 class="text-lg leading-6 font-medium text-gray-900">Personal Performance</h3>
-                <p class="mt-1 text-sm text-gray-500">Your task completion performance</p>
-            </div>
-            <div class="p-6">
-                {% for performer in user_performance %}
-                <div class="flex items-center justify-between py-3">
-                    <div class="flex items-center">
-                        <div class="w-8 h-8 bg-gray-800 rounded-full flex items-center justify-center">
-                            <span class="text-white text-sm font-medium">{{ performer.initials }}</span>
-                        </div>
-                        <div class="ml-3">
-                            <p class="text-sm font-medium text-gray-900">{{ performer.name }}</p>
-                        </div>
-                    </div>
-                    <div class="flex items-center">
-                        <div class="text-sm text-gray-500 mr-4">{{ performer.tasks_completed }} tasks</div>
-                        <div class="text-sm font-medium text-blue-600">#{{ performer.rank }}</div>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-
-    </div>
-</div>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Task Completion Trend Chart
-    const completionCtx = document.getElementById('completionTrendChart').getContext('2d');
-    new Chart(completionCtx, {
-        type: 'bar',
-        data: {
-            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'],
-            datasets: [{
-                label: 'Completed',
-                data: [45, 12, 8, 17, 5, 12, 5, 8],
-                backgroundColor: '#10b981',
-                borderColor: '#059669',
-                borderWidth: 1
-            }, {
-                label: 'Pending',
-                data: [12, 19, 3, 5, 2, 3, 7, 10],
-                backgroundColor: '#f59e0b',
-                borderColor: '#d97706',
-                borderWidth: 1
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                y: {
-                    beginAtZero: true
-                }
-            }
-        }
-    });
-
-    // Weekly Productivity Chart
-    const weeklyCtx = document.getElementById('weeklyProductivityChart').getContext('2d');
-    new Chart(weeklyCtx, {
-        type: 'line',
-        data: {
-            labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-            datasets: [{
-                label: 'Tasks Completed',
-                data: [0, 0, 0, 10, 0, 0, 0],
-                borderColor: '#3b82f6',
-                backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                fill: true,
-                tension: 0.4
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    max: 20
-                }
-            }
-        }
-    });
-
-    // Priority Distribution Chart
-    const priorityCtx = document.getElementById('priorityDistributionChart').getContext('2d');
-    new Chart(priorityCtx, {
-        type: 'doughnut',
-        data: {
-            labels: ['Urgent', 'High', 'Medium', 'Low'],
-            datasets: [{
-                data: [25, 35, 30, 10],
-                backgroundColor: [
-                    '#ef4444',
-                    '#f59e0b',
-                    '#10b981',
-                    '#6b7280'
-                ],
-                borderWidth: 0
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'bottom'
-                }
-            }
-        }
-    });
-});
-</script>
-        </div>
-
-        <div class="bg-white overflow-hidden shadow rounded-lg">
-            <div class="p-5">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <div class="w-8 h-8 bg-green-500 rounded-md flex items-center justify-center">
-                            <span class="text-white text-sm font-medium">✓</span>
-                        </div>
-                    </div>
-                    <div class="ml-5 w-0 flex-1">
-                        <dl>
-                            <dt class="text-sm font-medium text-gray-500 truncate">Completed</dt>
-                            <dd class="text-lg font-medium text-gray-900" x-text="analytics.overview?.completed_tasks || 0"></dd>
-                        </dl>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-white overflow-hidden shadow rounded-lg">
-            <div class="p-5">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <div class="w-8 h-8 bg-yellow-500 rounded-md flex items-center justify-center">
-                            <span class="text-white text-sm font-medium">%</span>
-                        </div>
-                    </div>
-                    <div class="ml-5 w-0 flex-1">
-                        <dl>
-                            <dt class="text-sm font-medium text-gray-500 truncate">Completion Rate</dt>
-                            <dd class="text-lg font-medium text-gray-900" x-text="(analytics.overview?.completion_rate || 0).toFixed(1) + '%'"></dd>
-                        </dl>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-white overflow-hidden shadow rounded-lg">
-            <div class="p-5">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <div class="w-8 h-8 bg-red-500 rounded-md flex items-center justify-center">
-                            <span class="text-white text-sm font-medium">⚠️</span>
-                        </div>
-                    </div>
-                    <div class="ml-5 w-0 flex-1">
-                        <dl>
-                            <dt class="text-sm font-medium text-gray-500 truncate">Overdue</dt>
-                            <dd class="text-lg font-medium text-gray-900" x-text="analytics.overview?.overdue_tasks || 0"></dd>
-                        </dl>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Charts Row -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <!-- Completion Trend Chart -->
-        <div class="bg-white shadow rounded-lg">
-            <div class="px-6 py-4 border-b border-gray-200">
-                <h3 class="text-lg font-medium text-gray-900">Task Completion Trend</h3>
-            </div>
-            <div class="p-6">
-                <div class="chart-container">
-                    <canvas id="completionChart"></canvas>
-                </div>
-            </div>
-        </div>
-
-        <!-- Status Distribution Chart -->
-        <div class="bg-white shadow rounded-lg">
-            <div class="px-6 py-4 border-b border-gray-200">
-                <h3 class="text-lg font-medium text-gray-900">Task Status Distribution</h3>
-            </div>
-            <div class="p-6">
-                <div class="chart-container">
-                    <canvas id="statusChart"></canvas>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Priority and Category Analysis -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <!-- Priority Distribution -->
-        <div class="bg-white shadow rounded-lg">
-            <div class="px-6 py-4 border-b border-gray-200">
-                <h3 class="text-lg font-medium text-gray-900">Priority Distribution</h3>
-            </div>
-            <div class="p-6">
-                <div class="chart-container">
-                    <canvas id="priorityChart"></canvas>
-                </div>
+                <canvas id="priorityChart" width="400" height="200"></canvas>
             </div>
         </div>
 
         <!-- Category Breakdown -->
-        <div class="bg-white shadow rounded-lg">
+        <div class="bg-white overflow-hidden shadow rounded-lg">
             <div class="px-6 py-4 border-b border-gray-200">
-                <h3 class="text-lg font-medium text-gray-900">Category Breakdown</h3>
+                <h3 class="text-lg leading-6 font-medium text-gray-900">Category Breakdown</h3>
+                <p class="mt-1 text-sm text-gray-500">Tasks by category</p>
             </div>
             <div class="p-6">
-                <template x-for="category in analytics.category_distribution" :key="category.category__name">
+                <template x-for="category in analytics.category_distribution" :key="category.category">
                     <div class="flex items-center justify-between py-2">
                         <div class="flex items-center">
-                            <div class="w-4 h-4 rounded-full mr-3" :style="`background-color: ${category.category__color}`"></div>
-                            <span class="text-sm font-medium text-gray-900" x-text="category.category__name"></span>
+                            <div class="w-4 h-4 rounded-full mr-3 bg-blue-500"></div>
+                            <span class="text-sm font-medium text-gray-900" x-text="category.category || 'Uncategorized'"></span>
                         </div>
                         <span class="text-sm text-gray-500" x-text="category.count + ' tasks'"></span>
                     </div>
@@ -398,44 +159,15 @@ document.addEventListener('DOMContentLoaded', function() {
                      class="text-gray-500 text-sm">No category data available</div>
             </div>
         </div>
-    </div>
 
-    <!-- Productivity Insights -->
-    <div class="bg-white shadow rounded-lg">
-        <div class="px-6 py-4 border-b border-gray-200">
-            <h3 class="text-lg font-medium text-gray-900">Productivity Insights</h3>
-        </div>
-        <div class="p-6">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <!-- Average Completion Time -->
-                <div class="text-center">
-                    <div class="text-2xl font-bold text-blue-600" x-text="analytics.overview?.avg_completion_time ? analytics.overview.avg_completion_time.toFixed(1) + ' hrs' : 'N/A'"></div>
-                    <div class="text-sm text-gray-500">Average Completion Time</div>
-                </div>
-
-                <!-- Most Productive Day -->
-                <div class="text-center">
-                    <div class="text-2xl font-bold text-green-600" x-text="getMostProductiveDay()"></div>
-                    <div class="text-sm text-gray-500">Most Productive Day</div>
-                </div>
-
-                <!-- Task Velocity -->
-                <div class="text-center">
-                    <div class="text-2xl font-bold text-purple-600" x-text="getTaskVelocity()"></div>
-                    <div class="text-sm text-gray-500">Tasks per Day</div>
-                </div>
-            </div>
-        </div>
     </div>
 
     <!-- Loading State -->
     <div x-show="loading" 
-         @click="loading = false" 
-         class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50 cursor-pointer"
-         title="Click to dismiss if stuck">
+         class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
         <div class="bg-white p-6 rounded-lg shadow-lg max-w-md">
             <div class="flex items-center space-x-3 mb-4">
-                <div class="spinner"></div>
+                <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
                 <span class="text-gray-700">Loading analytics...</span>
             </div>
             
@@ -445,8 +177,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="text-xs text-red-600" x-text="error"></div>
             </div>
             
-            <div class="text-xs text-gray-500 text-center mb-3">Taking longer than expected?</div>
-            <button @click="loading = false; console.log('Manual loading override')" 
+            <button @click="loading = false" 
                     class="w-full px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm">
                 Continue Anyway
             </button>
@@ -471,36 +202,29 @@ function analyticsBoard() {
 
         async loadAnalytics() {
             this.loading = true;
-            this.error = null; // Clear previous errors
-            console.log('🔍 Starting analytics load...');
+            this.error = null;
+            console.log('🔍 Loading analytics...');
             
-            // Set a timeout to prevent infinite loading
             const loadingTimeout = setTimeout(() => {
                 if (this.loading) {
-                    console.warn('⚠️ Analytics loading timeout - forcing completion');
+                    console.warn('⚠️ Analytics loading timeout');
                     this.loading = false;
                 }
-            }, 10000); // 10 second timeout
+            }, 10000);
             
             try {
-                // Get CSRF token
                 const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
                 
-                console.log('📡 Fetching from:', `/analytics/api/?range=${this.timeRange}`);
                 const response = await fetch(`/analytics/api/?range=${this.timeRange}`, {
                     method: 'GET',
-                    credentials: 'same-origin', // Include cookies for authentication
+                    credentials: 'same-origin',
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest',
                         'X-CSRFToken': csrfToken || ''
                     }
                 });
-                console.log('📊 Response status:', response.status);
-                console.log('📊 Response headers:', [...response.headers.entries()]);
                 
                 if (!response.ok) {
-                    const errorText = await response.text();
-                    console.error('Response error:', errorText);
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 
@@ -508,24 +232,22 @@ function analyticsBoard() {
                 console.log('✅ Analytics data loaded:', data);
                 this.analytics = data;
                 
-                clearTimeout(loadingTimeout); // Clear timeout since we succeeded
+                clearTimeout(loadingTimeout);
                 
-                // Wait for next tick to ensure DOM is updated
                 await this.$nextTick();
                 this.renderCharts();
+                
             } catch (error) {
                 console.error('❌ Error loading analytics:', error);
                 this.error = `Failed to load analytics: ${error.message}`;
-                clearTimeout(loadingTimeout); // Clear timeout on error
+                clearTimeout(loadingTimeout);
                 
-                // Set fallback empty data
                 this.analytics = {
                     overview: {
                         total_tasks: 0,
                         completed_tasks: 0,
                         completion_rate: 0,
-                        overdue_tasks: 0,
-                        avg_completion_time: null
+                        overdue_tasks: 0
                     },
                     completion_trend: [],
                     status_distribution: {},
@@ -534,7 +256,6 @@ function analyticsBoard() {
                 };
             } finally {
                 this.loading = false;
-                console.log('🏁 Analytics loading complete');
             }
         },
 
@@ -564,7 +285,7 @@ function analyticsBoard() {
                     datasets: [{
                         label: 'Tasks Completed',
                         data: data,
-                        borderColor: 'rgb(59, 130, 246)',
+                        borderColor: '#3b82f6',
                         backgroundColor: 'rgba(59, 130, 246, 0.1)',
                         tension: 0.1,
                         fill: true
@@ -576,15 +297,11 @@ function analyticsBoard() {
                     scales: {
                         y: {
                             beginAtZero: true,
-                            ticks: {
-                                stepSize: 1
-                            }
+                            ticks: { stepSize: 1 }
                         }
                     },
                     plugins: {
-                        legend: {
-                            display: false
-                        }
+                        legend: { display: false }
                     }
                 }
             });
@@ -620,9 +337,7 @@ function analyticsBoard() {
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: {
-                            position: 'bottom'
-                        }
+                        legend: { position: 'bottom' }
                     }
                 }
             });
@@ -660,42 +375,14 @@ function analyticsBoard() {
                     scales: {
                         y: {
                             beginAtZero: true,
-                            ticks: {
-                                stepSize: 1
-                            }
+                            ticks: { stepSize: 1 }
                         }
                     },
                     plugins: {
-                        legend: {
-                            display: false
-                        }
+                        legend: { display: false }
                     }
                 }
             });
-        },
-
-        getMostProductiveDay() {
-            if (!this.analytics.completion_trend || this.analytics.completion_trend.length === 0) {
-                return 'N/A';
-            }
-            
-            const maxCompleted = Math.max(...this.analytics.completion_trend.map(item => item.completed));
-            const mostProductiveDay = this.analytics.completion_trend.find(item => item.completed === maxCompleted);
-            
-            if (mostProductiveDay) {
-                return new Date(mostProductiveDay.date).toLocaleDateString('en-US', { weekday: 'short' });
-            }
-            
-            return 'N/A';
-        },
-
-        getTaskVelocity() {
-            if (!this.analytics.overview || !this.analytics.time_range) {
-                return 'N/A';
-            }
-            
-            const velocity = (this.analytics.overview.completed_tasks / this.analytics.time_range).toFixed(1);
-            return velocity;
         }
     }
 }

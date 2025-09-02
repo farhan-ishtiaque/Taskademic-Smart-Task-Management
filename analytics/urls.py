@@ -7,7 +7,10 @@ urlpatterns = [
     # Web views
     path('', views.analytics_dashboard, name='dashboard'),
     
-    # API endpoints
+    # Combined API endpoint
+    path('api/', views.analytics_api, name='api'),
+    
+    # Individual API endpoints
     path('api/daily-progress/', views.daily_progress, name='api_daily_progress'),
     path('api/weekly-category-stats/', views.weekly_category_stats, name='api_weekly_category_stats'),
     path('api/priority-breakdown/', views.priority_breakdown, name='api_priority_breakdown'),

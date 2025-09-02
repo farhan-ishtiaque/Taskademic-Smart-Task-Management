@@ -99,14 +99,16 @@
                                             <div class="text-sm text-gray-500">{{ task.description|truncatechars:60 }}</div>
                                         </div>
                                         <div class="flex items-center space-x-2">
-                                            {% if task.priority == 'urgent' %}
-                                                <span class="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded">Urgent</span>
-                                            {% elif task.priority == 'high' %}
-                                                <span class="px-2 py-1 text-xs font-medium bg-orange-100 text-orange-800 rounded">High</span>
-                                            {% elif task.priority == 'medium' %}
-                                                <span class="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded">Medium</span>
+                                            {% if task.priority == 'must' %}
+                                                <span class="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded">Must Have</span>
+                                            {% elif task.priority == 'should' %}
+                                                <span class="px-2 py-1 text-xs font-medium bg-orange-100 text-orange-800 rounded">Should Have</span>
+                                            {% elif task.priority == 'could' %}
+                                                <span class="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded">Could Have</span>
+                                            {% elif task.priority == 'wont' %}
+                                                <span class="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded">Won't Have</span>
                                             {% else %}
-                                                <span class="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded">Low</span>
+                                                <span class="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded">{{ task.get_priority_display }}</span>
                                             {% endif %}
                                             <div class="text-xs text-gray-500">{{ task.due_date|date:"g:i A" }}</div>
                                         </div>
@@ -162,14 +164,16 @@
                                             <div class="text-sm text-gray-500">{{ task.description|truncatechars:60 }}</div>
                                         </div>
                                         <div class="flex items-center space-x-2">
-                                            {% if task.priority == 'urgent' %}
-                                                <span class="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded">Urgent</span>
-                                            {% elif task.priority == 'high' %}
-                                                <span class="px-2 py-1 text-xs font-medium bg-orange-100 text-orange-800 rounded">High</span>
-                                            {% elif task.priority == 'medium' %}
-                                                <span class="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded">Medium</span>
+                                            {% if task.priority == 'must' %}
+                                                <span class="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded">Must Have</span>
+                                            {% elif task.priority == 'should' %}
+                                                <span class="px-2 py-1 text-xs font-medium bg-orange-100 text-orange-800 rounded">Should Have</span>
+                                            {% elif task.priority == 'could' %}
+                                                <span class="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded">Could Have</span>
+                                            {% elif task.priority == 'wont' %}
+                                                <span class="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded">Won't Have</span>
                                             {% else %}
-                                                <span class="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded">Low</span>
+                                                <span class="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded">{{ task.get_priority_display }}</span>
                                             {% endif %}
                                             <div class="text-xs text-gray-500">{{ task.due_date|date:"M d" }}</div>
                                         </div>

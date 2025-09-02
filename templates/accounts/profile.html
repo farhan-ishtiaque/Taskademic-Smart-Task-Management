@@ -81,7 +81,7 @@
                     <div class="ml-5 w-0 flex-1">
                         <dl>
                             <dt class="text-sm font-medium text-gray-500 truncate">Completed</dt>
-                            <dd class="text-lg font-medium text-gray-900">{{ user.tasks.filter:status='done'|length }}</dd>
+                            <dd class="text-lg font-medium text-gray-900">{{ completed_tasks_count }}</dd>
                         </dl>
                     </div>
                 </div>
@@ -99,7 +99,7 @@
                     <div class="ml-5 w-0 flex-1">
                         <dl>
                             <dt class="text-sm font-medium text-gray-500 truncate">In Progress</dt>
-                            <dd class="text-lg font-medium text-gray-900">{{ user.tasks.filter:status='in_progress'|length }}</dd>
+                            <dd class="text-lg font-medium text-gray-900">{{ in_progress_tasks_count }}</dd>
                         </dl>
                     </div>
                 </div>

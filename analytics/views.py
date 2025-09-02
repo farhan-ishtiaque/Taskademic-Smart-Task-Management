@@ -14,7 +14,34 @@ from django.contrib.auth.models import User
 @login_required
 def analytics_dashboard(request):
     """Enhanced analytics dashboard view"""
-    return render(request, 'analytics/dashboard.html')
+    # Get basic analytics data for initial page load
+    user = request.user
+    
+    # Basic stats
+    total_tasks = Task.objects.filter(user=user).count()
+    completed_tasks = Task.objects.filter(user=user, status='done').count()
+    pending_tasks = Task.objects.filter(user=user, status__in=['todo', 'in_progress']).count()
+    
+    # Calculate overdue tasks
+    now = timezone.now()
+    overdue_tasks = Task.objects.filter(
+        user=user,
+        due_date__lt=now,
+        status__in=['todo', 'in_progress']
+    ).count()
+    
+    # Calculate completion rate
+    completion_rate = (completed_tasks / total_tasks * 100) if total_tasks > 0 else 0
+    
+    context = {
+        'total_tasks': total_tasks,
+        'completed_tasks': completed_tasks,
+        'pending_tasks': pending_tasks,
+        'overdue_tasks': overdue_tasks,
+        'completion_rate': round(completion_rate, 1),
+    }
+    
+    return render(request, 'analytics/dashboard.html', context)
 
 
 @api_view(['GET'])
@@ -238,6 +265,84 @@ def overdue_analysis(request):
             'priority': task.priority,
             'category': task.category
         } for task in overdue_tasks[:10]]  # Limit to 10 most recent
+    })
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def analytics_api(request):
+    """Combined analytics API endpoint for dashboard"""
+    user = request.user
+    time_range = int(request.GET.get('range', 30))
+    
+    # Basic overview
+    total_tasks = Task.objects.filter(user=user).count()
+    completed_tasks = Task.objects.filter(user=user, status='done').count()
+    pending_tasks = Task.objects.filter(user=user, status__in=['todo', 'in_progress']).count()
+    
+    # Calculate overdue tasks
+    now = timezone.now()
+    overdue_tasks = Task.objects.filter(
+        user=user,
+        due_date__lt=now,
+        status__in=['todo', 'in_progress']
+    ).count()
+    
+    # Calculate completion rate
+    completion_rate = (completed_tasks / total_tasks * 100) if total_tasks > 0 else 0
+    
+    # Completion trend (last 30 days)
+    end_date = now.date()
+    start_date = end_date - timedelta(days=time_range-1)
+    
+    completion_trend = []
+    current_date = start_date
+    
+    while current_date <= end_date:
+        completed_on_date = Task.objects.filter(
+            user=user,
+            completed_at__date=current_date,
+            status='done'
+        ).count()
+        
+        completion_trend.append({
+            'date': current_date.isoformat(),
+            'completed': completed_on_date
+        })
+        current_date += timedelta(days=1)
+    
+    # Status distribution
+    status_distribution = {}
+    for status, label in Task.STATUS_CHOICES:
+        count = Task.objects.filter(user=user, status=status).count()
+        if count > 0:
+            status_distribution[status] = count
+    
+    # Priority distribution
+    priority_distribution = {}
+    for priority, label in Task.PRIORITY_CHOICES:
+        count = Task.objects.filter(user=user, priority=priority).count()
+        if count > 0:
+            priority_distribution[priority] = count
+    
+    # Category distribution
+    category_distribution = Task.objects.filter(user=user).values(
+        'category'
+    ).annotate(count=Count('id')).order_by('-count')
+    
+    return Response({
+        'time_range': time_range,
+        'overview': {
+            'total_tasks': total_tasks,
+            'completed_tasks': completed_tasks,
+            'pending_tasks': pending_tasks,
+            'overdue_tasks': overdue_tasks,
+            'completion_rate': completion_rate
+        },
+        'completion_trend': completion_trend,
+        'status_distribution': status_distribution,
+        'priority_distribution': priority_distribution,
+        'category_distribution': list(category_distribution)
     })
 
 
