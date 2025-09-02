@@ -161,13 +161,13 @@
                               class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"></textarea>
                 </div>
                 <div class="mb-4">
-                    <label class="block text-gray-700 text-sm font-bold mb-2">Priority</label>
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Priority (MoSCoW)</label>
                     <select x-model="newTask.priority"
                             class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-                        <option value="low">Low</option>
-                        <option value="medium">Medium</option>
-                        <option value="high">High</option>
-                        <option value="urgent">Urgent</option>
+                        <option value="must">Must Have</option>
+                        <option value="should">Should Have</option>
+                        <option value="could">Could Have</option>
+                        <option value="wont">Won't Have</option>
                     </select>
                 </div>
                 <div class="mb-6">
@@ -199,7 +199,7 @@ function taskCalendar() {
         newTask: {
             title: '',
             description: '',
-            priority: 'medium',
+            priority: 'should',
             due_date: ''
         },
         daysOfWeek: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
@@ -320,7 +320,7 @@ function taskCalendar() {
                 
                 if (response.ok) {
                     this.showAddTaskModal = false;
-                    this.newTask = { title: '', description: '', priority: 'medium', due_date: '' };
+                    this.newTask = { title: '', description: '', priority: 'should', due_date: '' };
                     await this.loadTasks();
                 }
             } catch (error) {
