@@ -159,17 +159,13 @@ class TaskViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def kanban_board_data(self, request):
         """Get tasks organized by Kanban board columns"""
-        tasks = self.get_queryset().filter(status__in=['todo', 'in_progress', 'done'])
+        tasks = self.get_queryset().filter(status__in=['todo', 'in_progress', 'review', 'done'])
         
         # Organize tasks by status
         todo_tasks = tasks.filter(status='todo')
         in_progress_tasks = tasks.filter(status='in_progress')
+        review_tasks = tasks.filter(status='review')
         done_tasks = tasks.filter(status='done')
-        
-        # For now, we'll put high-priority tasks that are in progress into "review"
-        # You can modify this logic based on your needs
-        review_tasks = in_progress_tasks.filter(priority='must')
-        in_progress_tasks = in_progress_tasks.exclude(priority='must')
         
         data = {
             'todo': TaskSerializer(todo_tasks, many=True, context={'request': request}).data,

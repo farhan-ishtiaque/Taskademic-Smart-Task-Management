@@ -34,6 +34,7 @@ class Task(models.Model):
     STATUS_CHOICES = [
         ('todo', 'To Do'),
         ('in_progress', 'In Progress'),
+        ('review', 'In Review'),
         ('done', 'Done'),
     ]
     
@@ -41,6 +42,13 @@ class Task(models.Model):
         ('academic', 'Academic'),
         ('personal', 'Personal'),
         ('urgent', 'Urgent'),
+    ]
+    
+    FOCUS_CATEGORY_CHOICES = [
+        ('', 'Not in Focus List'),
+        ('big', '🎯 Big Thing (1)'),
+        ('medium', '📋 Medium Thing (3)'),
+        ('small', '✅ Small Thing (5)'),
     ]
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='tasks')
@@ -51,6 +59,7 @@ class Task(models.Model):
     priority = models.CharField(max_length=10, choices=PRIORITY_CHOICES, default='should')
     status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='todo')
     category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default='academic')
+    focus_category = models.CharField(max_length=10, choices=FOCUS_CATEGORY_CHOICES, default='', blank=True, help_text="Manually assign to 1-3-5 focus categories")
     tags = models.CharField(max_length=200, blank=True, help_text="Comma-separated tags")
     points_awarded = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)

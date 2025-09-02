@@ -1,5 +1,6 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
+from django.contrib import messages
 from django.db.models import Count, Q
 from django.utils import timezone
 from datetime import timedelta
@@ -69,6 +70,36 @@ def dashboard_home(request):
 @login_required
 def settings_view(request):
     """Settings page"""
+    if request.method == 'POST':
+        # Handle profile update
+        user = request.user
+        
+        # Get form data
+        first_name = request.POST.get('first_name', '').strip()
+        last_name = request.POST.get('last_name', '').strip()
+        email = request.POST.get('email', '').strip()
+        
+        # Validate email
+        if email and email != user.email:
+            from django.contrib.auth.models import User
+            if User.objects.filter(email=email).exclude(id=user.id).exists():
+                messages.error(request, 'This email is already in use by another account.')
+                return redirect('dashboard:settings')
+        
+        # Update user fields
+        user.first_name = first_name
+        user.last_name = last_name
+        if email:
+            user.email = email
+        
+        try:
+            user.save()
+            messages.success(request, 'Profile updated successfully!')
+        except Exception as e:
+            messages.error(request, 'Error updating profile. Please try again.')
+        
+        return redirect('dashboard:settings')
+    
     return render(request, 'dashboard/settings.html')
 
 

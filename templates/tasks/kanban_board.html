@@ -155,7 +155,10 @@
                             <span class="text-xs text-gray-500" x-text="formatDate(task.due_date)"></span>
                         </div>
                         <div class="mt-2">
-                            <span class="text-xs bg-yellow-200 text-yellow-800 px-2 py-1 rounded">High Priority Review</span>
+                            <span x-show="task.priority === 'must'" 
+                                  class="text-xs bg-yellow-200 text-yellow-800 px-2 py-1 rounded">High Priority Review</span>
+                            <span x-show="task.priority !== 'must'" 
+                                  class="text-xs bg-blue-200 text-blue-800 px-2 py-1 rounded">Needs Review</span>
                         </div>
                     </div>
                 </template>
@@ -335,11 +338,11 @@ function kanbanBoard() {
                 let updateData = {};
                 
                 if (newStatus === 'review') {
-                    // Review column: keep as in_progress but set priority to must
-                    actualStatus = 'in_progress';
+                    // Review column: set status to 'review' and keep original priority
+                    actualStatus = 'review';
                     updateData = { 
-                        status: actualStatus,
-                        priority: 'must'
+                        status: actualStatus
+                        // Keep original priority - don't force change it
                     };
                 } else {
                     updateData = { status: actualStatus };
