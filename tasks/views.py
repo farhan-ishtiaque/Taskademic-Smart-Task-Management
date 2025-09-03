@@ -23,15 +23,11 @@ def task_list(request):
 
 
 @login_required
-@login_required
 def task_create(request):
     """Create a new task with automatic priority calculation"""
-    print(f"DEBUG: task_create called with method: {request.method}")
     
     if request.method == 'POST':
-        print(f"DEBUG: POST data: {request.POST}")
         form = TaskForm(request.POST)
-        print(f"DEBUG: Form is valid: {form.is_valid()}")
         
         if form.is_valid():
             try:
@@ -42,15 +38,10 @@ def task_create(request):
                 # Save first to get the ID, then calculate priority
                 task.save()
                 
-                # Calculate and display priority information for debugging
+                # Calculate priority information
                 priority_score = task.calculate_priority_score()
                 auto_priority = task.get_auto_priority()
                 
-                print(f"DEBUG: Task created with original priority: {task.priority}")
-                print(f"DEBUG: Calculated priority score: {priority_score}")
-                print(f"DEBUG: Auto-assigned priority: {auto_priority}")
-                
-                print(f"DEBUG: Task created successfully: {task.id}")
                 messages.success(request, 
                     f'Task "{task.title}" created successfully! '
                     f'Priority Score: {priority_score} | '
@@ -70,16 +61,13 @@ def task_create(request):
                 return redirect('dashboard:home')
                 
             except Exception as e:
-                print(f"DEBUG: Error creating task: {str(e)}")
                 messages.error(request, f'Error creating task: {str(e)}')
                 return render(request, 'tasks/create.html', {'form': form})
         else:
             # Form has validation errors
-            print(f"DEBUG: Form errors: {form.errors}")
             return render(request, 'tasks/create.html', {'form': form})
     
     # GET request - display empty form
-    print("DEBUG: GET request - showing empty form")
     form = TaskForm()
     return render(request, 'tasks/create.html', {'form': form})
 
