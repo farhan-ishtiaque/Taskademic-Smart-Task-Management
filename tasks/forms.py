@@ -61,17 +61,6 @@ class TaskForm(forms.ModelForm):
         })
     )
     
-    estimated_duration = forms.IntegerField(
-        required=False,
-        initial=30,
-        min_value=1,
-        widget=forms.NumberInput(attrs={
-            'class': 'form-input',
-            'min': '1',
-            'placeholder': '30'
-        })
-    )
-    
     category = forms.ChoiceField(
         choices=Task.CATEGORY_CHOICES,
         required=False,
@@ -82,6 +71,7 @@ class TaskForm(forms.ModelForm):
     
     class Meta:
         model = Task
+
         fields = ['title', 'description', 'team', 'assigned_to', 'priority', 'due_date', 'estimated_duration', 'category']
     
     def __init__(self, *args, **kwargs):
@@ -153,9 +143,3 @@ class TaskForm(forms.ModelForm):
         if commit:
             instance.save()
         return instance
-        
-    def clean_estimated_duration(self):
-        duration = self.cleaned_data.get('estimated_duration')
-        if duration and duration < 1:
-            raise forms.ValidationError('Duration must be at least 1 minute.')
-        return duration

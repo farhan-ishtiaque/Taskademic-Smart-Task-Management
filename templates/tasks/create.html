@@ -423,24 +423,6 @@
                                 </div>
                             {% endif %}
                         </div>
-                        
-                        <div class="form-group">
-                            <label for="estimated_duration" class="form-label">⏱️ Duration (minutes)</label>
-                            <input 
-                                type="number" 
-                                id="estimated_duration" 
-                                name="estimated_duration" 
-                                class="form-input" 
-                                min="1"
-                                placeholder="30"
-                                value="{{ form.estimated_duration.value|default:'30' }}"
-                            >
-                            {% if form.estimated_duration.errors %}
-                                <div class="error-message">
-                                    ⚠️ {{ form.estimated_duration.errors.0 }}
-                                </div>
-                            {% endif %}
-                        </div>
                     </div>
                     
                     <!-- Team and Assignment Section -->

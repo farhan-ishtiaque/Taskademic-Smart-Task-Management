@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Leaderboard - Taskademic{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-8">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">🏆 Leaderboard</h1>
+        <a href="{% url 'points:profile' %}" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+            Back to Profile
+        </a>
+    </div>
+
+    <!-- Current User Position -->
+    <div class="bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl p-6 text-white mb-8">
+        <div class="text-center">
+            <h2 class="text-xl font-semibold mb-2">Your Ranking</h2>
+            <div class="flex items-center justify-center space-x-8">
+                <div>
+                    <p class="text-3xl font-bold">#{{ user_position }}</p>
+                    <p class="text-blue-100">Position</p>
+                </div>
+                <div>
+                    <p class="text-3xl font-bold">{{ user_level.total_points }}</p>
+                    <p class="text-blue-100">Points</p>
+                </div>
+                <div>
+                    <p class="text-3xl font-bold">{{ user_level.current_level }}</p>
+                    <p class="text-blue-100">Level</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leaderboard Table -->
+    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+        <div class="p-6 border-b bg-gray-50">
+            <h3 class="text-lg font-semibold text-gray-900">All Users Rankings</h3>
+            <p class="text-gray-600">Ranked by level and total points in descending order</p>
+        </div>
+        
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rank</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Level</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Points</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for user_rank in ranked_users %}
+                    <tr class="{% if user_rank.user == request.user %}bg-blue-50{% else %}hover:bg-gray-50{% endif %}">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                {% if user_rank.rank == 1 %}
+                                    <span class="text-2xl">🥇</span>
+                                {% elif user_rank.rank == 2 %}
+                                    <span class="text-2xl">🥈</span>
+                                {% elif user_rank.rank == 3 %}
+                                    <span class="text-2xl">🥉</span>
+                                {% else %}
+                                    <span class="text-lg font-bold text-gray-600">#{{ user_rank.rank }}</span>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0 h-10 w-10">
+                                    <div class="h-10 w-10 rounded-full bg-gradient-to-r from-blue-400 to-purple-500 flex items-center justify-center text-white font-bold">
+                                        {{ user_rank.user.username|first|upper }}
+                                    </div>
+                                </div>
+                                <div class="ml-4">
+                                    <div class="text-sm font-medium text-gray-900">
+                                        {{ user_rank.user.username }}
+                                        {% if user_rank.user == request.user %}
+                                            <span class="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">You</span>
+                                        {% endif %}
+                                    </div>
+                                    {% if user_rank.user.first_name %}
+                                        <div class="text-sm text-gray-500">{{ user_rank.user.first_name }} {{ user_rank.user.last_name }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <span class="text-lg font-bold text-purple-600">{{ user_rank.current_level }}</span>
+                                <div class="ml-2">
+                                    <div class="text-sm font-medium text-gray-900">{{ user_rank.level_name }}</div>
+                                    <div class="text-xs text-gray-500">Level {{ user_rank.current_level }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-lg font-bold text-blue-600">{{ user_rank.total_points }}</div>
+                            <div class="text-xs text-gray-500">total points</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {% if user_rank.streak_days > 0 %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                                    🔥 {{ user_rank.streak_days }} days
+                                </span>
+                            {% else %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                    No streak
+                                </span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="px-6 py-8 text-center text-gray-500">
+                            No users found
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Statistics -->
+    <div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="bg-white rounded-lg p-6 shadow-md text-center">
+            <div class="text-2xl mb-2">👥</div>
+            <div class="text-2xl font-bold text-gray-900">{{ ranked_users|length }}</div>
+            <div class="text-sm text-gray-600">Total Users</div>
+        </div>
+        
+        <div class="bg-white rounded-lg p-6 shadow-md text-center">
+            <div class="text-2xl mb-2">⭐</div>
+            <div class="text-2xl font-bold text-gray-900">
+                {% if ranked_users %}{{ ranked_users.0.total_points }}{% else %}0{% endif %}
+            </div>
+            <div class="text-sm text-gray-600">Highest Score</div>
+        </div>
+        
+        <div class="bg-white rounded-lg p-6 shadow-md text-center">
+            <div class="text-2xl mb-2">🏆</div>
+            <div class="text-2xl font-bold text-gray-900">
+                {% if ranked_users %}{{ ranked_users.0.current_level }}{% else %}0{% endif %}
+            </div>
+            <div class="text-sm text-gray-600">Highest Level</div>
+        </div>
+    </div>
+</div>
+{% endblock %}

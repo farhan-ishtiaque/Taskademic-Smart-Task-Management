@@ -27,7 +27,7 @@ SECRET_KEY = 'django-insecure-f)=%$hu+95yvprpk#abpg^3&1^$tq_(dqfjj7g)(!!!!a#rvjk
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['.localhost', '127.0.0.1', '[::1]', 'testserver', 'localhost']
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -49,6 +49,8 @@ INSTALLED_APPS = [
     'notifications',
     'priority_analyzer',
     'priority_ai',
+    'calendar_sync',
+    'points',
 ]
 
 MIDDLEWARE = [
@@ -75,6 +77,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'django.template.context_processors.media',
+                'points.context_processors.points_context',
             ],
         },
     },
@@ -173,6 +176,7 @@ CSRF_TRUSTED_ORIGINS = [
     'http://127.0.0.1:8000',
     'https://firebaseinstallations.googleapis.com',
     'https://firebase.googleapis.com',
+    'https://complimentary-compensation-cult-sustainable.trycloudflare.com'
 ]
 
 # Session settings
