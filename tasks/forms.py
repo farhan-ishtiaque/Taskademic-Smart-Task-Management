@@ -1,16 +1,9 @@
 from django import forms
 from .models import Task
-
+from priority_analyzer.services import DeepSeekPriorityAnalyzer
 
 class TaskForm(forms.ModelForm):
-    """Form for creating and updating tasks"""
-    
-    PRIORITY_CHOICES = [
-        ('must', 'Must Have'),
-        ('should', 'Should Have'), 
-        ('could', 'Could Have'),
-        ('wont', 'Won\'t Have'),
-    ]
+    """Form for creating and updating tasks with AI priority prediction"""
     
     title = forms.CharField(
         max_length=200,
@@ -30,11 +23,10 @@ class TaskForm(forms.ModelForm):
         })
     )
     
-    priority = forms.ChoiceField(
-        choices=PRIORITY_CHOICES,
-        widget=forms.RadioSelect(attrs={
-            'class': 'priority-option'
-        })
+    # Priority is hidden as it's determined automatically by DeepSeek API
+    priority = forms.CharField(
+        widget=forms.HiddenInput(),
+        required=False  # Will be set automatically by the AI
     )
     
     due_date = forms.DateTimeField(
@@ -67,12 +59,24 @@ class TaskForm(forms.ModelForm):
     class Meta:
         model = Task
         fields = ['title', 'description', 'priority', 'due_date', 'estimated_duration', 'category']
+    
+    def save(self, commit=True):
+        """Override save to ensure priority is set by DeepSeek API"""
+        instance = super().save(commit=False)
         
-    def clean_priority(self):
-        priority = self.cleaned_data.get('priority')
-        if not priority:
-            raise forms.ValidationError('Please select a priority level.')
-        return priority
+        # Get priority from DeepSeek API
+        analyzer = DeepSeekPriorityAnalyzer()
+        priority = analyzer.analyze_priority(
+            self.cleaned_data['title'],
+            self.cleaned_data.get('description', '')
+        )
+        
+        # Set the priority
+        instance.priority = priority
+        
+        if commit:
+            instance.save()
+        return instance
         
     def clean_estimated_duration(self):
         duration = self.cleaned_data.get('estimated_duration')

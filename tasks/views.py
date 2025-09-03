@@ -98,6 +98,50 @@ def task_complete(request, task_id):
 
 
 @login_required
+def task_edit(request, task_id):
+    """Edit an existing task"""
+    task = get_object_or_404(Task, id=task_id, user=request.user)
+    
+    if request.method == 'POST':
+        form = TaskForm(request.POST, instance=task)
+        if form.is_valid():
+            try:
+                # Save the updated task
+                updated_task = form.save(commit=False)
+                updated_task.user = request.user
+                updated_task.save()
+                
+                messages.success(request, f'Task "{updated_task.title}" updated successfully!')
+                
+                # Return JSON for AJAX requests
+                if request.headers.get('Content-Type') == 'application/json':
+                    return JsonResponse({
+                        'success': True,
+                        'message': 'Task updated successfully!',
+                        'task_id': updated_task.id
+                    })
+                
+                return redirect('tasks:kanban_board')
+                
+            except Exception as e:
+                messages.error(request, f'Error updating task: {str(e)}')
+                return render(request, 'tasks/edit.html', {'form': form, 'task': task})
+        else:
+            return render(request, 'tasks/edit.html', {'form': form, 'task': task})
+    
+    # GET request - display form with current task data
+    form = TaskForm(instance=task)
+    return render(request, 'tasks/edit.html', {'form': form, 'task': task})
+
+
+@login_required
+def task_edit_select(request):
+    """Display list of tasks to select for editing"""
+    tasks = Task.objects.filter(user=request.user).exclude(status='done').order_by('-created_at')
+    return render(request, 'tasks/edit_select.html', {'tasks': tasks})
+
+
+@login_required
 def kanban_board(request):
     """Kanban board view"""
     return render(request, 'tasks/kanban_board.html')
@@ -196,6 +240,33 @@ class TaskViewSet(viewsets.ModelViewSet):
     
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+    
+    def update(self, request, *args, **kwargs):
+        """Custom update method to handle task completion properly"""
+        instance = self.get_object()
+        old_status = instance.status
+        
+        # Get the new status from request data
+        new_status = request.data.get('status', old_status)
+        
+        # If status is changing to 'done', use mark_complete method
+        if old_status != 'done' and new_status == 'done':
+            instance.mark_complete()
+            # Update other fields if provided
+            serializer = self.get_serializer(instance, data=request.data, partial=True)
+            serializer.is_valid(raise_exception=True)
+            # Only save non-completion fields since mark_complete already handled status and completed_at
+            update_fields = {k: v for k, v in serializer.validated_data.items() 
+                           if k not in ['status', 'completed_at']}
+            for field, value in update_fields.items():
+                setattr(instance, field, value)
+            if update_fields:
+                instance.save()
+            serializer = self.get_serializer(instance)
+            return Response(serializer.data)
+        else:
+            # For other status changes, use default update behavior
+            return super().update(request, *args, **kwargs)
     
     @action(detail=True, methods=['post'])
     def complete_task(self, request, pk=None):

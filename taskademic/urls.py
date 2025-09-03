@@ -34,6 +34,7 @@ urlpatterns = [
     path('analytics/', include('analytics.urls')),
     path('accounts/', include('accounts.urls')),
     path('api-auth/', include('rest_framework.urls')),
+    path('priority/', include('priority_analyzer.urls')),
 ]
 
 if settings.DEBUG:

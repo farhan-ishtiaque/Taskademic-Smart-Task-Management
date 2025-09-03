@@ -404,45 +404,8 @@
                         {% endif %}
                     </div>
                     
-                    <div class="form-group">
-                        <label class="form-label">🎯 Priority Level</label>
-                        <div class="priority-section">
-                            <div class="priority-grid">
-                                <label class="priority-card priority-must" for="priority_must">
-                                    <input type="radio" name="priority" value="must" id="priority_must" required>
-                                    <div class="priority-icon">M</div>
-                                    <div class="priority-title">Must Have</div>
-                                    <div class="priority-desc">Critical requirements absolutely necessary</div>
-                                </label>
-                                
-                                <label class="priority-card priority-should" for="priority_should">
-                                    <input type="radio" name="priority" value="should" id="priority_should" required>
-                                    <div class="priority-icon">S</div>
-                                    <div class="priority-title">Should Have</div>
-                                    <div class="priority-desc">Important but not critical features</div>
-                                </label>
-                                
-                                <label class="priority-card priority-could" for="priority_could">
-                                    <input type="radio" name="priority" value="could" id="priority_could" required>
-                                    <div class="priority-icon">C</div>
-                                    <div class="priority-title">Could Have</div>
-                                    <div class="priority-desc">Nice-to-have if time permits</div>
-                                </label>
-                                
-                                <label class="priority-card priority-wont" for="priority_wont">
-                                    <input type="radio" name="priority" value="wont" id="priority_wont" required>
-                                    <div class="priority-icon">W</div>
-                                    <div class="priority-title">Won't Have</div>
-                                    <div class="priority-desc">Not for this iteration</div>
-                                </label>
-                            </div>
-                        </div>
-                        {% if form.priority.errors %}
-                            <div class="error-message">
-                                ⚠️ {{ form.priority.errors.0 }}
-                            </div>
-                        {% endif %}
-                    </div>
+                    <!-- Priority is automatically determined by AI -->
+                    {{ form.priority }}
                     
                     <div class="form-row">
                         <div class="form-group">
@@ -542,17 +505,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    // Set initial priority if form has errors
-    {% if form.priority.value %}
-    const initialPriority = '{{ form.priority.value }}';
-    if (initialPriority) {
-        const initialOption = document.querySelector(`input[name="priority"][value="${initialPriority}"]`);
-        if (initialOption) {
-            initialOption.checked = true;
-            initialOption.closest('.priority-card').classList.add('selected');
-        }
-    }
-    {% endif %}
+    // Priority is now handled automatically by AI
     
     // Form submission with loading state
     form.addEventListener('submit', function() {
