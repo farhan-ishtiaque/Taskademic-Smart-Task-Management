@@ -130,6 +130,27 @@ def task_edit_select(request):
 
 
 @login_required
+def task_delete_select(request):
+    """Display list of tasks to select for deletion"""
+    tasks = Task.objects.filter(user=request.user).exclude(status='done').order_by('-created_at')
+    return render(request, 'tasks/delete_select.html', {'tasks': tasks})
+
+
+@login_required
+def task_delete(request, task_id):
+    """Delete a specific task"""
+    task = get_object_or_404(Task, id=task_id, user=request.user)
+    
+    if request.method == 'POST':
+        task_title = task.title
+        task.delete()
+        messages.success(request, f'Task "{task_title}" has been deleted successfully.')
+        return redirect('tasks:list')
+    
+    return render(request, 'tasks/delete_confirm.html', {'task': task})
+
+
+@login_required
 def kanban_board(request):
     """Kanban board view"""
     return render(request, 'tasks/kanban_board.html')

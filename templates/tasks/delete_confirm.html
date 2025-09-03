@@ -1,0 +1,270 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Delete Task - Taskademic{% endblock %}
+
+{% block extra_css %}
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+    .delete-task-page {
+        font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif !important;
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%) !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        min-height: 100vh !important;
+    }
+
+    .delete-task-page .page-container {
+        max-width: 600px !important;
+        margin: 0 auto !important;
+        padding: 2rem !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        min-height: 100vh !important;
+    }
+
+    .delete-task-page .delete-card {
+        background: white !important;
+        border-radius: 20px !important;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1) !important;
+        overflow: hidden !important;
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        width: 100% !important;
+    }
+
+    .delete-task-page .delete-header {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+        padding: 2rem !important;
+        text-align: center !important;
+        color: white !important;
+    }
+
+    .delete-task-page .delete-icon {
+        font-size: 3rem !important;
+        margin-bottom: 1rem !important;
+    }
+
+    .delete-task-page .delete-title {
+        font-size: 1.5rem !important;
+        font-weight: 700 !important;
+        margin: 0 0 0.5rem 0 !important;
+        letter-spacing: -0.025em !important;
+    }
+
+    .delete-task-page .delete-subtitle {
+        font-size: 1rem !important;
+        opacity: 0.9 !important;
+        margin: 0 !important;
+        font-weight: 400 !important;
+    }
+
+    .delete-task-page .delete-content {
+        padding: 2rem !important;
+    }
+
+    .delete-task-page .task-info {
+        background: #f9fafb !important;
+        border-radius: 12px !important;
+        padding: 1.5rem !important;
+        margin-bottom: 2rem !important;
+        border: 1px solid #e5e7eb !important;
+    }
+
+    .delete-task-page .task-info h3 {
+        font-size: 1.125rem !important;
+        font-weight: 600 !important;
+        color: #1f2937 !important;
+        margin: 0 0 0.5rem 0 !important;
+    }
+
+    .delete-task-page .task-info p {
+        color: #6b7280 !important;
+        margin: 0 0 1rem 0 !important;
+        line-height: 1.5 !important;
+    }
+
+    .delete-task-page .task-meta {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 0.5rem !important;
+    }
+
+    .delete-task-page .task-badge {
+        display: inline-flex !important;
+        align-items: center !important;
+        padding: 0.25rem 0.75rem !important;
+        border-radius: 12px !important;
+        font-size: 0.75rem !important;
+        font-weight: 500 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.05em !important;
+    }
+
+    .delete-task-page .task-badge.priority {
+        background: rgba(239, 68, 68, 0.1) !important;
+        color: #dc2626 !important;
+    }
+
+    .delete-task-page .task-badge.priority.low {
+        background: rgba(16, 185, 129, 0.1) !important;
+        color: #059669 !important;
+    }
+
+    .delete-task-page .task-badge.priority.medium {
+        background: rgba(245, 158, 11, 0.1) !important;
+        color: #d97706 !important;
+    }
+
+    .delete-task-page .task-badge.category {
+        background: rgba(147, 51, 234, 0.1) !important;
+        color: #7c3aed !important;
+    }
+
+    .delete-task-page .task-badge.status {
+        background: rgba(59, 130, 246, 0.1) !important;
+        color: #1d4ed8 !important;
+    }
+
+    .delete-task-page .warning-box {
+        background: rgba(239, 68, 68, 0.05) !important;
+        border: 1px solid rgba(239, 68, 68, 0.2) !important;
+        border-radius: 12px !important;
+        padding: 1rem !important;
+        margin-bottom: 2rem !important;
+        color: #dc2626 !important;
+        font-weight: 500 !important;
+    }
+
+    .delete-task-page .warning-box svg {
+        margin-right: 0.5rem !important;
+        vertical-align: middle !important;
+    }
+
+    .delete-task-page .action-buttons {
+        display: flex !important;
+        gap: 1rem !important;
+        flex-direction: column !important;
+    }
+
+    .delete-task-page .btn {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding: 0.875rem 1.5rem !important;
+        border-radius: 12px !important;
+        font-weight: 600 !important;
+        text-decoration: none !important;
+        transition: all 0.3s ease !important;
+        border: none !important;
+        cursor: pointer !important;
+        font-size: 1rem !important;
+    }
+
+    .delete-task-page .btn-danger {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+        color: white !important;
+        box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4) !important;
+    }
+
+    .delete-task-page .btn-danger:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 8px 25px rgba(239, 68, 68, 0.5) !important;
+        text-decoration: none !important;
+        color: white !important;
+    }
+
+    .delete-task-page .btn-secondary {
+        background: #f9fafb !important;
+        color: #374151 !important;
+        border: 1px solid #d1d5db !important;
+    }
+
+    .delete-task-page .btn-secondary:hover {
+        background: #f3f4f6 !important;
+        transform: translateY(-2px) !important;
+        text-decoration: none !important;
+        color: #374151 !important;
+    }
+
+    .delete-task-page .btn svg {
+        margin-right: 0.5rem !important;
+    }
+
+    @media (min-width: 640px) {
+        .delete-task-page .action-buttons {
+            flex-direction: row !important;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .delete-task-page .page-container {
+            padding: 1rem !important;
+        }
+
+        .delete-task-page .delete-header {
+            padding: 1.5rem !important;
+        }
+
+        .delete-task-page .delete-content {
+            padding: 1.5rem !important;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="delete-task-page">
+    <div class="page-container">
+        <div class="delete-card">
+            <div class="delete-header">
+                <div class="delete-icon">🗑️</div>
+                <h1 class="delete-title">Delete Task</h1>
+                <p class="delete-subtitle">This action cannot be undone</p>
+            </div>
+            
+            <div class="delete-content">
+                <div class="task-info">
+                    <h3>{{ task.title }}</h3>
+                    {% if task.description %}
+                        <p>{{ task.description }}</p>
+                    {% endif %}
+                    <div class="task-meta">
+                        <span class="task-badge priority {{ task.priority|lower }}">{{ task.get_priority_display }}</span>
+                        <span class="task-badge category">{{ task.category }}</span>
+                        <span class="task-badge status">{{ task.get_status_display }}</span>
+                        {% if task.due_date %}
+                            <span class="task-badge">Due: {{ task.due_date|date:"M d, Y" }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="warning-box">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                    </svg>
+                    Warning: This will permanently delete the task and all its associated data. This action cannot be undone.
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="action-buttons">
+                        <button type="submit" class="btn btn-danger">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                            </svg>
+                            Yes, Delete Task
+                        </button>
+                        <a href="{% url 'tasks:delete_select' %}" class="btn btn-secondary">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                            Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

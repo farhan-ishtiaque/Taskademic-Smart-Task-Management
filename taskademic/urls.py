@@ -37,6 +37,7 @@ urlpatterns = [
     path('api-auth/', include('rest_framework.urls')),
     path('priority/', include('priority_analyzer.urls')),
     path('calendar-sync/', include('calendar_sync.urls')),
+    path('points/', include('points.urls')),
     path('debug/firebase-test/', TemplateView.as_view(template_name='debug/firebase_test.html'), name='firebase_test'),
 ]
 
