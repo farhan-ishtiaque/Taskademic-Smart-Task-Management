@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+
+{% block title %}Notifications{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-bell"></i> Notifications</h2>
+        {% if unread_count > 0 %}
+        <button class="btn btn-outline-primary btn-sm" onclick="markAllRead()">
+            <i class="fas fa-check-double"></i> Mark All Read
+        </button>
+        {% endif %}
+    </div>
+    
+    {% if notifications %}
+        <div class="notification-list">
+            {% for notification in notifications %}
+            <div class="card mb-2 {% if not notification.is_read %}border-primary bg-light{% endif %}">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div class="flex-grow-1">
+                            <h6 class="card-title mb-1">
+                                {% if notification.notification_type == 'team_invite' %}
+                                    <i class="fas fa-users text-primary"></i>
+                                {% elif notification.notification_type == 'task_assigned' %}
+                                    <i class="fas fa-tasks text-info"></i>
+                                {% endif %}
+                                {{ notification.title }}
+                                {% if not notification.is_read %}
+                                    <span class="badge bg-primary ms-2">New</span>
+                                {% endif %}
+                            </h6>
+                            <p class="card-text text-muted mb-2">{{ notification.message }}</p>
+                            <small class="text-muted">
+                                <i class="fas fa-clock"></i> {{ notification.created_at|timesince }} ago
+                            </small>
+                        </div>
+                        <div class="notification-actions ms-3">
+                            {% if notification.action_url and notification.notification_type == 'team_invite' %}
+                                <a href="{% url 'notifications:accept_team_invite' notification.id %}" 
+                                   class="btn btn-success btn-sm mb-1">
+                                    <i class="fas fa-check"></i> Accept
+                                </a>
+                            {% endif %}
+                            {% if not notification.is_read %}
+                                <button class="btn btn-outline-secondary btn-sm" 
+                                        onclick="markAsRead('{{ notification.id }}')">
+                                    <i class="fas fa-check"></i> Mark Read
+                                </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-bell-slash fa-3x text-muted mb-3"></i>
+            <h4 class="text-muted">No Notifications</h4>
+            <p class="text-muted">You're all caught up! Notifications will appear here.</p>
+        </div>
+    {% endif %}
+</div>
+
+<script>
+function markAsRead(notificationId) {
+    fetch(`/notifications/mark-read/${notificationId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            location.reload();
+        }
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+function markAllRead() {
+    fetch('/notifications/mark-all-read/', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            location.reload();
+        }
+    })
+    .catch(error => console.error('Error:', error));
+}
+</script>
+
+{% csrf_token %}
+{% endblock %}

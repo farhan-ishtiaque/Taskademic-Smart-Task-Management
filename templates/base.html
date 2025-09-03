@@ -55,6 +55,10 @@
                            class="{% if 'kanban' in request.path %}border-blue-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
                             Kanban
                         </a>
+                        <a href="{% url 'teams:list' %}" 
+                           class="{% if 'teams' in request.path %}border-blue-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                            Teams
+                        </a>
                         <a href="{% url 'tasks:calendar' %}" 
                            class="{% if 'calendar' in request.path %}border-blue-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
                             Calendar
@@ -74,6 +78,10 @@
                         <a href="{% url 'dashboard:focus_timer' %}" 
                            class="{% if 'focus-timer' in request.path %}border-blue-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
                             Focus Timer
+                        </a>
+                        <a href="{% url 'notifications:list' %}" 
+                           class="{% if 'notifications' in request.path %}border-blue-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                            <i class="fas fa-bell mr-1"></i> Notifications
                         </a>
                     </div>
                 </div>
@@ -95,6 +103,28 @@
                         </svg>
                         Edit Task
                     </a>
+                    
+                    <!-- Notifications Bell -->
+                    <div class="relative" x-data="{ open: false }">
+                        <button @click="open = !open" class="relative inline-flex items-center px-3 py-2 text-gray-700 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5zM21 12H9.5A2.5 2.5 0 007 9.5V7a5 5 0 0110 0v2h4z"></path>
+                            </svg>
+                            <span id="notification-badge" class="hidden absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center"></span>
+                        </button>
+                        <div x-show="open" @click.away="open = false" 
+                             class="origin-top-right absolute right-0 mt-2 w-80 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50">
+                            <div class="p-4">
+                                <div class="flex justify-between items-center mb-3">
+                                    <h3 class="text-lg font-medium text-gray-900">Notifications</h3>
+                                    <a href="{% url 'notifications:list' %}" class="text-blue-600 hover:text-blue-800 text-sm">View All</a>
+                                </div>
+                                <div id="notification-preview" class="space-y-2">
+                                    <p class="text-gray-500 text-sm">No new notifications</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     
                     <!-- User Profile Dropdown -->
                     <div class="ml-3 relative" x-data="{ open: false }">
@@ -135,9 +165,49 @@
                 {% endfor %}
             </div>
         {% endif %}
-        
-        {% block content %}{% endblock %}
+
+        {% block content %}
+        {% endblock %}
     </main>
+
+    <!-- Alpine.js for dropdowns -->
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
+    {% if user.is_authenticated %}
+    <script>
+    // Load notification count and preview
+    function loadNotifications() {
+        fetch('/notifications/unread-count/')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                const badge = document.getElementById('notification-badge');
+                if (badge) {
+                    if (data.unread_count > 0) {
+                        badge.textContent = data.unread_count;
+                        badge.classList.remove('hidden');
+                    } else {
+                        badge.classList.add('hidden');
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error loading notifications:', error);
+            });
+    }
+    
+    // Load notifications on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        loadNotifications();
+        // Refresh every 30 seconds
+        setInterval(loadNotifications, 30000);
+    });
+    </script>
+    {% endif %}
 
     <!-- Footer -->
     <footer class="bg-white border-t mt-auto">

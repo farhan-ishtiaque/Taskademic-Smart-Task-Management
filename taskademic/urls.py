@@ -31,8 +31,10 @@ urlpatterns = [
     path('', home_redirect, name='home'),
     path('dashboard/', include('dashboard.urls')),
     path('tasks/', include('tasks.urls')),
+    path('teams/', include('teams.urls')),
     path('analytics/', include('analytics.urls')),
     path('accounts/', include('accounts.urls')),
+    path('notifications/', include('notifications.urls')),
     path('api-auth/', include('rest_framework.urls')),
     path('priority/', include('priority_analyzer.urls')),
 ]

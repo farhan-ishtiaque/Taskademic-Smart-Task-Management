@@ -1,0 +1,289 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ team.name }} - Team Board{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-6">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <!-- Team Header with Gradient Background -->
+        <div class="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl shadow-xl p-8 mb-8 text-white">
+            <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center space-y-4 lg:space-y-0">
+                <div class="flex items-center space-x-4">
+                    <div class="bg-white bg-opacity-20 rounded-full p-4">
+                        <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h1 class="text-3xl font-bold mb-2">🏢 {{ team.name }}</h1>
+                        <p class="text-blue-100 text-lg">{{ team.description|default:"Building amazing things together" }}</p>
+                        <div class="flex items-center mt-2 space-x-4">
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm bg-white bg-opacity-20">
+                                <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                {{ team.member_count }} Members
+                            </span>
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm bg-white bg-opacity-20">
+                                <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"></path>
+                                </svg>
+                                Active Team
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        
+        <!-- Team Stats with Beautiful Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <!-- Members Card -->
+            <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-blue-500 hover:shadow-xl transition-shadow duration-300">
+                <div class="flex items-center">
+                    <div class="bg-blue-100 rounded-full p-3 mr-4">
+                        <svg class="w-6 h-6 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="text-2xl font-bold text-gray-800">{{ team.member_count }}</h3>
+                        <p class="text-gray-600 font-medium">👥 Active Members</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Pending Invites Card -->
+            <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-yellow-500 hover:shadow-xl transition-shadow duration-300">
+                <div class="flex items-center">
+                    <div class="bg-yellow-100 rounded-full p-3 mr-4">
+                        <svg class="w-6 h-6 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"></path>
+                            <path fill-rule="evenodd" d="M4 5a2 2 0 012-2h8a2 2 0 012 2v6a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 1a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="text-2xl font-bold text-gray-800">{{ pending_invites.count }}</h3>
+                        <p class="text-gray-600 font-medium">⏳ Pending Invites</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Tasks Card -->
+            <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-green-500 hover:shadow-xl transition-shadow duration-300">
+                <div class="flex items-center">
+                    <div class="bg-green-100 rounded-full p-3 mr-4">
+                        <svg class="w-6 h-6 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" clip-rule="evenodd"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="text-2xl font-bold text-gray-800">{{ team.tasks.count }}</h3>
+                        <p class="text-gray-600 font-medium">📋 Team Tasks</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Activity Card -->
+            <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-purple-500 hover:shadow-xl transition-shadow duration-300">
+                <div class="flex items-center">
+                    <div class="bg-purple-100 rounded-full p-3 mr-4">
+                        <svg class="w-6 h-6 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M12 1.586l-4 4v12.828l4-4V1.586zM3.707 3.293A1 1 0 002 4v10a1 1 0 00.293.707L6 18.414V5.586L3.707 3.293zM17.707 5.293L14 1.586v12.828l2.293 2.293A1 1 0 0018 16V6a1 1 0 00-.293-.707z" clip-rule="evenodd"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="text-2xl font-bold text-gray-800">Active</h3>
+                        <p class="text-gray-600 font-medium">🔥 Status</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Team Members Section with Modern Cards -->
+        <div class="mb-8">
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                <div class="bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-4 border-b border-gray-200">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-xl font-bold text-gray-800 flex items-center">
+                            <svg class="w-6 h-6 text-blue-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM5 8a2 2 0 114 0v5H7a1 1 0 000 2h6a1 1 0 100-2h-2V8a2 2 0 114 0v5a2 2 0 01-2 2H7a2 2 0 01-2-2V8z"></path>
+                            </svg>
+                            Team Members
+                        </h3>
+                        <span class="bg-blue-100 text-blue-800 text-sm font-medium px-2.5 py-0.5 rounded-full">
+                            {{ team.members.all|length }} Members
+                        </span>
+                    </div>
+                </div>
+                <div class="p-6">
+                    {% if team.members.all %}
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {% for member in team.members.all %}
+                                <div class="flex items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-200">
+                                    <div class="flex-shrink-0 mr-4">
+                                        <div class="w-12 h-12 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                                            {{ member.username|first|upper }}
+                                        </div>
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <p class="text-lg font-semibold text-gray-900 truncate">
+                                            {{ member.username }}
+                                        </p>
+                                        {% if member.email %}
+                                            <p class="text-sm text-gray-500 truncate">{{ member.email }}</p>
+                                        {% endif %}
+                                        <div class="flex items-center mt-1">
+                                            {% if member == team.created_by %}
+                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                                    👑 Owner
+                                                </span>
+                                            {% else %}
+                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                    👤 Member
+                                                </span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-8">
+                            <svg class="mx-auto h-16 w-16 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                            </svg>
+                            <h3 class="mt-4 text-lg font-medium text-gray-900">No team members yet</h3>
+                            <p class="mt-2 text-gray-500">Start by inviting some colleagues to join your team!</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Team Tasks Section -->
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+            <div class="bg-gradient-to-r from-green-50 to-emerald-100 px-6 py-4 border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-xl font-bold text-gray-800 flex items-center">
+                        <svg class="w-6 h-6 text-green-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" clip-rule="evenodd"></path>
+                        </svg>
+                        Team Tasks
+                    </h3>
+                    <span class="bg-green-100 text-green-800 text-sm font-medium px-2.5 py-0.5 rounded-full">
+                        {{ team.tasks.count }} Tasks
+                    </span>
+                </div>
+            </div>
+            <div class="p-6">
+                <div class="text-center">
+                    <div class="mb-6">
+                        <svg class="mx-auto h-16 w-16 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                        </svg>
+                    </div>
+                    <h4 class="text-lg font-semibold text-gray-900 mb-2">Collaborative Task Management</h4>
+                    <p class="text-gray-600 mb-6 max-w-md mx-auto">
+                        Create tasks and assign them to team members. Use the Kanban board to track progress and collaborate effectively.
+                    </p>
+                    <div class="flex flex-col sm:flex-row gap-3 justify-center">
+                        <a href="{% url 'tasks:create' %}" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-semibold rounded-lg shadow-md hover:from-green-600 hover:to-emerald-700 transform hover:scale-105 transition-all duration-200">
+                            <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"></path>
+                            </svg>
+                            Create New Task
+                        </a>
+                        {% if team.tasks.count > 0 %}
+                            <a href="{% url 'tasks:team_kanban_board' team.id %}" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold rounded-lg shadow-md hover:from-blue-600 hover:to-indigo-700 transform hover:scale-105 transition-all duration-200">
+                                <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"></path>
+                                </svg>
+                                View Team Kanban
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<!-- Modern Email Invite Modal -->
+<div class="modal fade" id="inviteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content rounded-xl border-0 shadow-2xl">
+            <div class="modal-header bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-t-xl border-0">
+                <h5 class="modal-title font-bold flex items-center">
+                    <svg class="w-6 h-6 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"></path>
+                        <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"></path>
+                    </svg>
+                    Invite Team Member
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-6">
+                <form method="post" action="{% url 'teams:invite_email' team.id %}">
+                    {% csrf_token %}
+                    <div class="mb-4">
+                        <label for="email" class="form-label text-gray-700 font-semibold mb-2 flex items-center">
+                            <svg class="w-4 h-4 mr-2 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"></path>
+                                <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"></path>
+                            </svg>
+                            Email Address
+                        </label>
+                        <div class="relative">
+                            {{ email_invite_form.email }}
+                        </div>
+                    </div>
+                    <button type="submit" class="w-100 btn bg-gradient-to-r from-green-500 to-emerald-600 text-white font-semibold py-3 rounded-lg shadow-lg hover:from-green-600 hover:to-emerald-700 transform hover:scale-105 transition-all duration-200">
+                        <svg class="w-5 h-5 me-2 d-inline" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"></path>
+                            <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"></path>
+                        </svg>
+                        Send Invitation
+                    </button>
+                </form>
+
+                <!-- Pending Invites Section -->
+                {% if pending_invites %}
+                <div class="mt-6 pt-4 border-t border-gray-200">
+                    <h6 class="text-gray-800 font-semibold mb-3 flex items-center">
+                        <svg class="w-5 h-5 text-yellow-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path>
+                        </svg>
+                        Pending Invitations
+                    </h6>
+                    <div class="space-y-2">
+                        {% for invite in pending_invites %}
+                        <div class="flex justify-content-between align-items-center p-3 bg-gray-50 rounded-lg">
+                            <div class="flex items-center">
+                                <div class="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center mr-3">
+                                    <svg class="w-4 h-4 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"></path>
+                                    </svg>
+                                </div>
+                                <span class="text-gray-800 font-medium">{{ invite.email }}</span>
+                            </div>
+                            <form method="post" action="{% url 'teams:cancel_invite' team.id invite.id %}" class="d-inline">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-outline-danger rounded-full px-3 py-1 hover:bg-red-50 transition-colors">
+                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                                    </svg>
+                                </button>
+                            </form>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

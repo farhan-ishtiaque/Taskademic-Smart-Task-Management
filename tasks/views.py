@@ -30,7 +30,7 @@ def task_create(request):
     
     if request.method == 'POST':
         print(f"DEBUG: POST data: {request.POST}")
-        form = TaskForm(request.POST)
+        form = TaskForm(request.POST, user=request.user)  # Pass user to form
         print(f"DEBUG: Form is valid: {form.is_valid()}")
         
         if form.is_valid():
@@ -80,7 +80,7 @@ def task_create(request):
     
     # GET request - display empty form
     print("DEBUG: GET request - showing empty form")
-    form = TaskForm()
+    form = TaskForm(user=request.user)  # Pass user to form
     return render(request, 'tasks/create.html', {'form': form})
 
 
@@ -103,7 +103,7 @@ def task_edit(request, task_id):
     task = get_object_or_404(Task, id=task_id, user=request.user)
     
     if request.method == 'POST':
-        form = TaskForm(request.POST, instance=task)
+        form = TaskForm(request.POST, instance=task, user=request.user)  # Pass user
         if form.is_valid():
             try:
                 # Save the updated task
@@ -130,7 +130,7 @@ def task_edit(request, task_id):
             return render(request, 'tasks/edit.html', {'form': form, 'task': task})
     
     # GET request - display form with current task data
-    form = TaskForm(instance=task)
+    form = TaskForm(instance=task, user=request.user)  # Pass user
     return render(request, 'tasks/edit.html', {'form': form, 'task': task})
 
 
@@ -143,8 +143,27 @@ def task_edit_select(request):
 
 @login_required
 def kanban_board(request):
-    """Kanban board view"""
+    """Personal Kanban board view"""
     return render(request, 'tasks/kanban_board.html')
+
+
+@login_required
+def team_kanban_board(request, team_id):
+    """Team Kanban board view showing all team tasks"""
+    from teams.models import Team
+    
+    team = get_object_or_404(Team, id=team_id)
+    
+    # Check if user is a team member
+    if request.user not in team.members.all():
+        messages.error(request, "You don't have access to this team's board.")
+        return redirect('teams:list')
+    
+    context = {
+        'team': team,
+        'is_team_board': True,
+    }
+    return render(request, 'tasks/team_kanban_board.html', context)
 
 
 @login_required
@@ -208,7 +227,15 @@ class TaskViewSet(viewsets.ModelViewSet):
     
     def get_queryset(self):
         try:
-            queryset = Task.objects.filter(user=self.request.user)
+            # Get personal tasks
+            personal_tasks = Task.objects.filter(user=self.request.user, team__isnull=True)
+            
+            # Get team tasks where user is a member
+            team_tasks = Task.objects.filter(team__members=self.request.user)
+            
+            # Combine both
+            queryset = personal_tasks.union(team_tasks).order_by('-created_at')
+            
             print(f"TaskViewSet: Found {queryset.count()} tasks for user {self.request.user}")
         except Exception as e:
             print(f"TaskViewSet error: {e}")
@@ -229,6 +256,13 @@ class TaskViewSet(viewsets.ModelViewSet):
         if category:
             queryset = queryset.filter(category=category)
         
+        # Team filter
+        team_id = self.request.query_params.get('team', None)
+        if team_id:
+            queryset = queryset.filter(team_id=team_id)
+        elif team_id == 'personal':
+            queryset = queryset.filter(team__isnull=True)
+        
         # Search by title or description
         search = self.request.query_params.get('search', None)
         if search:
@@ -236,37 +270,10 @@ class TaskViewSet(viewsets.ModelViewSet):
                 Q(title__icontains=search) | Q(description__icontains=search)
             )
         
-        return queryset.order_by('-created_at')
+        return queryset
     
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
-    
-    def update(self, request, *args, **kwargs):
-        """Custom update method to handle task completion properly"""
-        instance = self.get_object()
-        old_status = instance.status
-        
-        # Get the new status from request data
-        new_status = request.data.get('status', old_status)
-        
-        # If status is changing to 'done', use mark_complete method
-        if old_status != 'done' and new_status == 'done':
-            instance.mark_complete()
-            # Update other fields if provided
-            serializer = self.get_serializer(instance, data=request.data, partial=True)
-            serializer.is_valid(raise_exception=True)
-            # Only save non-completion fields since mark_complete already handled status and completed_at
-            update_fields = {k: v for k, v in serializer.validated_data.items() 
-                           if k not in ['status', 'completed_at']}
-            for field, value in update_fields.items():
-                setattr(instance, field, value)
-            if update_fields:
-                instance.save()
-            serializer = self.get_serializer(instance)
-            return Response(serializer.data)
-        else:
-            # For other status changes, use default update behavior
-            return super().update(request, *args, **kwargs)
     
     @action(detail=True, methods=['post'])
     def complete_task(self, request, pk=None):
@@ -284,7 +291,54 @@ class TaskViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def kanban_board_data(self, request):
         """Get tasks organized by Kanban board columns"""
-        tasks = self.get_queryset().filter(status__in=['todo', 'in_progress', 'review', 'done'])
+        # Get personal tasks
+        personal_tasks = Task.objects.filter(
+            user=request.user, 
+            team__isnull=True,
+            status__in=['todo', 'in_progress', 'review', 'done']
+        )
+        
+        # Get team tasks where user is a member
+        team_tasks = Task.objects.filter(
+            team__members=request.user,
+            status__in=['todo', 'in_progress', 'review', 'done']
+        )
+        
+        # Combine all tasks
+        all_tasks = list(personal_tasks) + list(team_tasks)
+        
+        # Organize tasks by status
+        data = {
+            'todo': [],
+            'in_progress': [],
+            'review': [],
+            'done': []
+        }
+        
+        for task in all_tasks:
+            task_data = TaskSerializer(task, context={'request': request}).data
+            data[task.status].append(task_data)
+        
+        return Response(data)
+    
+    @action(detail=False, methods=['get'])
+    def team_kanban_data(self, request):
+        """Get tasks organized by Kanban board columns for a specific team"""
+        team_id = request.query_params.get('team_id')
+        if not team_id:
+            return Response({'error': 'team_id parameter required'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Get team tasks where user has access
+        from teams.models import Team
+        try:
+            team = Team.objects.get(id=team_id)
+            if request.user not in team.members.all():
+                return Response({'error': 'No access to this team'}, status=status.HTTP_403_FORBIDDEN)
+        except Team.DoesNotExist:
+            return Response({'error': 'Team not found'}, status=status.HTTP_404_NOT_FOUND)
+        
+        # Get all team tasks regardless of assignment
+        tasks = Task.objects.filter(team=team, status__in=['todo', 'in_progress', 'review', 'done'])
         
         # Organize tasks by status
         todo_tasks = tasks.filter(status='todo')
@@ -296,10 +350,74 @@ class TaskViewSet(viewsets.ModelViewSet):
             'todo': TaskSerializer(todo_tasks, many=True, context={'request': request}).data,
             'in_progress': TaskSerializer(in_progress_tasks, many=True, context={'request': request}).data,
             'review': TaskSerializer(review_tasks, many=True, context={'request': request}).data,
-            'done': TaskSerializer(done_tasks, many=True, context={'request': request}).data
+            'done': TaskSerializer(done_tasks, many=True, context={'request': request}).data,
+            'team': {
+                'id': str(team.id),
+                'name': team.name,
+                'member_count': team.member_count,
+                'members': [{'id': m.id, 'username': m.username, 'full_name': m.get_full_name()} for m in team.members.all()]
+            }
         }
         
         return Response(data)
+    
+    @action(detail=True, methods=['post'])
+    def assign_to_member(self, request, pk=None):
+        """Assign task to a team member"""
+        task = self.get_object()
+        
+        # Check if user can assign this task
+        if not task.can_be_edited_by(request.user):
+            return Response({'error': 'No permission to edit this task'}, status=status.HTTP_403_FORBIDDEN)
+        
+        member_id = request.data.get('member_id')
+        if not member_id:
+            # Unassign task
+            task.assigned_to = None
+            task.save()
+            return Response({'message': 'Task unassigned successfully'})
+        
+        try:
+            from django.contrib.auth.models import User
+            member = User.objects.get(id=member_id)
+            
+            # Check if member is in the task's team
+            if task.team and member not in task.team.members.all():
+                return Response({'error': 'User is not a member of this team'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            task.assigned_to = member
+            task.save()
+            
+            return Response({
+                'message': f'Task assigned to {member.get_full_name() or member.username}',
+                'task': TaskSerializer(task, context={'request': request}).data
+            })
+            
+        except User.DoesNotExist:
+            return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+    
+    @action(detail=True, methods=['post'])
+    def change_status(self, request, pk=None):
+        """Change task status (for team collaboration)"""
+        task = self.get_object()
+        
+        # Check if user can change status
+        if not task.can_change_status(request.user):
+            return Response({'error': 'No permission to change status'}, status=status.HTTP_403_FORBIDDEN)
+        
+        new_status = request.data.get('status')
+        if new_status not in ['todo', 'in_progress', 'review', 'done']:
+            return Response({'error': 'Invalid status'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        task.status = new_status
+        if new_status == 'done' and not task.completed_at:
+            task.completed_at = timezone.now()
+        task.save()
+        
+        return Response({
+            'message': f'Task status changed to {new_status}',
+            'task': TaskSerializer(task, context={'request': request}).data
+        })
     
     @action(detail=False, methods=['get'])
     def moscow_prioritized(self, request):
@@ -343,6 +461,36 @@ class TaskViewSet(viewsets.ModelViewSet):
         
         serializer = TaskSerializer(today_tasks, many=True, context={'request': request})
         return Response(serializer.data)
+    
+    @action(detail=False, methods=['get'])
+    def team_kanban_data(self, request):
+        """Get team Kanban board data"""
+        team_id = request.query_params.get('team_id')
+        
+        if not team_id:
+            return Response({'error': 'team_id required'}, status=400)
+        
+        try:
+            from teams.models import Team
+            team = Team.objects.get(id=team_id)
+            
+            # Simple check - user must be team member
+            if request.user not in team.members.all():
+                return Response({'error': 'Access denied'}, status=403)
+            
+        except Team.DoesNotExist:
+            return Response({'error': 'Team not found'}, status=404)
+        
+        tasks = Task.objects.filter(team=team)
+        
+        data = {
+            'todo': TaskSerializer(tasks.filter(status='todo'), many=True, context={'request': request}).data,
+            'in_progress': TaskSerializer(tasks.filter(status='in_progress'), many=True, context={'request': request}).data,
+            'review': TaskSerializer(tasks.filter(status='review'), many=True, context={'request': request}).data,
+            'done': TaskSerializer(tasks.filter(status='done'), many=True, context={'request': request}).data,
+        }
+        
+        return Response(data)
 
 
 class TimeBlockViewSet(viewsets.ModelViewSet):
@@ -457,3 +605,31 @@ def smart_schedule_suggestion(request):
         'preferred_technique': technique,
         'suggestions': suggestions
     })
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_team_members(request, team_id):
+    """Get members of a specific team for assignment dropdown"""
+    from teams.models import Team
+    
+    try:
+        team = Team.objects.get(id=team_id)
+        if request.user not in team.members.all():
+            return Response({'error': 'No access to this team'}, status=status.HTTP_403_FORBIDDEN)
+        
+        members = team.members.all()
+        member_data = [
+            {
+                'id': member.id,
+                'username': member.username,
+                'full_name': member.get_full_name() or member.username,
+                'email': member.email
+            }
+            for member in members
+        ]
+        
+        return Response(member_data)
+        
+    except Team.DoesNotExist:
+        return Response({'error': 'Team not found'}, status=status.HTTP_404_NOT_FOUND)

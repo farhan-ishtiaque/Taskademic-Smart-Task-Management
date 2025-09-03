@@ -43,8 +43,10 @@ INSTALLED_APPS = [
     'corsheaders',
     'dashboard',
     'tasks',
+    'teams',
     'analytics',
     'accounts',
+    'notifications',
     'priority_analyzer',
     'priority_ai',
 ]
@@ -194,3 +196,10 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # DeepSeek API Settings
 DEEPSEEK_API_KEY = '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'
+
+# Email Configuration (for development - console backend)
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+DEFAULT_FROM_EMAIL = 'Taskademic <noreply@taskademic.com>'
+
+# Site URL for email links
+SITE_URL = 'http://localhost:8000'
