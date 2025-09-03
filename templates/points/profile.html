@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Points Profile - Taskademic{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-4 py-8">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">Your Progress</h1>
+        <div class="flex space-x-4">
+            <a href="{% url 'points:leaderboard' %}" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+                🏆 Leaderboard
+            </a>
+        </div>
+    </div>
+
+    <!-- Level Card -->
+    <div class="bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl p-6 text-white mb-8">
+        <div class="flex items-center justify-between">
+            <div>
+                <h2 class="text-2xl font-bold">{{ level.level_name }}</h2>
+                <p class="text-blue-100">Level {{ level.current_level }}</p>
+            </div>
+            <div class="text-right">
+                <p class="text-3xl font-bold">{{ level.total_points }}</p>
+                <p class="text-blue-100">Total Points</p>
+            </div>
+        </div>
+        
+        <!-- Progress Bar -->
+        <div class="mt-4">
+            <div class="flex justify-between text-sm mb-2">
+                <span>Progress to next level</span>
+                <span>{{ level.points_to_next_level }} points needed</span>
+            </div>
+            <div class="w-full bg-blue-400 rounded-full h-3">
+                <div class="bg-white h-3 rounded-full transition-all duration-300" 
+                     style="width: {{ level.level_progress_percentage }}%"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <!-- Current Streak -->
+        <div class="bg-white rounded-lg p-6 shadow-md">
+            <div class="flex items-center">
+                <div class="text-2xl mr-3">🔥</div>
+                <div>
+                    <p class="text-gray-600 text-sm">Current Streak</p>
+                    <p class="text-2xl font-bold text-orange-600">{{ level.streak_days }} days</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Longest Streak -->
+        <div class="bg-white rounded-lg p-6 shadow-md">
+            <div class="flex items-center">
+                <div class="text-2xl mr-3">🏅</div>
+                <div>
+                    <p class="text-gray-600 text-sm">Longest Streak</p>
+                    <p class="text-2xl font-bold text-yellow-600">{{ level.longest_streak }} days</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Weekly Points -->
+        <div class="bg-white rounded-lg p-6 shadow-md">
+            <div class="flex items-center">
+                <div class="text-2xl mr-3">📊</div>
+                <div>
+                    <p class="text-gray-600 text-sm">This Week</p>
+                    <p class="text-2xl font-bold text-green-600">{{ weekly_points }} pts</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Completion Rate -->
+        <div class="bg-white rounded-lg p-6 shadow-md">
+            <div class="flex items-center">
+                <div class="text-2xl mr-3">🎯</div>
+                <div>
+                    <p class="text-gray-600 text-sm">Avg Completion</p>
+                    <p class="text-2xl font-bold text-blue-600">{{ avg_completion_rate|floatformat:1 }}%</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="bg-white rounded-lg shadow-md">
+        <div class="p-6 border-b">
+            <h3 class="text-lg font-semibold">Recent Activity</h3>
+        </div>
+        <div class="p-6">
+            {% for transaction in recent_transactions %}
+            <div class="flex items-center justify-between py-3 {% if not forloop.last %}border-b{% endif %}">
+                <div>
+                    <p class="font-medium">{{ transaction.description }}</p>
+                    <p class="text-sm text-gray-500">{{ transaction.created_at|date:"M j, H:i" }}</p>
+                </div>
+                <div class="text-right">
+                    {% if transaction.points > 0 %}
+                        <span class="text-green-600 font-bold">+{{ transaction.points }}</span>
+                    {% elif transaction.points < 0 %}
+                        <span class="text-red-600 font-bold">{{ transaction.points }}</span>
+                    {% else %}
+                        <span class="text-gray-500">{{ transaction.points }}</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% empty %}
+            <p class="text-gray-500 text-center py-8">No recent activity</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Weekly Progress Chart -->
+    <div class="mt-8 bg-white rounded-lg shadow-md">
+        <div class="p-6 border-b">
+            <h3 class="text-lg font-semibold">Weekly Progress</h3>
+        </div>
+        <div class="p-6">
+            <div class="grid grid-cols-7 gap-2">
+                {% for activity in weekly_activities %}
+                <div class="text-center">
+                    <div class="text-xs text-gray-500 mb-2">{{ activity.date|date:"D" }}</div>
+                    <div class="h-20 bg-gray-100 rounded flex items-end justify-center">
+                        <div class="bg-blue-500 rounded-t w-full" 
+                             style="height: {{ activity.completion_rate }}%"></div>
+                    </div>
+                    <div class="text-xs mt-1">{{ activity.completion_rate|floatformat:0 }}%</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

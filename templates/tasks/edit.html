@@ -223,7 +223,7 @@
             <!-- Header -->
             <div class="form-header">
                 <h1 class="form-title">✏️ Edit Task</h1>
-                <p class="form-subtitle">Update your task details, deadline, or duration</p>
+                <p class="form-subtitle">Update your task details, deadline, and priority</p>
             </div>
 
             <!-- Form Body -->
@@ -287,24 +287,6 @@
                                 {% if form.due_date.errors %}
                                     <div class="error-message">
                                         ⚠️ {{ form.due_date.errors.0 }}
-                                    </div>
-                                {% endif %}
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="estimated_duration" class="form-label">⏱️ Duration (minutes)</label>
-                                <input 
-                                    type="number" 
-                                    id="estimated_duration" 
-                                    name="estimated_duration" 
-                                    class="form-input" 
-                                    min="1"
-                                    placeholder="30"
-                                    value="{{ form.estimated_duration.value|default:'30' }}"
-                                >
-                                {% if form.estimated_duration.errors %}
-                                    <div class="error-message">
-                                        ⚠️ {{ form.estimated_duration.errors.0 }}
                                     </div>
                                 {% endif %}
                             </div>

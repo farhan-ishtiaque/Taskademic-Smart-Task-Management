@@ -1,0 +1,319 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Select Task to Delete - Taskademic{% endblock %}
+
+{% block extra_css %}
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+    .select-task-page {
+        font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif !important;
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%) !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        min-height: 100vh !important;
+    }
+
+    .select-task-page .page-container {
+        max-width: 1200px !important;
+        margin: 0 auto !important;
+        padding: 2rem !important;
+    }
+
+    .select-task-page .header-card {
+        background: white !important;
+        border-radius: 20px !important;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1) !important;
+        overflow: hidden !important;
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        margin-bottom: 2rem !important;
+    }
+
+    .select-task-page .header-content {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+        padding: 2rem !important;
+        text-align: center !important;
+        color: white !important;
+    }
+
+    .select-task-page .page-title {
+        font-size: 1.875rem !important;
+        font-weight: 700 !important;
+        margin: 0 0 0.5rem 0 !important;
+        letter-spacing: -0.025em !important;
+    }
+
+    .select-task-page .page-subtitle {
+        font-size: 1rem !important;
+        opacity: 0.9 !important;
+        margin: 0 !important;
+        font-weight: 400 !important;
+    }
+
+    .select-task-page .tasks-grid {
+        display: grid !important;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)) !important;
+        gap: 1.5rem !important;
+        margin: 0 !important;
+    }
+
+    .select-task-page .task-card {
+        background: white !important;
+        border-radius: 16px !important;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08) !important;
+        overflow: hidden !important;
+        border: 1px solid rgba(0, 0, 0, 0.05) !important;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        text-decoration: none !important;
+        color: inherit !important;
+        display: block !important;
+    }
+
+    .select-task-page .task-card:hover {
+        transform: translateY(-8px) !important;
+        box-shadow: 0 20px 60px rgba(220, 38, 38, 0.15) !important;
+        border-color: rgba(220, 38, 38, 0.2) !important;
+        text-decoration: none !important;
+        color: inherit !important;
+    }
+
+    .select-task-page .task-priority {
+        height: 6px !important;
+        background: linear-gradient(90deg, #ef4444, #dc2626) !important;
+    }
+
+    .select-task-page .task-priority.low {
+        background: linear-gradient(90deg, #10b981, #059669) !important;
+    }
+
+    .select-task-page .task-priority.medium {
+        background: linear-gradient(90deg, #f59e0b, #d97706) !important;
+    }
+
+    .select-task-page .task-priority.high {
+        background: linear-gradient(90deg, #ef4444, #dc2626) !important;
+    }
+
+    .select-task-page .task-content {
+        padding: 1.5rem !important;
+    }
+
+    .select-task-page .task-title {
+        font-size: 1.125rem !important;
+        font-weight: 600 !important;
+        margin: 0 0 0.5rem 0 !important;
+        color: #1f2937 !important;
+        line-height: 1.4 !important;
+    }
+
+    .select-task-page .task-description {
+        color: #6b7280 !important;
+        font-size: 0.875rem !important;
+        line-height: 1.5 !important;
+        margin: 0 0 1rem 0 !important;
+    }
+
+    .select-task-page .task-meta {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 0.75rem !important;
+        align-items: center !important;
+    }
+
+    .select-task-page .task-status,
+    .select-task-page .task-category,
+    .select-task-page .task-due {
+        display: inline-flex !important;
+        align-items: center !important;
+        padding: 0.25rem 0.75rem !important;
+        border-radius: 12px !important;
+        font-size: 0.75rem !important;
+        font-weight: 500 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.05em !important;
+    }
+
+    .select-task-page .task-status {
+        background: rgba(59, 130, 246, 0.1) !important;
+        color: #1d4ed8 !important;
+    }
+
+    .select-task-page .task-category {
+        background: rgba(147, 51, 234, 0.1) !important;
+        color: #7c3aed !important;
+    }
+
+    .select-task-page .task-due {
+        background: rgba(239, 68, 68, 0.1) !important;
+        color: #dc2626 !important;
+    }
+
+    .select-task-page .empty-state {
+        text-align: center !important;
+        background: white !important;
+        border-radius: 20px !important;
+        padding: 4rem 2rem !important;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1) !important;
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    }
+
+    .select-task-page .empty-icon {
+        font-size: 4rem !important;
+        margin-bottom: 1rem !important;
+        opacity: 0.3 !important;
+    }
+
+    .select-task-page .empty-title {
+        font-size: 1.5rem !important;
+        font-weight: 600 !important;
+        color: #1f2937 !important;
+        margin: 0 0 0.5rem 0 !important;
+    }
+
+    .select-task-page .empty-description {
+        color: #6b7280 !important;
+        margin: 0 0 2rem 0 !important;
+    }
+
+    .select-task-page .empty-action {
+        display: inline-flex !important;
+        align-items: center !important;
+        padding: 0.75rem 1.5rem !important;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        color: white !important;
+        text-decoration: none !important;
+        border-radius: 12px !important;
+        font-weight: 500 !important;
+        transition: all 0.3s ease !important;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4) !important;
+    }
+
+    .select-task-page .empty-action:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5) !important;
+        text-decoration: none !important;
+        color: white !important;
+    }
+
+    .select-task-page .back-button {
+        display: inline-flex !important;
+        align-items: center !important;
+        padding: 0.75rem 1.5rem !important;
+        background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%) !important;
+        color: white !important;
+        text-decoration: none !important;
+        border-radius: 12px !important;
+        font-weight: 500 !important;
+        transition: all 0.3s ease !important;
+        box-shadow: 0 4px 15px rgba(107, 114, 128, 0.4) !important;
+        margin-bottom: 2rem !important;
+    }
+
+    .select-task-page .back-button:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 8px 25px rgba(107, 114, 128, 0.5) !important;
+        text-decoration: none !important;
+        color: white !important;
+    }
+
+    .select-task-page .back-button svg {
+        margin-right: 0.5rem !important;
+    }
+
+    .select-task-page .warning-notice {
+        background: rgba(239, 68, 68, 0.1) !important;
+        border: 1px solid rgba(239, 68, 68, 0.2) !important;
+        border-radius: 12px !important;
+        padding: 1rem 1.5rem !important;
+        margin-bottom: 2rem !important;
+        color: #dc2626 !important;
+        font-weight: 500 !important;
+        text-align: center !important;
+    }
+
+    .select-task-page .warning-notice svg {
+        margin-right: 0.5rem !important;
+        vertical-align: middle !important;
+    }
+
+    @media (max-width: 768px) {
+        .select-task-page .page-container {
+            padding: 1rem !important;
+        }
+
+        .select-task-page .tasks-grid {
+            grid-template-columns: 1fr !important;
+        }
+
+        .select-task-page .header-content {
+            padding: 1.5rem !important;
+        }
+
+        .select-task-page .page-title {
+            font-size: 1.5rem !important;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="select-task-page">
+    <div class="page-container">
+        <a href="{% url 'tasks:list' %}" class="back-button">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+            </svg>
+            Back to Tasks
+        </a>
+
+        <div class="header-card">
+            <div class="header-content">
+                <h1 class="page-title">Select Task to Delete</h1>
+                <p class="page-subtitle">Choose a task from the list below to permanently delete</p>
+            </div>
+        </div>
+
+        <div class="warning-notice">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+            </svg>
+            Warning: Deleting a task is permanent and cannot be undone.
+        </div>
+
+        {% if tasks %}
+            <div class="tasks-grid">
+                {% for task in tasks %}
+                    <a href="{% url 'tasks:delete' task.id %}" class="task-card">
+                        <div class="task-priority {{ task.priority|lower }}"></div>
+                        <div class="task-content">
+                            <h3 class="task-title">{{ task.title }}</h3>
+                            {% if task.description %}
+                                <p class="task-description">{{ task.description|truncatechars:100 }}</p>
+                            {% endif %}
+                            <div class="task-meta">
+                                <span class="task-status">{{ task.get_status_display }}</span>
+                                <span class="task-category">{{ task.category }}</span>
+                                {% if task.due_date %}
+                                    <span class="task-due">Due: {{ task.due_date|date:"M d" }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </a>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <div class="empty-icon">📝</div>
+                <h2 class="empty-title">No Tasks Available</h2>
+                <p class="empty-description">You don't have any active tasks to delete at the moment.</p>
+                <a href="{% url 'tasks:create' %}" class="empty-action">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                    </svg>
+                    Create Your First Task
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
