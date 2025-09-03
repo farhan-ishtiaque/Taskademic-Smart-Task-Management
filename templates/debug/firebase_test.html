@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase Auth Test - Taskademic</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-app-compat.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-auth-compat.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .status { margin: 10px 0; padding: 10px; border-radius: 5px; }
+        .success { background-color: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+        .error { background-color: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+        .info { background-color: #d1ecf1; border: 1px solid #bee5eb; color: #0c5460; }
+        button { padding: 10px 20px; margin: 5px; }
+    </style>
+</head>
+<body>
+    <h1>Firebase Auth Test</h1>
+    
+    <div id="status-container">
+        <div class="status info">
+            <strong>Test Status:</strong> Initializing...
+        </div>
+    </div>
+    
+    <div>
+        <button id="test-config">Test Configuration</button>
+        <button id="test-auth" disabled>Test Google Auth</button>
+        <button id="clear-logs">Clear Logs</button>
+    </div>
+    
+    <div>
+        <h3>Configuration Details:</h3>
+        <pre id="config-details"></pre>
+    </div>
+    
+    <div>
+        <h3>Test Logs:</h3>
+        <pre id="logs" style="background: #f5f5f5; padding: 10px; max-height: 400px; overflow-y: auto;"></pre>
+    </div>
+
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDCvnJdpNOeR3WI3p3tZue-duWCh9iRdjw",
+            authDomain: "taskademic1.firebaseapp.com",
+            projectId: "taskademic1",
+            storageBucket: "taskademic1.firebasestorage.app",
+            messagingSenderId: "67763949564",
+            appId: "1:67763949564:web:6d2b21d78e3afc9b1fac79",
+            measurementId: "G-WCZ9XCH273"
+        };
+
+        let app, auth, provider;
+        const logs = [];
+
+        function addLog(message, type = 'info') {
+            const timestamp = new Date().toISOString();
+            logs.push(`[${timestamp}] ${type.toUpperCase()}: ${message}`);
+            updateLogsDisplay();
+            console.log(`${type}: ${message}`);
+        }
+
+        function updateLogsDisplay() {
+            document.getElementById('logs').textContent = logs.join('\n');
+        }
+
+        function updateStatus(message, type = 'info') {
+            const container = document.getElementById('status-container');
+            container.innerHTML = `<div class="status ${type}"><strong>Status:</strong> ${message}</div>`;
+        }
+
+        function updateConfigDisplay() {
+            const details = {
+                'Current URL': window.location.href,
+                'Firebase Config': firebaseConfig,
+                'Expected Redirect URI': `https://${firebaseConfig.authDomain}/__/auth/handler`,
+                'Current Domain': window.location.hostname,
+                'Current Port': window.location.port
+            };
+            document.getElementById('config-details').textContent = JSON.stringify(details, null, 2);
+        }
+
+        function initializeFirebase() {
+            try {
+                addLog('Initializing Firebase...');
+                
+                if (!firebase.apps.length) {
+                    app = firebase.initializeApp(firebaseConfig);
+                    addLog('Firebase app initialized successfully');
+                } else {
+                    app = firebase.app();
+                    addLog('Using existing Firebase app');
+                }
+
+                auth = firebase.auth();
+                provider = new firebase.auth.GoogleAuthProvider();
+                
+                provider.addScope('profile');
+                provider.addScope('email');
+                provider.setCustomParameters({
+                    prompt: 'select_account'
+                });
+
+                addLog('Firebase Auth and Google provider configured');
+                updateStatus('Firebase initialized successfully', 'success');
+                document.getElementById('test-auth').disabled = false;
+                return true;
+                
+            } catch (error) {
+                addLog(`Firebase initialization failed: ${error.message}`, 'error');
+                updateStatus(`Firebase initialization failed: ${error.message}`, 'error');
+                return false;
+            }
+        }
+
+        async function testGoogleAuth() {
+            try {
+                updateStatus('Testing Google Authentication...', 'info');
+                addLog('Starting Google sign-in test...');
+
+                const result = await auth.signInWithPopup(provider);
+                const user = result.user;
+                
+                addLog(`Google sign-in successful for: ${user.email}`, 'success');
+                addLog(`User UID: ${user.uid}`);
+                addLog(`Display Name: ${user.displayName}`);
+                
+                // Get ID token
+                const idToken = await user.getIdToken();
+                addLog('ID token obtained successfully');
+                
+                updateStatus(`Authentication successful for ${user.email}`, 'success');
+                
+                // Sign out for testing
+                await auth.signOut();
+                addLog('Signed out successfully');
+                
+            } catch (error) {
+                addLog(`Google sign-in failed: ${error.code} - ${error.message}`, 'error');
+                updateStatus(`Authentication failed: ${error.message}`, 'error');
+                
+                if (error.code === 'auth/popup-blocked') {
+                    addLog('Suggestion: Allow popups for this site', 'info');
+                } else if (error.code === 'auth/unauthorized-domain') {
+                    addLog('Suggestion: Add this domain to Firebase Auth authorized domains', 'info');
+                }
+            }
+        }
+
+        // Event listeners
+        document.getElementById('test-config').addEventListener('click', () => {
+            addLog('Testing configuration...');
+            updateConfigDisplay();
+            
+            if (typeof firebase === 'undefined') {
+                addLog('Firebase SDK not loaded!', 'error');
+                updateStatus('Firebase SDK not loaded', 'error');
+            } else {
+                addLog('Firebase SDK loaded successfully');
+                initializeFirebase();
+            }
+        });
+
+        document.getElementById('test-auth').addEventListener('click', testGoogleAuth);
+        
+        document.getElementById('clear-logs').addEventListener('click', () => {
+            logs.length = 0;
+            updateLogsDisplay();
+        });
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            updateConfigDisplay();
+            addLog('Page loaded, ready for testing');
+            
+            // Auto-test configuration
+            setTimeout(() => {
+                document.getElementById('test-config').click();
+            }, 500);
+        });
+    </script>
+</body>
+</html>

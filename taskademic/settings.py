@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'accounts',
     'priority_analyzer',
     'priority_ai',
+    'calendar_sync',
 ]
 
 MIDDLEWARE = [
