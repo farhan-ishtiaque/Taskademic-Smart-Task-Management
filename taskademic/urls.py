@@ -19,6 +19,7 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from django.shortcuts import redirect
+from django.views.generic import TemplateView
 
 def home_redirect(request):
     if request.user.is_authenticated:
@@ -35,6 +36,8 @@ urlpatterns = [
     path('accounts/', include('accounts.urls')),
     path('api-auth/', include('rest_framework.urls')),
     path('priority/', include('priority_analyzer.urls')),
+    path('calendar-sync/', include('calendar_sync.urls')),
+    path('debug/firebase-test/', TemplateView.as_view(template_name='debug/firebase_test.html'), name='firebase_test'),
 ]
 
 if settings.DEBUG:
