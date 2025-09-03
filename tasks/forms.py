@@ -12,18 +12,6 @@ class TaskForm(forms.ModelForm):
         ('wont', 'Won\'t Have'),
     ]
     
-    CATEGORY_CHOICES = [
-        ('', 'Select a category'),
-        ('work', 'Work'),
-        ('personal', 'Personal'),
-        ('health', 'Health'),
-        ('learning', 'Learning'),
-        ('social', 'Social'),
-        ('finance', 'Finance'),
-        ('creative', 'Creative'),
-        ('other', 'Other'),
-    ]
-    
     title = forms.CharField(
         max_length=200,
         widget=forms.TextInput(attrs={
@@ -69,7 +57,7 @@ class TaskForm(forms.ModelForm):
     )
     
     category = forms.ChoiceField(
-        choices=CATEGORY_CHOICES,
+        choices=Task.CATEGORY_CHOICES,
         required=False,
         widget=forms.Select(attrs={
             'class': 'form-input'

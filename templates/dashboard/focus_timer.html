@@ -6,43 +6,8 @@
 {% block extra_css %}
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
-    * {
+    .focus-timer-content {
         font-family: 'Inter', sans-serif;
-    }
-    
-    body {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        min-height: 100vh;
-    }
-    
-    .main-container {
-        max-width: 1400px;
-                 <!-- 5 Small Things -->
-                <div class="task-category small-things">
-                    <div class="category-header">
-                        <div class="category-title">⚡ 5 Small Things</div>
-                        <div class="category-count">{{ could_do_tasks|length }}/5</div>
-                    </div> margin: 0 auto;
-        padding: 2rem;
-    }
-    
-    .page-header {
-        text-align: center;
-        margin-bottom: 3rem;
-        color: white;
-    }
-    
-    .page-title {
-        font-size: 3rem;
-        font-weight: 700;
-        margin-bottom: 1rem;
-        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-    }
-    
-    .page-subtitle {
-        font-size: 1.2rem;
-        opacity: 0.9;
-        font-weight: 300;
     }
     
     .content-grid {
@@ -51,313 +16,224 @@
         gap: 2rem;
     }
     
-    .glass-box {
-        background: rgba(255, 255, 255, 0.25);
-        backdrop-filter: blur(10px);
-        border-radius: 20px;
-        border: 1px solid rgba(255, 255, 255, 0.3);
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    .card {
+        background: white;
+        border-radius: 16px;
         padding: 2rem;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        border: 1px solid #e5e7eb;
         transition: all 0.3s ease;
     }
     
-    .glass-box:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+    .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
     }
     
     .section-title {
         font-size: 1.5rem;
         font-weight: 600;
-        color: white;
+        color: #1f2937;
         margin-bottom: 1.5rem;
-        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
     }
     
     .task-category {
-        margin-bottom: 2.5rem;
-        border: 2px solid rgba(255, 255, 255, 0.3);
-        border-radius: 16px;
+        margin-bottom: 2rem;
+        border: 2px solid #e5e7eb;
+        border-radius: 12px;
         overflow: hidden;
-        background: rgba(255, 255, 255, 0.15);
+        transition: all 0.3s ease;
+    }
+    
+    .task-category:hover {
+        border-color: #667eea;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.1);
     }
     
     .category-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 0;
-        background: rgba(255, 255, 255, 0.25);
-        padding: 1.5rem;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        padding: 1rem 1.5rem;
+        background: #f8fafc;
+        border-bottom: 1px solid #e5e7eb;
     }
     
     .category-title {
-        font-weight: 700;
-        color: white;
-        font-size: 1.2rem;
-        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        font-weight: 600;
+        color: #374151;
+        font-size: 1rem;
     }
     
     .category-count {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
-        padding: 0.5rem 1rem;
-        border-radius: 25px;
-        font-size: 0.9rem;
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
         font-weight: 600;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     }
     
     .task-item {
-        background: white;
-        border-radius: 16px;
-        padding: 0;
-        margin-bottom: 1rem;
-        border: 2px solid #e5e7eb;
-        transition: all 0.3s ease;
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid #f3f4f6;
+        transition: all 0.2s ease;
         cursor: pointer;
-        overflow: hidden;
-        position: relative;
     }
     
     .task-item:last-child {
-        margin-bottom: 1rem;
+        border-bottom: none;
     }
     
     .task-item:hover {
-        border-color: #667eea;
-        box-shadow: 0 8px 25px rgba(103, 126, 234, 0.15);
-        transform: translateY(-2px);
-    }
-    
-    .task-item:hover .task-checkbox input[type="checkbox"] {
-        border-color: #4f46e5;
-        box-shadow: 0 0 0 3px rgba(103, 126, 234, 0.1);
+        background: #f8fafc;
     }
     
     .task-item-inner {
-        padding: 2rem;
         display: flex;
         align-items: flex-start;
-        gap: 1.5rem;
+        gap: 1rem;
     }
     
-    .checkbox-container {
-        position: relative;
-        flex-shrink: 0;
-    }
-    
-    .checkbox-container::after {
-        content: "";
-        position: absolute;
-        top: 1rem;
-        left: 100%;
-        width: 1rem;
-        height: 2px;
-        background: linear-gradient(to right, #667eea, transparent);
-        opacity: 0;
-        transition: opacity 0.3s ease;
-    }
-    
-    .task-item:hover .checkbox-container::after {
-        opacity: 1;
-    }
-    
-    .task-checkbox {
-        display: flex;
-        align-items: flex-start;
-        gap: 1.5rem;
-        position: relative;
-    }
-    
-    .task-checkbox input[type="checkbox"] {
-        width: 2rem;
-        height: 2rem;
-        border-radius: 10px;
-        border: 3px solid #667eea;
+    .checkbox-container input[type="checkbox"] {
+        width: 1.25rem;
+        height: 1.25rem;
+        border-radius: 4px;
+        border: 2px solid #667eea;
         background: white;
-        margin-top: 0.25rem;
         cursor: pointer;
+        transition: all 0.2s ease;
         position: relative;
-        flex-shrink: 0;
-        transition: all 0.3s ease;
     }
     
-    .task-checkbox input[type="checkbox"]:hover {
-        border-color: #4f46e5;
-        box-shadow: 0 0 0 3px rgba(103, 126, 234, 0.1);
-        transform: scale(1.05);
-    }
-    
-    .task-checkbox input[type="checkbox"]:checked {
+    .checkbox-container input[type="checkbox"]:checked {
         background: #667eea;
         border-color: #667eea;
-        box-shadow: 0 0 0 3px rgba(103, 126, 234, 0.2);
     }
     
-    .task-checkbox input[type="checkbox"]:checked::after {
+    .checkbox-container input[type="checkbox"]:checked::after {
         content: "✓";
         position: absolute;
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
         color: white;
-        font-size: 1.2rem;
+        font-size: 0.75rem;
         font-weight: bold;
     }
     
     .task-content {
         flex: 1;
         min-width: 0;
-        background: linear-gradient(90deg, rgba(103, 126, 234, 0.02) 0%, transparent 100%);
-        padding: 1rem 1.5rem;
-        border-radius: 12px;
-        border-left: 3px solid transparent;
-        transition: all 0.3s ease;
-    }
-    
-    .task-item:hover .task-content {
-        background: linear-gradient(90deg, rgba(103, 126, 234, 0.05) 0%, transparent 100%);
-        border-left-color: #667eea;
     }
     
     .task-title {
-        font-weight: 700;
+        font-weight: 600;
         color: #1f2937;
-        margin-bottom: 0.75rem;
-        font-size: 1.1rem;
+        margin-bottom: 0.25rem;
+        font-size: 0.875rem;
         line-height: 1.3;
-        cursor: pointer;
     }
     
     .task-description {
         color: #6b7280;
-        font-size: 0.95rem;
-        line-height: 1.5;
-        font-weight: 400;
-        cursor: pointer;
-    }
-    
-    /* Visual connection indicators */
-    .task-item:hover .task-title {
-        color: #4f46e5;
-    }
-    
-    .task-item.completed .task-content {
-        opacity: 0.6;
-        background: linear-gradient(90deg, rgba(34, 197, 94, 0.05) 0%, transparent 100%);
-        border-left-color: #22c55e;
+        font-size: 0.75rem;
+        line-height: 1.4;
     }
     
     .task-item.completed .task-title {
         text-decoration: line-through;
-        color: #6b7280;
+        color: #9ca3af;
+    }
+    
+    .task-item.completed .task-description {
+        color: #d1d5db;
     }
     
     .empty-state {
-        background: rgba(255, 255, 255, 0.9);
-        border: 2px dashed #667eea;
-        border-radius: 12px;
-        padding: 3rem;
-        margin: 1.5rem;
+        padding: 2rem;
         text-align: center;
-        color: #667eea;
+        color: #9ca3af;
+        font-style: italic;
     }
     
-    .empty-state svg {
-        opacity: 0.6;
-        margin-bottom: 1rem;
-    }
-    
-    .empty-state p {
-        font-weight: 500;
-        margin: 0;
-        font-size: 1.1rem;
-    }
-    
-    /* Category-specific styling */
+    /* Category-specific colors */
     .big-things {
-        border-color: rgba(239, 68, 68, 0.4);
+        border-color: #fca5a5;
     }
-    
     .big-things .category-header {
-        background: rgba(239, 68, 68, 0.25);
+        background: #fef2f2;
     }
-    
     .big-things .category-count {
         background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
     }
     
     .medium-things {
-        border-color: rgba(245, 158, 11, 0.4);
+        border-color: #fcd34d;
     }
-    
     .medium-things .category-header {
-        background: rgba(245, 158, 11, 0.25);
+        background: #fffbeb;
     }
-    
     .medium-things .category-count {
         background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
     }
     
     .small-things {
-        border-color: rgba(34, 197, 94, 0.4);
+        border-color: #86efac;
     }
-    
     .small-things .category-header {
-        background: rgba(34, 197, 94, 0.25);
+        background: #f0fdf4;
     }
-    
     .small-things .category-count {
         background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
     }
-        text-align: center;
-        color: white;
-        opacity: 0.8;
-    }
     
+    /* Timer Section */
     .timer-section {
         display: flex;
         flex-direction: column;
-        gap: 2rem;
+        gap: 1.5rem;
     }
     
     .timer-setup {
-        background: rgba(255, 255, 255, 0.25);
-        backdrop-filter: blur(10px);
-        border-radius: 20px;
-        padding: 2rem;
-        border: 1px solid rgba(255, 255, 255, 0.3);
+        background: white;
+        border-radius: 16px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        border: 1px solid #e5e7eb;
     }
     
     .timer-display {
-        background: rgba(255, 255, 255, 0.25);
-        backdrop-filter: blur(10px);
-        border-radius: 20px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 16px;
         padding: 2rem;
         text-align: center;
-        border: 1px solid rgba(255, 255, 255, 0.3);
+        color: white;
+        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
     }
     
     .timer-clock {
-        font-size: 4rem;
+        font-size: 3rem;
         font-weight: 700;
         color: white;
-        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
         margin-bottom: 1rem;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
     }
     
     .timer-label {
         color: rgba(255, 255, 255, 0.9);
         font-size: 1rem;
         margin-bottom: 2rem;
+        font-weight: 500;
     }
     
     .progress-ring {
-        width: 200px;
-        height: 200px;
-        margin: 0 auto 2rem;
+        width: 150px;
+        height: 150px;
+        margin: 0 auto 1.5rem;
         position: relative;
     }
     
@@ -365,77 +241,102 @@
         width: 100%;
         height: 100%;
         border-radius: 50%;
-        background: conic-gradient(from 0deg, #3b82f6 0%, #3b82f6 0%, rgba(255, 255, 255, 0.2) 0%);
         display: flex;
         align-items: center;
         justify-content: center;
         position: relative;
-    }
-    
-    .progress-circle::after {
-        content: '';
-        width: 160px;
-        height: 160px;
         background: rgba(255, 255, 255, 0.1);
-        border-radius: 50%;
-        backdrop-filter: blur(10px);
     }
     
     .timer-controls {
         display: flex;
         gap: 1rem;
         justify-content: center;
-        margin-bottom: 2rem;
+        margin-bottom: 1.5rem;
     }
     
     .control-btn {
         background: rgba(255, 255, 255, 0.2);
         color: white;
         border: 1px solid rgba(255, 255, 255, 0.3);
-        padding: 1rem 2rem;
-        border-radius: 12px;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
         font-weight: 600;
         cursor: pointer;
-        transition: all 0.3s ease;
+        transition: all 0.2s ease;
         display: flex;
         align-items: center;
         gap: 0.5rem;
+        font-size: 0.875rem;
     }
     
     .control-btn:hover {
         background: rgba(255, 255, 255, 0.3);
-        transform: translateY(-2px);
+        transform: translateY(-1px);
     }
     
     .control-btn.primary {
-        background: #3b82f6;
-        border-color: #3b82f6;
+        background: rgba(255, 255, 255, 0.9);
+        color: #667eea;
+        border-color: rgba(255, 255, 255, 0.9);
     }
     
     .control-btn.primary:hover {
-        background: #2563eb;
+        background: white;
+        color: #4f46e5;
     }
     
     .form-group {
-        margin-bottom: 1.5rem;
+        margin-bottom: 1rem;
     }
     
     .form-label {
         display: block;
-        color: white;
+        color: #374151;
         font-weight: 600;
         margin-bottom: 0.5rem;
-        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+        font-size: 0.875rem;
     }
     
     .form-select {
         width: 100%;
-        padding: 1rem;
-        border: 1px solid rgba(255, 255, 255, 0.3);
-        border-radius: 12px;
-        background: rgba(255, 255, 255, 0.9);
+        padding: 0.75rem;
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        background: white;
         color: #1f2937;
         font-weight: 500;
+        font-size: 0.875rem;
+        transition: all 0.2s ease;
+    }
+    
+    .form-select:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    
+    /* Custom timer input styling */
+    input[type="number"].form-select {
+        -moz-appearance: textfield;
+    }
+    
+    input[type="number"].form-select::-webkit-outer-spin-button,
+    input[type="number"].form-select::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+    
+    #custom-timer-settings {
+        background: #f8fafc;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-top: 1rem;
+        border: 1px solid #e5e7eb;
+    }
+    
+    #custom-timer-settings .form-group:last-child {
+        margin-bottom: 0;
     }
     
     .stats-grid {
@@ -447,44 +348,24 @@
     .stat-box {
         background: rgba(255, 255, 255, 0.2);
         border-radius: 12px;
-        padding: 1.5rem;
+        padding: 1rem;
         text-align: center;
         border: 1px solid rgba(255, 255, 255, 0.3);
     }
     
     .stat-number {
-        font-size: 2rem;
+        font-size: 1.5rem;
         font-weight: 700;
         color: white;
-        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
     }
     
     .stat-label {
         color: rgba(255, 255, 255, 0.8);
-        font-size: 0.9rem;
-        margin-top: 0.5rem;
-    }
-    
-    .add-task-btn {
-        background: rgba(255, 255, 255, 0.2);
-        color: white;
-        border: 1px solid rgba(255, 255, 255, 0.3);
-        padding: 1rem 2rem;
-        border-radius: 12px;
-        font-weight: 600;
-        text-decoration: none;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-        transition: all 0.3s ease;
-        margin-bottom: 2rem;
-    }
-    
-    .add-task-btn:hover {
-        background: rgba(255, 255, 255, 0.3);
-        transform: translateY(-2px);
-        color: white;
-        text-decoration: none;
+        font-size: 0.75rem;
+        margin-top: 0.25rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
     }
     
     @media (max-width: 1024px) {
@@ -492,43 +373,39 @@
             grid-template-columns: 1fr;
         }
         
-        .main-container {
-            padding: 1rem;
-        }
-        
-        .page-title {
-            font-size: 2rem;
-        }
-        
         .timer-clock {
-            font-size: 3rem;
+            font-size: 2.5rem;
+        }
+        
+        .progress-ring {
+            width: 120px;
+            height: 120px;
         }
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="main-container">
-    <div class="page-header">
-        <h1 class="page-title">Focus Timer</h1>
-        <p class="page-subtitle">Boost your productivity with the 1-3-5 method and Pomodoro technique</p>
-    </div>
-    
-    <div class="content-grid">
-        <!-- Left Column - Task Management -->
-        <div class="task-management">
-            <a href="{% url 'tasks:create' %}" class="add-task-btn">
-                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-                </svg>
-                Add New Task
-            </a>
-            
-            <div class="glass-box">
-                <h2 class="section-title">1-3-5 Daily Method</h2>
-                <p style="color: rgba(255, 255, 255, 0.8); margin-bottom: 2rem;">
-                    Focus on 1 big thing, 3 medium things, and 5 small things each day
-                </p>
+<div class="min-h-screen bg-gray-50 focus-timer-content">
+    <!-- Main content -->
+    <div class="px-4 py-6 sm:px-0">
+        <!-- Page Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900">🎯 Focus Timer</h1>
+            <p class="mt-2 text-gray-600">Boost your productivity with the 1-3-5 method and Pomodoro technique</p>
+        </div>
+
+        <!-- Content -->
+        <main>
+            <div class="max-w-7xl mx-auto">
+                <div class="content-grid">
+        <!-- Tasks Section -->
+        <div class="tasks-section">
+            <div class="card">
+                <h2 class="section-title">
+                    <i class="fas fa-tasks"></i>
+                    Today's Tasks (1-3-5 Method)
+                </h2>
                 
                 <!-- 1 Big Thing -->
                 <div class="task-category big-things">
@@ -536,27 +413,26 @@
                         <div class="category-title">🎯 1 Big Thing</div>
                         <div class="category-count">{{ must_do_tasks|length }}/1</div>
                     </div>
-                    
-                    {% for task in must_do_tasks %}
-                        <div class="task-item">
-                            <div class="task-item-inner">
-                                <div class="checkbox-container">
-                                    <input type="checkbox" class="task-checkbox-input" id="big-{{ task.id }}" data-task-id="{{ task.id }}" {% if task.status == 'done' %}checked{% endif %}>
-                                </div>
-                                <div class="task-content">
-                                    <div class="task-title">{{ task.title }}</div>
-                                    <div class="task-description">{{ task.description|truncatechars:60 }}</div>
+                    <div class="task-list">
+                        {% for task in must_do_tasks %}
+                            <div class="task-item {% if task.status == 'completed' %}completed{% endif %}" data-task-id="{{ task.id }}">
+                                <div class="task-item-inner">
+                                    <div class="checkbox-container">
+                                        <input type="checkbox" 
+                                               id="task-{{ task.id }}" 
+                                               {% if task.status == 'completed' %}checked{% endif %}
+                                               onchange="updateTaskStatus({{ task.id }}, this.checked)">
+                                    </div>
+                                    <div class="task-content">
+                                        <div class="task-title">{{ task.title }}</div>
+                                        <div class="task-description">{{ task.description|truncatewords:20 }}</div>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    {% empty %}
-                        <div class="empty-state">
-                            <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin: 0 auto 1rem;">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-                            </svg>
-                            <p>Choose your most important task for today</p>
-                        </div>
-                    {% endfor %}
+                        {% empty %}
+                            <div class="empty-state">No big task assigned yet. Focus on one major accomplishment!</div>
+                        {% endfor %}
+                    </div>
                 </div>
                 
                 <!-- 3 Medium Things -->
@@ -565,65 +441,63 @@
                         <div class="category-title">📋 3 Medium Things</div>
                         <div class="category-count">{{ should_do_tasks|length }}/3</div>
                     </div>
-                    
-                    {% for task in should_do_tasks %}
-                        <div class="task-item">
-                            <div class="task-item-inner">
-                                <div class="checkbox-container">
-                                    <input type="checkbox" class="task-checkbox-input" id="medium-{{ task.id }}" data-task-id="{{ task.id }}" {% if task.status == 'done' %}checked{% endif %}>
-                                </div>
-                                <div class="task-content">
-                                    <div class="task-title">{{ task.title }}</div>
-                                    <div class="task-description">{{ task.description|truncatechars:50 }}</div>
+                    <div class="task-list">
+                        {% for task in should_do_tasks %}
+                            <div class="task-item {% if task.status == 'completed' %}completed{% endif %}" data-task-id="{{ task.id }}">
+                                <div class="task-item-inner">
+                                    <div class="checkbox-container">
+                                        <input type="checkbox" 
+                                               id="task-{{ task.id }}" 
+                                               {% if task.status == 'completed' %}checked{% endif %}
+                                               onchange="updateTaskStatus({{ task.id }}, this.checked)">
+                                    </div>
+                                    <div class="task-content">
+                                        <div class="task-title">{{ task.title }}</div>
+                                        <div class="task-description">{{ task.description|truncatewords:15 }}</div>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    {% empty %}
-                        <div class="empty-state">
-                            <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin: 0 auto 1rem;">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-                            </svg>
-                            <p>Select 3 important tasks to accomplish</p>
-                        </div>
-                    {% endfor %}
+                        {% empty %}
+                            <div class="empty-state">No medium tasks assigned. Add some important to-dos!</div>
+                        {% endfor %}
+                    </div>
                 </div>
                 
                 <!-- 5 Small Things -->
-                <div class="task-category">
+                <div class="task-category small-things">
                     <div class="category-header">
-                        <div class="category-title">✅ 5 Small Things</div>
+                        <div class="category-title">⚡ 5 Small Things</div>
                         <div class="category-count">{{ could_do_tasks|length }}/5</div>
                     </div>
-                    
-                    {% for task in could_do_tasks %}
-                        <div class="task-item">
-                            <div class="task-item-inner">
-                                <div class="checkbox-container">
-                                    <input type="checkbox" class="task-checkbox-input" id="small-{{ task.id }}" data-task-id="{{ task.id }}" {% if task.status == 'done' %}checked{% endif %}>
-                                </div>
-                                <div class="task-content">
-                                    <div class="task-title">{{ task.title }}</div>
-                                    <div class="task-description">{{ task.description|truncatechars:40 }}</div>
+                    <div class="task-list">
+                        {% for task in could_do_tasks %}
+                            <div class="task-item {% if task.status == 'completed' %}completed{% endif %}" data-task-id="{{ task.id }}">
+                                <div class="task-item-inner">
+                                    <div class="checkbox-container">
+                                        <input type="checkbox" 
+                                               id="task-{{ task.id }}" 
+                                               {% if task.status == 'completed' %}checked{% endif %}
+                                               onchange="updateTaskStatus({{ task.id }}, this.checked)">
+                                    </div>
+                                    <div class="task-content">
+                                        <div class="task-title">{{ task.title }}</div>
+                                        <div class="task-description">{{ task.description|truncatewords:10 }}</div>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    {% empty %}
-                        <div class="empty-state">
-                            <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin: 0 auto 1rem;">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                            </svg>
-                            <p>Add 5 quick tasks to complete</p>
-                        </div>
-                    {% endfor %}
+                        {% empty %}
+                            <div class="empty-state">No small tasks yet. Add some quick wins!</div>
+                        {% endfor %}
+                    </div>
                 </div>
             </div>
         </div>
-        
-        <!-- Right Column - Timer Section -->
+
+        <!-- Timer Section -->
         <div class="timer-section">
             <!-- Timer Setup -->
             <div class="timer-setup">
-                <h3 class="section-title" style="font-size: 1.2rem; margin-bottom: 1.5rem;">Timer Setup</h3>
+                <h3 class="section-title" style="font-size: 1.2rem; margin-bottom: 1.5rem;">⏰ Timer Setup</h3>
                 
                 <div class="form-group">
                     <label class="form-label">Select Task</label>
@@ -636,7 +510,7 @@
                             <option value="{{ task.id }}">📋 {{ task.title }}</option>
                         {% endfor %}
                         {% for task in could_do_tasks %}
-                            <option value="{{ task.id }}">✅ {{ task.title }}</option>
+                            <option value="{{ task.id }}">⚡ {{ task.title }}</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -648,6 +522,30 @@
                         <option value="52-17">⏰ 52/17 (52min/17min)</option>
                         <option value="custom">⚙️ Custom Timer</option>
                     </select>
+                </div>
+                
+                <!-- Custom Timer Settings (hidden by default) -->
+                <div id="custom-timer-settings" style="display: none;">
+                    <div class="form-group">
+                        <label class="form-label">Focus Time (minutes)</label>
+                        <input type="number" 
+                               class="form-select" 
+                               id="custom-focus-time" 
+                               value="25" 
+                               min="1" 
+                               max="120" 
+                               placeholder="Enter focus time">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Break Time (minutes)</label>
+                        <input type="number" 
+                               class="form-select" 
+                               id="custom-break-time" 
+                               value="5" 
+                               min="1" 
+                               max="60" 
+                               placeholder="Enter break time">
+                    </div>
                 </div>
             </div>
             
@@ -664,7 +562,7 @@
                 <div class="timer-controls">
                     <button class="control-btn primary" id="start-btn" onclick="toggleTimer()">
                         <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h8m-9-4h10a2 2 0 012 2v8a2 2 0 01-2 2H7a2 2 0 01-2-2v-8a2 2 0 012-2z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h8m-9-4h10a2 2 0 012 2v8a2 2 0 01-2-2v-8a2 2 0 012-2z"/>
                         </svg>
                         Start Focus
                     </button>
@@ -688,12 +586,14 @@
                 </div>
             </div>
         </div>
+            </div>
+        </main>
     </div>
 </div>
 
 <script>
-    // Enhanced Timer with Visual Effects
-    class EnhancedTimer {
+    // Enhanced Focus Timer
+    class FocusTimer {
         constructor() {
             this.timeLeft = 25 * 60; // 25 minutes in seconds
             this.totalTime = 25 * 60;
@@ -701,8 +601,8 @@
             this.isBreak = false;
             this.interval = null;
             this.currentTask = null;
-            this.sessionsCompleted = 0;
-            this.totalFocusTime = 0;
+            this.sessionsCompleted = parseInt(localStorage.getItem('focus_sessions') || '0');
+            this.totalFocusTime = parseInt(localStorage.getItem('total_focus_time') || '0');
             
             this.techniques = {
                 pomodoro: { work: 25, break: 5 },
@@ -712,7 +612,10 @@
             
             this.initializeElements();
             this.bindEvents();
-            this.loadStats();
+            this.toggleCustomSettings(); // Initialize custom settings visibility
+            this.updateStatsDisplay();
+            this.updateDisplay();
+            this.updateProgress();
         }
         
         initializeElements() {
@@ -725,34 +628,66 @@
             this.techniqueSelector = document.getElementById('technique-selector');
             this.sessionsCount = document.getElementById('sessions-count');
             this.totalTimeElement = document.getElementById('total-time');
+            this.customTimerSettings = document.getElementById('custom-timer-settings');
+            this.customFocusTime = document.getElementById('custom-focus-time');
+            this.customBreakTime = document.getElementById('custom-break-time');
         }
         
         bindEvents() {
             this.techniqueSelector.addEventListener('change', () => {
                 this.updateTechnique();
+                this.toggleCustomSettings();
             });
             
             this.taskSelector.addEventListener('change', () => {
                 this.currentTask = this.taskSelector.value;
             });
             
-            // Task checkbox events
-            document.querySelectorAll('.task-checkbox-input').forEach(checkbox => {
-                checkbox.addEventListener('change', (e) => {
-                    this.updateTaskStatus(e.target.dataset.taskId, e.target.checked);
-                });
+            // Listen for custom time changes
+            this.customFocusTime.addEventListener('change', () => {
+                if (this.techniqueSelector.value === 'custom') {
+                    this.updateCustomTechnique();
+                }
             });
+            
+            this.customBreakTime.addEventListener('change', () => {
+                if (this.techniqueSelector.value === 'custom') {
+                    this.updateCustomTechnique();
+                }
+            });
+        }
+        
+        toggleCustomSettings() {
+            if (this.techniqueSelector.value === 'custom') {
+                this.customTimerSettings.style.display = 'block';
+            } else {
+                this.customTimerSettings.style.display = 'none';
+            }
+        }
+        
+        updateCustomTechnique() {
+            const focusTime = parseInt(this.customFocusTime.value) || 25;
+            const breakTime = parseInt(this.customBreakTime.value) || 5;
+            
+            // Update the custom technique settings
+            this.techniques.custom = { work: focusTime, break: breakTime };
+            
+            // Update current timer if not running and not in break
+            if (!this.isRunning && !this.isBreak) {
+                this.timeLeft = focusTime * 60;
+                this.totalTime = focusTime * 60;
+                this.updateDisplay();
+                this.updateProgress();
+            }
         }
         
         updateTechnique() {
             const technique = this.techniqueSelector.value;
-            const settings = this.techniques[technique];
             
             if (technique === 'custom') {
-                // You could add a modal here for custom time settings
-                this.timeLeft = 25 * 60;
-                this.totalTime = 25 * 60;
+                this.updateCustomTechnique();
             } else {
+                const settings = this.techniques[technique];
                 this.timeLeft = settings.work * 60;
                 this.totalTime = settings.work * 60;
             }
@@ -778,7 +713,6 @@
                 </svg>
                 Pause
             `;
-            this.startBtn.classList.add('pause');
             
             this.interval = setInterval(() => {
                 this.timeLeft--;
@@ -795,7 +729,7 @@
                 this.timerPhase.textContent = 'Break Time 🧘‍♀️';
             } else {
                 this.timerPhase.textContent = this.currentTask ? 
-                    `Focusing on: ${this.getTaskTitle()}` : 'Focus Session 🎯';
+                    `Focusing on selected task` : 'Focus Session 🎯';
             }
         }
         
@@ -808,7 +742,6 @@
                 </svg>
                 Resume
             `;
-            this.startBtn.classList.remove('pause');
             this.timerPhase.textContent = 'Paused ⏸️';
         }
         
@@ -817,14 +750,27 @@
             clearInterval(this.interval);
             
             const technique = this.techniqueSelector.value;
-            const settings = this.techniques[technique];
             
             if (this.isBreak) {
-                this.timeLeft = (settings.break || 5) * 60;
-                this.totalTime = (settings.break || 5) * 60;
+                let breakTime;
+                if (technique === 'custom') {
+                    breakTime = parseInt(this.customBreakTime.value) || 5;
+                } else {
+                    const settings = this.techniques[technique];
+                    breakTime = settings.break || 5;
+                }
+                this.timeLeft = breakTime * 60;
+                this.totalTime = breakTime * 60;
             } else {
-                this.timeLeft = (settings.work || 25) * 60;
-                this.totalTime = (settings.work || 25) * 60;
+                let workTime;
+                if (technique === 'custom') {
+                    workTime = parseInt(this.customFocusTime.value) || 25;
+                } else {
+                    const settings = this.techniques[technique];
+                    workTime = settings.work || 25;
+                }
+                this.timeLeft = workTime * 60;
+                this.totalTime = workTime * 60;
             }
             
             this.updateDisplay();
@@ -836,7 +782,6 @@
                 </svg>
                 Start Focus
             `;
-            this.startBtn.classList.remove('pause');
             this.timerPhase.textContent = 'Ready to focus';
         }
         
@@ -866,10 +811,17 @@
         switchToBreak() {
             this.isBreak = true;
             const technique = this.techniqueSelector.value;
-            const settings = this.techniques[technique];
             
-            this.timeLeft = (settings.break || 5) * 60;
-            this.totalTime = (settings.break || 5) * 60;
+            let breakTime;
+            if (technique === 'custom') {
+                breakTime = parseInt(this.customBreakTime.value) || 5;
+            } else {
+                const settings = this.techniques[technique];
+                breakTime = settings.break || 5;
+            }
+            
+            this.timeLeft = breakTime * 60;
+            this.totalTime = breakTime * 60;
             this.timerPhase.textContent = 'Break Time 🧘‍♀️';
             
             this.updateDisplay();
@@ -882,10 +834,17 @@
         switchToFocus() {
             this.isBreak = false;
             const technique = this.techniqueSelector.value;
-            const settings = this.techniques[technique];
             
-            this.timeLeft = (settings.work || 25) * 60;
-            this.totalTime = (settings.work || 25) * 60;
+            let workTime;
+            if (technique === 'custom') {
+                workTime = parseInt(this.customFocusTime.value) || 25;
+            } else {
+                const settings = this.techniques[technique];
+                workTime = settings.work || 25;
+            }
+            
+            this.timeLeft = workTime * 60;
+            this.totalTime = workTime * 60;
             this.timerPhase.textContent = 'Ready to focus';
             
             this.updateDisplay();
@@ -897,7 +856,6 @@
                 </svg>
                 Start Focus
             `;
-            this.startBtn.classList.remove('pause');
         }
         
         updateDisplay() {
@@ -908,75 +866,51 @@
         
         updateProgress() {
             const progress = ((this.totalTime - this.timeLeft) / this.totalTime) * 100;
-            const circumference = 2 * Math.PI * 120; // radius = 120
-            const strokeDashoffset = circumference - (progress / 100) * circumference;
             
-            // Create progress circle if it doesn't exist
+            // Create or update progress SVG
             let svg = this.progressCircle.querySelector('svg');
             if (!svg) {
                 svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-                svg.setAttribute('width', '250');
-                svg.setAttribute('height', '250');
-                svg.setAttribute('viewBox', '0 0 250 250');
+                svg.setAttribute('width', '150');
+                svg.setAttribute('height', '150');
+                svg.setAttribute('viewBox', '0 0 150 150');
+                svg.style.position = 'absolute';
+                svg.style.top = '0';
+                svg.style.left = '0';
                 
                 const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-                circle.setAttribute('cx', '125');
-                circle.setAttribute('cy', '125');
-                circle.setAttribute('r', '120');
+                circle.setAttribute('cx', '75');
+                circle.setAttribute('cy', '75');
+                circle.setAttribute('r', '70');
                 circle.setAttribute('fill', 'none');
-                circle.setAttribute('stroke', 'rgba(255, 255, 255, 0.1)');
-                circle.setAttribute('stroke-width', '8');
+                circle.setAttribute('stroke', 'rgba(255, 255, 255, 0.2)');
+                circle.setAttribute('stroke-width', '4');
                 
                 const progressCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-                progressCircle.setAttribute('cx', '125');
-                progressCircle.setAttribute('cy', '125');
-                progressCircle.setAttribute('r', '120');
+                progressCircle.setAttribute('cx', '75');
+                progressCircle.setAttribute('cy', '75');
+                progressCircle.setAttribute('r', '70');
                 progressCircle.setAttribute('fill', 'none');
-                progressCircle.setAttribute('stroke', this.isBreak ? '#10B981' : '#3B82F6');
-                progressCircle.setAttribute('stroke-width', '8');
+                progressCircle.setAttribute('stroke', this.isBreak ? '#10B981' : '#ffffff');
+                progressCircle.setAttribute('stroke-width', '4');
                 progressCircle.setAttribute('stroke-linecap', 'round');
-                progressCircle.setAttribute('stroke-dasharray', circumference);
-                progressCircle.setAttribute('stroke-dashoffset', strokeDashoffset);
-                progressCircle.setAttribute('transform', 'rotate(-90 125 125)');
+                progressCircle.setAttribute('stroke-dasharray', '439.82');
+                progressCircle.setAttribute('stroke-dashoffset', '439.82');
+                progressCircle.setAttribute('transform', 'rotate(-90 75 75)');
                 progressCircle.style.transition = 'stroke-dashoffset 1s ease';
+                progressCircle.id = 'progress-path';
                 
                 svg.appendChild(circle);
                 svg.appendChild(progressCircle);
-                this.progressCircle.insertBefore(svg, this.timerDisplay);
-            } else {
-                const progressCircle = svg.children[1];
-                progressCircle.setAttribute('stroke-dashoffset', strokeDashoffset);
-                progressCircle.setAttribute('stroke', this.isBreak ? '#10B981' : '#3B82F6');
+                this.progressCircle.appendChild(svg);
             }
-        }
-        
-        getTaskTitle() {
-            const selectedOption = this.taskSelector.options[this.taskSelector.selectedIndex];
-            return selectedOption ? selectedOption.textContent : '';
-        }
-        
-        updateTaskStatus(taskId, completed) {
-            // Make AJAX request to update task status
-            fetch('/tasks/update-status/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
-                },
-                body: JSON.stringify({
-                    task_id: taskId,
-                    completed: completed
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    console.log('Task status updated successfully');
-                }
-            })
-            .catch(error => {
-                console.error('Error updating task status:', error);
-            });
+            
+            const progressPath = document.getElementById('progress-path');
+            if (progressPath) {
+                const offset = 439.82 - (progress / 100) * 439.82;
+                progressPath.setAttribute('stroke-dashoffset', offset);
+                progressPath.setAttribute('stroke', this.isBreak ? '#10B981' : '#ffffff');
+            }
         }
         
         showNotification(title, body) {
@@ -998,12 +932,6 @@
             localStorage.setItem('total_focus_time', this.totalFocusTime.toString());
         }
         
-        loadStats() {
-            this.sessionsCompleted = parseInt(localStorage.getItem('focus_sessions') || '0');
-            this.totalFocusTime = parseInt(localStorage.getItem('total_focus_time') || '0');
-            this.updateStatsDisplay();
-        }
-        
         updateStatsDisplay() {
             this.sessionsCount.textContent = this.sessionsCompleted;
             const hours = Math.floor(this.totalFocusTime / 3600);
@@ -1012,7 +940,7 @@
         }
     }
     
-    // Global timer functions for backward compatibility
+    // Global timer instance
     let timer;
     
     function toggleTimer() {
@@ -1023,82 +951,56 @@
         timer.resetTimer();
     }
     
+    function updateTaskStatus(taskId, completed) {
+        // Update task status via AJAX
+        fetch(`/tasks/${taskId}/toggle/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || '',
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                completed: completed
+            })
+        }).then(response => response.json())
+          .then(data => {
+              if (data.success) {
+                  console.log('Task status updated');
+              }
+          })
+          .catch(error => console.error('Error:', error));
+    }
+    
     // Initialize timer when page loads
     document.addEventListener('DOMContentLoaded', function() {
-        timer = new EnhancedTimer();
+        timer = new FocusTimer();
         
         // Request notification permission
         if ('Notification' in window && Notification.permission === 'default') {
             Notification.requestPermission();
         }
         
-        // Enhanced task interaction
-        initializeTaskInteraction();
-    });
-    
-    function initializeTaskInteraction() {
-        // Make entire task item clickable to toggle checkbox
-        const taskItems = document.querySelectorAll('.task-item');
-        
-        taskItems.forEach(item => {
+        // Make task items clickable
+        document.querySelectorAll('.task-item').forEach(item => {
             const checkbox = item.querySelector('input[type="checkbox"]');
-            const content = item.querySelector('.task-content');
-            
             if (checkbox) {
-                // Click anywhere on task item to toggle checkbox
                 item.addEventListener('click', function(e) {
-                    // Don't trigger if clicking directly on checkbox
                     if (e.target.type !== 'checkbox') {
                         checkbox.checked = !checkbox.checked;
-                        updateTaskCompletion(checkbox);
+                        const event = new Event('change');
+                        checkbox.dispatchEvent(event);
                     }
                 });
                 
-                // Handle checkbox change
                 checkbox.addEventListener('change', function() {
-                    updateTaskCompletion(this);
+                    if (this.checked) {
+                        item.classList.add('completed');
+                    } else {
+                        item.classList.remove('completed');
+                    }
                 });
-                
-                // Initialize visual state
-                updateTaskVisualState(item, checkbox.checked);
             }
         });
-    }
-    
-    function updateTaskCompletion(checkbox) {
-        const taskItem = checkbox.closest('.task-item');
-        const isCompleted = checkbox.checked;
-        
-        // Update visual state
-        updateTaskVisualState(taskItem, isCompleted);
-        
-        // Send AJAX request to update task status
-        const taskId = checkbox.dataset.taskId;
-        if (taskId) {
-            fetch(`/tasks/${taskId}/toggle/`, {
-                method: 'POST',
-                headers: {
-                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    completed: isCompleted
-                })
-            }).catch(error => {
-                console.error('Error updating task:', error);
-                // Revert checkbox state on error
-                checkbox.checked = !isCompleted;
-                updateTaskVisualState(taskItem, !isCompleted);
-            });
-        }
-    }
-    
-    function updateTaskVisualState(taskItem, isCompleted) {
-        if (isCompleted) {
-            taskItem.classList.add('completed');
-        } else {
-            taskItem.classList.remove('completed');
-        }
-    }
+    });
 </script>
 {% endblock %}

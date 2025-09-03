@@ -1,620 +1,378 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}Add New Task{% endblock %}
+{% block title %}Create New Task - Taskademic{% endblock %}
 
 {% block extra_css %}
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
-    :root {
-        --primary: #6366f1;
-        --primary-dark: #4f46e5;
-        --primary-light: #a5b4fc;
-        --accent: #14b8a6;
-        --warning: #f59e0b;
-        --danger: #ef4444;
-        --success: #10b981;
-        --gray-50: #f8fafc;
-        --gray-100: #f1f5f9;
-        --gray-200: #e2e8f0;
-        --gray-300: #cbd5e1;
-        --gray-400: #94a3b8;
-        --gray-500: #64748b;
-        --gray-600: #475569;
-        --gray-700: #334155;
-        --gray-800: #1e293b;
-        --gray-900: #0f172a;
-        --white: #ffffff;
-        --black: #000000;
-        --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-        --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-        --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-        --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-        --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
-        --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
-        --blur: blur(16px);
-        --radius: 12px;
-        --radius-lg: 16px;
-        --radius-xl: 24px;
-        --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    /* Override Tailwind styles */
+    .create-task-page {
+        font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif !important;
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%) !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        min-height: 100vh !important;
     }
-    
-    * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
+
+    .create-task-page .page-container {
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 2rem !important;
     }
-    
-    body {
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
-        min-height: 100vh;
-        font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
-        line-height: 1.6;
-        color: var(--gray-900);
-        overflow-x: hidden;
+
+    .create-task-page .form-card {
+        background: white !important;
+        border-radius: 20px !important;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1) !important;
+        overflow: hidden !important;
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        max-width: none !important;
+        width: 100% !important;
     }
-    
-    body::before {
-        content: '';
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: 
-            radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
-            radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
-            radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.2) 0%, transparent 50%);
-        pointer-events: none;
-        z-index: 1;
+
+    .create-task-page .form-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        padding: 2rem !important;
+        text-align: center !important;
+        color: white !important;
+        position: relative !important;
     }
-    
-    .app-container {
-        position: relative;
-        z-index: 2;
-        min-height: 100vh;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 2rem;
+
+    .create-task-page .form-header::before {
+        content: '' !important;
+        position: absolute !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        background: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='white' fill-opacity='0.1'%3E%3Cpath d='M20 20c0-8.837-7.163-16-16-16s-16 7.163-16 16 7.163 16 16 16 16-7.163 16-16zm16 0c0-8.837-7.163-16-16-16s-16 7.163-16 16 7.163 16 16 16 16-7.163 16-16z'/%3E%3C/g%3E%3C/svg%3E") !important;
     }
-    
-    .form-wrapper {
-        width: 100%;
-        max-width: 800px;
-        animation: slideUp 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+
+    .create-task-page .form-title {
+        font-size: 1.875rem !important;
+        font-weight: 700 !important;
+        margin: 0 0 0.5rem 0 !important;
+        letter-spacing: -0.025em !important;
+        position: relative !important;
     }
-    
-    .page-header {
-        text-align: center;
-        margin-bottom: 3rem;
-        animation: slideDown 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+
+    .create-task-page .form-subtitle {
+        font-size: 1rem !important;
+        opacity: 0.9 !important;
+        margin: 0 !important;
+        font-weight: 400 !important;
+        position: relative !important;
     }
-    
-    .page-title {
-        font-size: clamp(2.5rem, 5vw, 3.5rem);
-        font-weight: 900;
-        background: linear-gradient(135deg, var(--white) 0%, rgba(255, 255, 255, 0.8) 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        margin-bottom: 1rem;
-        letter-spacing: -0.02em;
-        line-height: 1.1;
+
+    .create-task-page .form-body {
+        padding: 2rem !important;
     }
-    
-    .page-subtitle {
-        font-size: 1.125rem;
-        color: rgba(255, 255, 255, 0.9);
-        font-weight: 400;
-        max-width: 500px;
-        margin: 0 auto;
-        line-height: 1.6;
+
+    .create-task-page .form-grid {
+        display: grid !important;
+        gap: 1.5rem !important;
+        max-width: none !important;
     }
-    
-    .form-card {
-        background: rgba(255, 255, 255, 0.95);
-        backdrop-filter: var(--blur);
-        border-radius: var(--radius-xl);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        box-shadow: var(--shadow-2xl);
-        padding: 3rem;
-        position: relative;
-        overflow: hidden;
-        transition: var(--transition);
+
+    .create-task-page .form-group {
+        position: relative !important;
+        opacity: 1 !important;
     }
-    
-    .form-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 1px;
-        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8), transparent);
+
+    .create-task-page .form-label {
+        display: block !important;
+        font-size: 0.875rem !important;
+        font-weight: 600 !important;
+        color: #374151 !important;
+        margin-bottom: 0.5rem !important;
+        text-transform: none !important;
+        letter-spacing: normal !important;
     }
-    
-    .form-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 32px 64px -12px rgba(0, 0, 0, 0.15);
+
+    .create-task-page .form-input, 
+    .create-task-page .form-textarea, 
+    .create-task-page .form-select {
+        width: 100% !important;
+        padding: 0.75rem 1rem !important;
+        border: 2px solid #e5e7eb !important;
+        border-radius: 8px !important;
+        font-size: 0.875rem !important;
+        font-weight: 400 !important;
+        background: #ffffff !important;
+        color: #111827 !important;
+        transition: all 0.2s ease !important;
+        font-family: 'Poppins', sans-serif !important;
     }
-    
-    .form-section {
-        margin-bottom: 2.5rem;
-        position: relative;
+
+    .create-task-page .form-input:focus, 
+    .create-task-page .form-textarea:focus, 
+    .create-task-page .form-select:focus {
+        outline: none !important;
+        border-color: #667eea !important;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1) !important;
+        transform: translateY(-1px) !important;
+        background: #fefefe !important;
     }
-    
-    .form-section:last-child {
-        margin-bottom: 0;
+
+    .create-task-page .form-textarea {
+        min-height: 100px !important;
+        resize: vertical !important;
     }
-    
-    .form-label {
-        display: block;
-        font-size: 0.875rem;
-        font-weight: 700;
-        color: var(--gray-700);
-        margin-bottom: 0.75rem;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        position: relative;
+
+    .create-task-page .form-input::placeholder, 
+    .create-task-page .form-textarea::placeholder {
+        color: #9ca3af !important;
+        font-weight: 400 !important;
     }
-    
-    .form-label::after {
-        content: '';
-        position: absolute;
-        bottom: -0.25rem;
-        left: 0;
-        width: 2rem;
-        height: 2px;
-        background: var(--primary);
-        border-radius: 1px;
+
+    .create-task-page .priority-section {
+        margin-top: 0.75rem !important;
     }
-    
-    .form-input {
-        width: 100%;
-        padding: 1.25rem 1.5rem;
-        border: 2px solid var(--gray-200);
-        border-radius: var(--radius);
-        font-size: 1rem;
-        font-weight: 500;
-        transition: var(--transition);
-        background: var(--white);
-        color: var(--gray-900);
-        position: relative;
-        box-shadow: var(--shadow-sm);
+
+    .create-task-page .priority-grid {
+        display: grid !important;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) !important;
+        gap: 1rem !important;
     }
-    
-    .form-input:focus {
-        outline: none;
-        border-color: var(--primary);
-        box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1), var(--shadow-md);
-        transform: translateY(-1px);
+
+    .create-task-page .priority-card {
+        position: relative !important;
+        cursor: pointer !important;
+        border: 2px solid #e5e7eb !important;
+        border-radius: 12px !important;
+        padding: 1.25rem !important;
+        background: white !important;
+        transition: all 0.3s ease !important;
+        text-align: center !important;
     }
-    
-    .form-input::placeholder {
-        color: var(--gray-400);
-        font-weight: 400;
+
+    .create-task-page .priority-card:hover {
+        border-color: #667eea !important;
+        transform: translateY(-3px) !important;
+        box-shadow: 0 10px 25px rgba(102, 126, 234, 0.15) !important;
     }
-    
-    .form-textarea {
-        min-height: 120px;
-        resize: vertical;
-        font-family: inherit;
-        line-height: 1.6;
+
+    .create-task-page .priority-card.selected {
+        border-color: #667eea !important;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        color: white !important;
+        box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3) !important;
     }
-    
-    .form-select {
-        appearance: none;
-        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%234f46e5' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
-        background-position: right 1.25rem center;
-        background-repeat: no-repeat;
-        background-size: 1.25rem;
-        padding-right: 3.5rem;
-        cursor: pointer;
+
+    .create-task-page .priority-card input[type="radio"] {
+        position: absolute !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
     }
-    
-    .priority-section {
-        margin-top: 1.5rem;
+
+    .create-task-page .priority-icon {
+        width: 50px !important;
+        height: 50px !important;
+        border-radius: 50% !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        font-size: 1.25rem !important;
+        font-weight: 700 !important;
+        margin: 0 auto 0.75rem !important;
+        transition: all 0.3s ease !important;
+        color: white !important;
     }
-    
-    .priority-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        gap: 1.5rem;
+
+    .create-task-page .priority-must .priority-icon { 
+        background: linear-gradient(135deg, #ef4444, #dc2626) !important; 
     }
-    
-    .priority-option {
-        position: relative;
-        border: 2px solid var(--gray-200);
-        border-radius: var(--radius-lg);
-        padding: 2rem;
-        cursor: pointer;
-        transition: var(--transition);
-        background: var(--white);
-        overflow: hidden;
-        group: priority;
+    .create-task-page .priority-should .priority-icon { 
+        background: linear-gradient(135deg, #f59e0b, #d97706) !important; 
     }
-    
-    .priority-option::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: linear-gradient(135deg, transparent 0%, rgba(99, 102, 241, 0.02) 100%);
-        opacity: 0;
-        transition: var(--transition);
+    .create-task-page .priority-could .priority-icon { 
+        background: linear-gradient(135deg, #3b82f6, #2563eb) !important; 
     }
-    
-    .priority-option:hover {
-        border-color: var(--primary);
-        transform: translateY(-2px);
-        box-shadow: var(--shadow-lg);
+    .create-task-page .priority-wont .priority-icon { 
+        background: linear-gradient(135deg, #10b981, #059669) !important; 
     }
-    
-    .priority-option:hover::before {
-        opacity: 1;
+
+    .create-task-page .priority-card.selected .priority-icon {
+        background: rgba(255, 255, 255, 0.2) !important;
+        color: white !important;
     }
-    
-    .priority-option input[type="radio"] {
-        position: absolute;
-        top: 1.5rem;
-        right: 1.5rem;
-        width: 1.25rem;
-        height: 1.25rem;
-        margin: 0;
-        accent-color: var(--primary);
-        cursor: pointer;
+
+    .create-task-page .priority-title {
+        font-size: 1rem !important;
+        font-weight: 600 !important;
+        margin-bottom: 0.25rem !important;
     }
-    
-    .priority-option.selected {
-        border-color: var(--primary);
-        background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(99, 102, 241, 0.02) 100%);
-        transform: translateY(-2px);
-        box-shadow: var(--shadow-lg);
+
+    .create-task-page .priority-desc {
+        font-size: 0.75rem !important;
+        opacity: 0.8 !important;
+        line-height: 1.3 !important;
     }
-    
-    .priority-option.selected::before {
-        opacity: 1;
+
+    .create-task-page .form-row {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 1.5rem !important;
     }
-    
-    .priority-must {
-        border-left: 6px solid var(--danger);
-    }
-    .priority-should {
-        border-left: 6px solid var(--warning);
-    }
-    .priority-could {
-        border-left: 6px solid var(--success);
-    }
-    .priority-wont {
-        border-left: 6px solid var(--gray-400);
-    }
-    
-    .priority-icon {
-        width: 3rem;
-        height: 3rem;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-bottom: 1rem;
-        font-size: 1.25rem;
-        font-weight: 600;
-    }
-    
-    .priority-must .priority-icon {
-        background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(239, 68, 68, 0.05) 100%);
-        color: var(--danger);
-    }
-    .priority-should .priority-icon {
-        background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(245, 158, 11, 0.05) 100%);
-        color: var(--warning);
-    }
-    .priority-could .priority-icon {
-        background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%);
-        color: var(--success);
-    }
-    .priority-wont .priority-icon {
-        background: linear-gradient(135deg, rgba(148, 163, 184, 0.1) 0%, rgba(148, 163, 184, 0.05) 100%);
-        color: var(--gray-400);
-    }
-    
-    .priority-title {
-        font-weight: 700;
-        color: var(--gray-900);
-        margin-bottom: 0.5rem;
-        font-size: 1.125rem;
-        padding-right: 2.5rem;
-    }
-    
-    .priority-desc {
-        font-size: 0.9rem;
-        color: var(--gray-600);
-        line-height: 1.5;
-        padding-right: 2.5rem;
-    }
-    
-    .form-row {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 2rem;
-    }
-    
-    .button-group {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-top: 3rem;
-        padding-top: 2rem;
-        border-top: 1px solid var(--gray-200);
-        gap: 1rem;
-    }
-    
-    .btn {
-        padding: 1rem 2rem;
-        border-radius: var(--radius);
-        font-weight: 600;
-        font-size: 0.95rem;
-        text-decoration: none;
-        transition: var(--transition);
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        border: none;
-        position: relative;
-        overflow: hidden;
-        min-width: 140px;
-    }
-    
-    .btn::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-        transition: left 0.5s;
-    }
-    
-    .btn:hover::before {
-        left: 100%;
-    }
-    
-    .btn-primary {
-        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-        color: var(--white);
-        box-shadow: var(--shadow-md);
-    }
-    
-    .btn-primary:hover {
-        transform: translateY(-2px);
-        box-shadow: var(--shadow-lg);
-        text-decoration: none;
-        color: var(--white);
-    }
-    
-    .btn-secondary {
-        background: var(--white);
-        color: var(--gray-700);
-        border: 2px solid var(--gray-200);
-        box-shadow: var(--shadow-sm);
-    }
-    
-    .btn-secondary:hover {
-        background: var(--gray-50);
-        border-color: var(--gray-300);
-        transform: translateY(-1px);
-        box-shadow: var(--shadow);
-        text-decoration: none;
-        color: var(--gray-800);
-    }
-    
-    .error-message {
-        color: var(--danger);
-        font-size: 0.875rem;
-        margin-top: 0.75rem;
-        font-weight: 600;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-    
-    .error-message::before {
-        content: '⚠';
-        font-size: 1rem;
-    }
-    
-    .success-message {
-        background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%);
-        border: 2px solid rgba(16, 185, 129, 0.2);
-        color: var(--success);
-        padding: 1.25rem;
-        border-radius: var(--radius-lg);
-        margin-bottom: 2rem;
-        font-weight: 600;
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        box-shadow: var(--shadow-sm);
-    }
-    
-    .success-message::before {
-        content: '✓';
-        font-size: 1.25rem;
-        font-weight: 700;
-    }
-    
-    .input-group {
-        position: relative;
-    }
-    
-    .input-icon {
-        position: absolute;
-        left: 1.25rem;
-        top: 50%;
-        transform: translateY(-50%);
-        color: var(--gray-400);
-        font-size: 1.125rem;
-        pointer-events: none;
-        transition: var(--transition);
-    }
-    
-    .input-group .form-input {
-        padding-left: 3.5rem;
-    }
-    
-    .input-group .form-input:focus + .input-icon {
-        color: var(--primary);
-    }
-    
-    /* Loading state */
-    .btn-loading {
-        position: relative;
-        color: transparent;
-    }
-    
-    .btn-loading::after {
-        content: '';
-        position: absolute;
-        width: 1.25rem;
-        height: 1.25rem;
-        border: 2px solid transparent;
-        border-top: 2px solid currentColor;
-        border-radius: 50%;
-        left: 50%;
-        top: 50%;
-        transform: translate(-50%, -50%);
-        animation: spin 1s linear infinite;
-    }
-    
-    @keyframes spin {
-        to {
-            transform: translate(-50%, -50%) rotate(360deg);
+
+    @media (max-width: 1200px) {
+        .create-task-page .form-body {
+            padding: 1.5rem !important;
         }
     }
-    
-    @keyframes slideUp {
-        from {
-            opacity: 0;
-            transform: translateY(30px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-    
-    @keyframes slideDown {
-        from {
-            opacity: 0;
-            transform: translateY(-30px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-    
-    @keyframes fadeIn {
-        from {
-            opacity: 0;
-        }
-        to {
-            opacity: 1;
-        }
-    }
-    
-    /* Responsive Design */
+
     @media (max-width: 768px) {
-        .app-container {
-            padding: 1rem;
+        .create-task-page .form-row {
+            grid-template-columns: 1fr !important;
         }
         
-        .form-card {
-            padding: 2rem;
+        .create-task-page .priority-grid {
+            grid-template-columns: 1fr !important;
         }
         
-        .form-row {
-            grid-template-columns: 1fr;
-            gap: 1.5rem;
+        .create-task-page .page-container {
+            padding: 1rem !important;
         }
         
-        .priority-grid {
-            grid-template-columns: 1fr;
-            gap: 1rem;
+        .create-task-page .form-body {
+            padding: 1.5rem !important;
         }
         
-        .priority-option {
-            padding: 1.5rem;
+        .create-task-page .form-header {
+            padding: 1.5rem !important;
         }
         
-        .button-group {
-            flex-direction: column;
-            gap: 1rem;
-        }
-        
-        .btn {
-            width: 100%;
-        }
-        
-        .page-title {
-            font-size: 2.5rem;
-        }
-        
-        .page-subtitle {
-            font-size: 1rem;
+        .create-task-page .form-title {
+            font-size: 1.5rem !important;
         }
     }
-    
-    @media (max-width: 480px) {
-        .form-card {
-            padding: 1.5rem;
-        }
-        
-        .priority-option {
-            padding: 1.25rem;
-        }
-        
-        .priority-title {
-            font-size: 1rem;
-        }
-        
-        .priority-desc {
-            font-size: 0.85rem;
-        }
+
+    .create-task-page .button-group {
+        display: flex !important;
+        gap: 1rem !important;
+        justify-content: center !important;
+        margin-top: 2rem !important;
+        padding-top: 2rem !important;
+        border-top: 1px solid #e5e7eb !important;
+    }
+
+    .create-task-page .btn {
+        padding: 0.75rem 2rem !important;
+        border-radius: 8px !important;
+        font-weight: 600 !important;
+        font-size: 0.875rem !important;
+        cursor: pointer !important;
+        transition: all 0.2s ease !important;
+        text-decoration: none !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 0.5rem !important;
+        border: none !important;
+        font-family: 'Poppins', sans-serif !important;
+        min-width: 120px !important;
+        justify-content: center !important;
+    }
+
+    .create-task-page .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        color: white !important;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3) !important;
+    }
+
+    .create-task-page .btn-primary:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4) !important;
+    }
+
+    .create-task-page .btn-secondary {
+        background: #f8fafc !important;
+        color: #475569 !important;
+        border: 2px solid #e2e8f0 !important;
+    }
+
+    .create-task-page .btn-secondary:hover {
+        background: #f1f5f9 !important;
+        border-color: #cbd5e1 !important;
+        transform: translateY(-1px) !important;
+    }
+
+    .create-task-page .error-message {
+        margin-top: 0.25rem !important;
+        color: #ef4444 !important;
+        font-size: 0.75rem !important;
+        font-weight: 500 !important;
+    }
+
+    .create-task-page .success-message {
+        background: linear-gradient(135deg, #ecfdf5, #d1fae5) !important;
+        border: 1px solid #22c55e !important;
+        color: #166534 !important;
+        padding: 0.75rem !important;
+        border-radius: 8px !important;
+        margin-bottom: 1.5rem !important;
+        font-weight: 500 !important;
+        font-size: 0.875rem !important;
+    }
+
+    /* Loading state */
+    .create-task-page .btn-primary:disabled {
+        opacity: 0.7 !important;
+        cursor: not-allowed !important;
+        transform: none !important;
+    }
+
+    .create-task-page .btn-primary.loading::after {
+        content: '' !important;
+        width: 16px !important;
+        height: 16px !important;
+        border: 2px solid white !important;
+        border-top: 2px solid transparent !important;
+        border-radius: 50% !important;
+        animation: spin 1s linear infinite !important;
+        margin-left: 0.5rem !important;
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    /* Better select styling */
+    .create-task-page .form-select {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e") !important;
+        background-position: right 0.75rem center !important;
+        background-repeat: no-repeat !important;
+        background-size: 1.25em 1.25em !important;
+        padding-right: 2.5rem !important;
+        appearance: none !important;
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="app-container">
-    <div class="form-wrapper">
-        <div class="page-header">
-            <h1 class="page-title">Create New Task</h1>
-            <p class="page-subtitle">Transform your ideas into actionable tasks with smart prioritization</p>
+<div class="create-task-page">
+    <div class="page-container">
+    <div class="form-card">
+        <div class="form-header">
+            <h1 class="form-title">✨ Create New Task</h1>
+            <p class="form-subtitle">Turn your ideas into organized, actionable tasks</p>
         </div>
         
-        {% if messages %}
-            {% for message in messages %}
-                <div class="success-message">{{ message }}</div>
-            {% endfor %}
-        {% endif %}
-        
-        <div class="form-card">
+        <div class="form-body">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="success-message">
+                        ✅ {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+            
             <form method="post" id="taskForm">
                 {% csrf_token %}
                 
-                <div class="form-section">
-                    <label for="title" class="form-label">
-                        <i class="fas fa-lightbulb"></i> Task Title
-                    </label>
-                    <div class="input-group">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="title" class="form-label">📝 Task Title</label>
                         <input 
                             type="text" 
                             id="title" 
@@ -624,74 +382,71 @@
                             placeholder="What needs to be accomplished?"
                             value="{{ form.title.value|default:'' }}"
                         >
-                        <i class="input-icon fas fa-tasks"></i>
+                        {% if form.title.errors %}
+                            <div class="error-message">
+                                ⚠️ {{ form.title.errors.0 }}
+                            </div>
+                        {% endif %}
                     </div>
-                    {% if form.title.errors %}
-                        <div class="error-message">{{ form.title.errors.0 }}</div>
-                    {% endif %}
-                </div>
-                
-                <div class="form-section">
-                    <label for="description" class="form-label">
-                        <i class="fas fa-align-left"></i> Description
-                    </label>
-                    <textarea 
-                        id="description" 
-                        name="description" 
-                        class="form-input form-textarea"
-                        placeholder="Provide detailed context and requirements for this task..."
-                    >{{ form.description.value|default:'' }}</textarea>
-                    {% if form.description.errors %}
-                        <div class="error-message">{{ form.description.errors.0 }}</div>
-                    {% endif %}
-                </div>
-                
-                <div class="form-section">
-                    <label class="form-label">
-                        <i class="fas fa-star"></i> Priority Level
-                    </label>
-                    <div class="priority-section">
-                        <div class="priority-grid">
-                            <label class="priority-option priority-must" for="priority_must">
-                                <input type="radio" name="priority" value="must" id="priority_must" required>
-                                <div class="priority-icon">M</div>
-                                <div class="priority-title">Must Have</div>
-                                <div class="priority-desc">Critical requirements that are absolutely necessary for success</div>
-                            </label>
-                            
-                            <label class="priority-option priority-should" for="priority_should">
-                                <input type="radio" name="priority" value="should" id="priority_should" required>
-                                <div class="priority-icon">S</div>
-                                <div class="priority-title">Should Have</div>
-                                <div class="priority-desc">Important features that add significant value but aren't critical</div>
-                            </label>
-                            
-                            <label class="priority-option priority-could" for="priority_could">
-                                <input type="radio" name="priority" value="could" id="priority_could" required>
-                                <div class="priority-icon">C</div>
-                                <div class="priority-title">Could Have</div>
-                                <div class="priority-desc">Nice-to-have features that would be included if time permits</div>
-                            </label>
-                            
-                            <label class="priority-option priority-wont" for="priority_wont">
-                                <input type="radio" name="priority" value="wont" id="priority_wont" required>
-                                <div class="priority-icon">W</div>
-                                <div class="priority-title">Won't Have</div>
-                                <div class="priority-desc">Features that won't be delivered in this iteration</div>
-                            </label>
+                    
+                    <div class="form-group">
+                        <label for="description" class="form-label">📄 Description</label>
+                        <textarea 
+                            id="description" 
+                            name="description" 
+                            class="form-textarea"
+                            placeholder="Provide detailed context and requirements for this task..."
+                        >{{ form.description.value|default:'' }}</textarea>
+                        {% if form.description.errors %}
+                            <div class="error-message">
+                                ⚠️ {{ form.description.errors.0 }}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">🎯 Priority Level</label>
+                        <div class="priority-section">
+                            <div class="priority-grid">
+                                <label class="priority-card priority-must" for="priority_must">
+                                    <input type="radio" name="priority" value="must" id="priority_must" required>
+                                    <div class="priority-icon">M</div>
+                                    <div class="priority-title">Must Have</div>
+                                    <div class="priority-desc">Critical requirements absolutely necessary</div>
+                                </label>
+                                
+                                <label class="priority-card priority-should" for="priority_should">
+                                    <input type="radio" name="priority" value="should" id="priority_should" required>
+                                    <div class="priority-icon">S</div>
+                                    <div class="priority-title">Should Have</div>
+                                    <div class="priority-desc">Important but not critical features</div>
+                                </label>
+                                
+                                <label class="priority-card priority-could" for="priority_could">
+                                    <input type="radio" name="priority" value="could" id="priority_could" required>
+                                    <div class="priority-icon">C</div>
+                                    <div class="priority-title">Could Have</div>
+                                    <div class="priority-desc">Nice-to-have if time permits</div>
+                                </label>
+                                
+                                <label class="priority-card priority-wont" for="priority_wont">
+                                    <input type="radio" name="priority" value="wont" id="priority_wont" required>
+                                    <div class="priority-icon">W</div>
+                                    <div class="priority-title">Won't Have</div>
+                                    <div class="priority-desc">Not for this iteration</div>
+                                </label>
+                            </div>
                         </div>
+                        {% if form.priority.errors %}
+                            <div class="error-message">
+                                ⚠️ {{ form.priority.errors.0 }}
+                            </div>
+                        {% endif %}
                     </div>
-                    {% if form.priority.errors %}
-                        <div class="error-message">{{ form.priority.errors.0 }}</div>
-                    {% endif %}
-                </div>
-                
-                <div class="form-row">
-                    <div class="form-section">
-                        <label for="due_date" class="form-label">
-                            <i class="fas fa-calendar-alt"></i> Due Date
-                        </label>
-                        <div class="input-group">
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="due_date" class="form-label">📅 Due Date</label>
                             <input 
                                 type="datetime-local" 
                                 id="due_date" 
@@ -699,18 +454,15 @@
                                 class="form-input"
                                 value="{{ form.due_date.value|default:'' }}"
                             >
-                            <i class="input-icon fas fa-clock"></i>
+                            {% if form.due_date.errors %}
+                                <div class="error-message">
+                                    ⚠️ {{ form.due_date.errors.0 }}
+                                </div>
+                            {% endif %}
                         </div>
-                        {% if form.due_date.errors %}
-                            <div class="error-message">{{ form.due_date.errors.0 }}</div>
-                        {% endif %}
-                    </div>
-                    
-                    <div class="form-section">
-                        <label for="estimated_duration" class="form-label">
-                            <i class="fas fa-hourglass-half"></i> Duration (minutes)
-                        </label>
-                        <div class="input-group">
+                        
+                        <div class="form-group">
+                            <label for="estimated_duration" class="form-label">⏱️ Duration (minutes)</label>
                             <input 
                                 type="number" 
                                 id="estimated_duration" 
@@ -720,20 +472,17 @@
                                 placeholder="30"
                                 value="{{ form.estimated_duration.value|default:'30' }}"
                             >
-                            <i class="input-icon fas fa-stopwatch"></i>
+                            {% if form.estimated_duration.errors %}
+                                <div class="error-message">
+                                    ⚠️ {{ form.estimated_duration.errors.0 }}
+                                </div>
+                            {% endif %}
                         </div>
-                        {% if form.estimated_duration.errors %}
-                            <div class="error-message">{{ form.estimated_duration.errors.0 }}</div>
-                        {% endif %}
                     </div>
-                </div>
-                
-                <div class="form-section">
-                    <label for="category" class="form-label">
-                        <i class="fas fa-folder"></i> Category
-                    </label>
-                    <div class="input-group">
-                        <select id="category" name="category" class="form-input form-select">
+                    
+                    <div class="form-group">
+                        <label for="category" class="form-label">📂 Category</label>
+                        <select id="category" name="category" class="form-select">
                             <option value="">Choose a category for better organization</option>
                             <option value="work" {% if form.category.value == 'work' %}selected{% endif %}>💼 Work</option>
                             <option value="personal" {% if form.category.value == 'personal' %}selected{% endif %}>🏠 Personal</option>
@@ -744,102 +493,51 @@
                             <option value="creative" {% if form.category.value == 'creative' %}selected{% endif %}>🎨 Creative</option>
                             <option value="other" {% if form.category.value == 'other' %}selected{% endif %}>📋 Other</option>
                         </select>
-                        <i class="input-icon fas fa-tag"></i>
+                        {% if form.category.errors %}
+                            <div class="error-message">
+                                ⚠️ {{ form.category.errors.0 }}
+                            </div>
+                        {% endif %}
                     </div>
-                    {% if form.category.errors %}
-                        <div class="error-message">{{ form.category.errors.0 }}</div>
-                    {% endif %}
                 </div>
                 
                 <div class="button-group">
                     <a href="{% url 'dashboard:home' %}" class="btn btn-secondary">
-                        <i class="fas fa-arrow-left" style="margin-right: 0.5rem;"></i>
-                        Cancel
+                        ← Cancel
                     </a>
                     <button type="submit" class="btn btn-primary" id="submitBtn">
-                        <i class="fas fa-plus" style="margin-right: 0.5rem;"></i>
-                        Create Task
+                        ✨ Create Task
                     </button>
                 </div>
             </form>
         </div>
     </div>
 </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Enhanced priority selection with smooth animations
-    const priorityOptions = document.querySelectorAll('.priority-option');
+    const form = document.getElementById('taskForm');
     const submitBtn = document.getElementById('submitBtn');
-    const taskForm = document.getElementById('taskForm');
+    const priorityCards = document.querySelectorAll('.priority-card');
     
-    // Add staggered animation to priority options
-    priorityOptions.forEach((option, index) => {
-        option.style.opacity = '0';
-        option.style.transform = 'translateY(20px)';
-        setTimeout(() => {
-            option.style.transition = 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
-            option.style.opacity = '1';
-            option.style.transform = 'translateY(0)';
-        }, index * 100);
-    });
-    
-    // Enhanced priority selection functionality
-    priorityOptions.forEach(option => {
-        option.addEventListener('click', function(e) {
-            // Prevent double-clicking on radio button
+    // Enhanced priority selection
+    priorityCards.forEach(card => {
+        card.addEventListener('click', function(e) {
             if (e.target.type === 'radio') return;
             
-            // Remove selected class from all options with animation
-            priorityOptions.forEach(opt => {
-                opt.classList.remove('selected');
-                opt.style.transform = 'scale(1)';
-            });
+            // Remove selected class from all cards
+            priorityCards.forEach(c => c.classList.remove('selected'));
             
-            // Add selected class to clicked option with animation
+            // Add selected class to clicked card
             this.classList.add('selected');
-            this.style.transform = 'scale(1.02)';
             
-            // Set the radio button as checked
+            // Check the radio button
             const radioInput = this.querySelector('input[type="radio"]');
             if (radioInput) {
                 radioInput.checked = true;
-            }
-            
-            // Add ripple effect
-            const ripple = document.createElement('div');
-            ripple.style.position = 'absolute';
-            ripple.style.borderRadius = '50%';
-            ripple.style.background = 'rgba(99, 102, 241, 0.3)';
-            ripple.style.transform = 'scale(0)';
-            ripple.style.animation = 'ripple 0.6s linear';
-            ripple.style.left = e.offsetX - 10 + 'px';
-            ripple.style.top = e.offsetY - 10 + 'px';
-            ripple.style.width = '20px';
-            ripple.style.height = '20px';
-            ripple.style.pointerEvents = 'none';
-            
-            this.appendChild(ripple);
-            setTimeout(() => ripple.remove(), 600);
-            
-            // Reset transform after animation
-            setTimeout(() => {
-                this.style.transform = 'scale(1)';
-            }, 200);
-        });
-        
-        // Add hover effects
-        option.addEventListener('mouseenter', function() {
-            if (!this.classList.contains('selected')) {
-                this.style.transform = 'translateY(-3px)';
-            }
-        });
-        
-        option.addEventListener('mouseleave', function() {
-            if (!this.classList.contains('selected')) {
-                this.style.transform = 'translateY(0)';
             }
         });
     });
@@ -848,220 +546,48 @@ document.addEventListener('DOMContentLoaded', function() {
     {% if form.priority.value %}
     const initialPriority = '{{ form.priority.value }}';
     if (initialPriority) {
-        const initialOption = document.querySelector(`input[value="${initialPriority}"]`);
+        const initialOption = document.querySelector(`input[name="priority"][value="${initialPriority}"]`);
         if (initialOption) {
             initialOption.checked = true;
-            initialOption.closest('.priority-option').classList.add('selected');
+            initialOption.closest('.priority-card').classList.add('selected');
         }
     }
     {% endif %}
     
-    // Enhanced form inputs with floating labels effect
-    const formInputs = document.querySelectorAll('.form-input');
-    formInputs.forEach(input => {
-        // Add focus animations
-        input.addEventListener('focus', function() {
-            this.style.transform = 'translateY(-1px)';
-            this.style.boxShadow = '0 0 0 4px rgba(99, 102, 241, 0.1), 0 4px 6px -1px rgb(0 0 0 / 0.1)';
-        });
-        
-        input.addEventListener('blur', function() {
-            this.style.transform = 'translateY(0)';
-            this.style.boxShadow = '0 1px 2px 0 rgb(0 0 0 / 0.05)';
-        });
-        
-        // Add typing animation
-        input.addEventListener('input', function() {
-            this.style.borderColor = 'var(--primary)';
-            setTimeout(() => {
-                if (!this.matches(':focus')) {
-                    this.style.borderColor = 'var(--gray-200)';
-                }
-            }, 500);
-        });
-    });
-    
-    // Enhanced form submission with loading states
-    taskForm.addEventListener('submit', function(e) {
-        // Validate priority is selected
-        const selectedPriority = document.querySelector('input[name="priority"]:checked');
-        if (!selectedPriority) {
-            e.preventDefault();
-            
-            // Shake animation for priority section
-            const prioritySection = document.querySelector('.priority-section');
-            prioritySection.style.animation = 'shake 0.5s ease-in-out';
-            setTimeout(() => {
-                prioritySection.style.animation = '';
-            }, 500);
-            
-            // Show elegant error notification
-            showNotification('Please select a priority level for your task.', 'error');
-            return;
-        }
-        
-        // Show loading state with animation
-        submitBtn.classList.add('btn-loading');
-        const originalText = submitBtn.innerHTML;
-        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin" style="margin-right: 0.5rem;"></i>Creating...';
+    // Form submission with loading state
+    form.addEventListener('submit', function() {
         submitBtn.disabled = true;
-        
-        // Add success animation to form
-        this.style.opacity = '0.7';
-        this.style.pointerEvents = 'none';
-        
-        // Show success notification
-        showNotification('Creating your task...', 'info');
-        
-        // Restore button state if form submission fails (fallback)
-        setTimeout(() => {
-            submitBtn.classList.remove('btn-loading');
-            submitBtn.innerHTML = originalText;
-            submitBtn.disabled = false;
-            this.style.opacity = '1';
-            this.style.pointerEvents = 'auto';
-        }, 10000);
+        submitBtn.classList.add('loading');
+        submitBtn.innerHTML = '⏳ Creating Task...';
     });
     
-    // Elegant notification system
-    function showNotification(message, type = 'info') {
-        // Remove existing notifications
-        const existingNotifications = document.querySelectorAll('.notification');
-        existingNotifications.forEach(notif => notif.remove());
-        
-        const notification = document.createElement('div');
-        notification.className = `notification notification-${type}`;
-        notification.innerHTML = `
-            <div class="notification-content">
-                <i class="fas fa-${type === 'error' ? 'exclamation-triangle' : type === 'success' ? 'check-circle' : 'info-circle'}"></i>
-                <span>${message}</span>
-            </div>
-        `;
-        
-        // Add notification styles
-        notification.style.cssText = `
-            position: fixed;
-            top: 2rem;
-            right: 2rem;
-            background: ${type === 'error' ? 'linear-gradient(135deg, rgba(239, 68, 68, 0.95) 0%, rgba(220, 38, 38, 0.95) 100%)' : 
-                       type === 'success' ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.95) 0%, rgba(5, 150, 105, 0.95) 100%)' : 
-                       'linear-gradient(135deg, rgba(99, 102, 241, 0.95) 0%, rgba(79, 70, 229, 0.95) 100%)'};
-            color: white;
-            padding: 1rem 1.5rem;
-            border-radius: 12px;
-            font-weight: 600;
-            font-size: 0.9rem;
-            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-            backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            z-index: 9999;
-            opacity: 0;
-            transform: translateX(100%);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            max-width: 400px;
-        `;
-        
-        const notificationContent = notification.querySelector('.notification-content');
-        notificationContent.style.cssText = `
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        `;
-        
-        document.body.appendChild(notification);
-        
-        // Animate in
-        setTimeout(() => {
-            notification.style.opacity = '1';
-            notification.style.transform = 'translateX(0)';
-        }, 100);
-        
-        // Auto remove after 5 seconds
-        setTimeout(() => {
-            notification.style.opacity = '0';
-            notification.style.transform = 'translateX(100%)';
-            setTimeout(() => notification.remove(), 300);
-        }, 5000);
+    // Auto-resize textarea
+    const textarea = document.getElementById('description');
+    if (textarea) {
+        textarea.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.max(120, this.scrollHeight) + 'px';
+        });
     }
     
-    // Add ripple animation to buttons
-    const buttons = document.querySelectorAll('.btn');
-    buttons.forEach(button => {
-        button.addEventListener('click', function(e) {
-            const ripple = document.createElement('span');
-            const rect = this.getBoundingClientRect();
-            const size = Math.max(rect.width, rect.height);
-            ripple.style.width = ripple.style.height = size + 'px';
-            ripple.style.left = e.clientX - rect.left - size / 2 + 'px';
-            ripple.style.top = e.clientY - rect.top - size / 2 + 'px';
-            ripple.classList.add('ripple');
-            this.appendChild(ripple);
-            
-            setTimeout(() => ripple.remove(), 600);
-        });
-    });
-    
-    // Add progress indication for form completion
-    function updateFormProgress() {
-        const requiredFields = taskForm.querySelectorAll('input[required], select[required], textarea[required]');
-        const filledFields = Array.from(requiredFields).filter(field => {
-            if (field.type === 'radio') {
-                return taskForm.querySelector(`input[name="${field.name}"]:checked`);
+    // Form validation feedback
+    const inputs = document.querySelectorAll('.form-input, .form-textarea, .form-select');
+    inputs.forEach(input => {
+        input.addEventListener('blur', function() {
+            if (this.hasAttribute('required') && !this.value.trim()) {
+                this.style.borderColor = '#ef4444';
+                this.style.boxShadow = '0 0 0 3px rgba(239, 68, 68, 0.1)';
+            } else {
+                this.style.borderColor = '';
+                this.style.boxShadow = '';
             }
-            return field.value.trim() !== '';
         });
         
-        const progress = (filledFields.length / requiredFields.length) * 100;
-        
-        // Update submit button based on progress
-        if (progress === 100) {
-            submitBtn.style.background = 'linear-gradient(135deg, var(--success) 0%, #059669 100%)';
-            submitBtn.innerHTML = '<i class="fas fa-check" style="margin-right: 0.5rem;"></i>Create Task';
-        } else {
-            submitBtn.style.background = 'linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%)';
-            submitBtn.innerHTML = '<i class="fas fa-plus" style="margin-right: 0.5rem;"></i>Create Task';
-        }
-    }
-    
-    // Monitor form completion
-    formInputs.forEach(input => {
-        input.addEventListener('input', updateFormProgress);
-        input.addEventListener('change', updateFormProgress);
+        input.addEventListener('input', function() {
+            this.style.borderColor = '';
+            this.style.boxShadow = '';
+        });
     });
-    
-    priorityOptions.forEach(option => {
-        option.addEventListener('click', updateFormProgress);
-    });
-    
-    // Initial progress check
-    updateFormProgress();
 });
-
-// Add CSS animations via JavaScript
-const style = document.createElement('style');
-style.textContent = `
-    @keyframes ripple {
-        to {
-            transform: scale(4);
-            opacity: 0;
-        }
-    }
-    
-    @keyframes shake {
-        0%, 100% { transform: translateX(0); }
-        10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
-        20%, 40%, 60%, 80% { transform: translateX(5px); }
-    }
-    
-    .ripple {
-        position: absolute;
-        border-radius: 50%;
-        background: rgba(255, 255, 255, 0.6);
-        transform: scale(0);
-        animation: ripple 0.6s linear;
-        pointer-events: none;
-    }
-`;
-document.head.appendChild(style);
 </script>
 {% endblock %}

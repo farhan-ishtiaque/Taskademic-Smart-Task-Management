@@ -39,9 +39,10 @@ class Task(models.Model):
     ]
     
     CATEGORY_CHOICES = [
-        ('academic', 'Academic'),
+        ('work', 'Work'),
         ('personal', 'Personal'),
-        ('urgent', 'Urgent'),
+        ('study', 'Study'),
+        ('health', 'Health'),
     ]
     
     FOCUS_CATEGORY_CHOICES = [
@@ -58,7 +59,7 @@ class Task(models.Model):
     estimated_duration = models.IntegerField(default=60, help_text="Duration in minutes")
     priority = models.CharField(max_length=10, choices=PRIORITY_CHOICES, default='should')
     status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='todo')
-    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default='academic')
+    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default='work')
     focus_category = models.CharField(max_length=10, choices=FOCUS_CATEGORY_CHOICES, default='', blank=True, help_text="Manually assign to 1-3-5 focus categories")
     tags = models.CharField(max_length=200, blank=True, help_text="Comma-separated tags")
     points_awarded = models.IntegerField(default=0)
