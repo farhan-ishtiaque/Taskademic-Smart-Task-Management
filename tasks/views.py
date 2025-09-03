@@ -106,7 +106,56 @@ def kanban_board(request):
 @login_required
 def task_calendar(request):
     """Calendar view for tasks"""
-    return render(request, 'tasks/calendar.html')
+    # Handle AJAX request for tasks
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        from django.http import JsonResponse
+        try:
+            # Get tasks for the current user
+            tasks = []
+            if request.user.is_authenticated:
+                # Use raw SQL to avoid model field issues
+                from django.db import connection
+                with connection.cursor() as cursor:
+                    cursor.execute("""
+                        SELECT id, title, description, due_date, priority, status 
+                        FROM tasks_task 
+                        WHERE user_id = %s AND due_date IS NOT NULL
+                        ORDER BY due_date
+                    """, [request.user.id])
+                    for row in cursor.fetchall():
+                        tasks.append({
+                            'id': row[0],
+                            'title': row[1],
+                            'description': row[2] or '',
+                            'due_date': row[3].isoformat() if row[3] else None,
+                            'priority': row[4],
+                            'status': row[5],
+                            'category': 'work'  # Default category
+                        })
+            
+            return JsonResponse(tasks, safe=False)
+        except Exception as e:
+            print(f"Calendar AJAX error: {e}")
+            import traceback
+            print(traceback.format_exc())
+            return JsonResponse([], safe=False)
+    
+    # For non-AJAX requests, provide server-side data as context
+    from django.utils import timezone
+    today = timezone.now().date()
+    
+    # Get today's tasks for server-side rendering
+    todays_tasks = Task.objects.filter(
+        user=request.user,
+        due_date__date=today
+    ).order_by('priority', 'created_at')
+    
+    context = {
+        'todays_tasks': todays_tasks,
+        'today': today,
+    }
+    
+    return render(request, 'tasks/calendar.html', context)
 
 
 class TaskViewSet(viewsets.ModelViewSet):
@@ -114,7 +163,12 @@ class TaskViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     
     def get_queryset(self):
-        queryset = Task.objects.filter(user=self.request.user)
+        try:
+            queryset = Task.objects.filter(user=self.request.user)
+            print(f"TaskViewSet: Found {queryset.count()} tasks for user {self.request.user}")
+        except Exception as e:
+            print(f"TaskViewSet error: {e}")
+            queryset = Task.objects.none()
         
         # Filter by status
         status_filter = self.request.query_params.get('status', None)

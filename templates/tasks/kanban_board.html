@@ -44,13 +44,6 @@
             <h1 class="text-3xl font-bold text-gray-900">Kanban Board</h1>
             <p class="mt-2 text-gray-600">Drag tasks between columns to update their status</p>
         </div>
-        <button @click="showAddTaskModal = true" 
-                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700">
-            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-            </svg>
-            Add Task
-        </button>
     </div>
 
     <!-- Kanban Columns -->
@@ -211,52 +204,6 @@
             </div>
         </div>
     </div>
-
-    <!-- Add Task Modal -->
-    <div x-show="showAddTaskModal" 
-         class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50"
-         @click.away="showAddTaskModal = false">
-        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-            <h3 class="text-lg font-bold text-gray-900 mb-4">Add New Task</h3>
-            <form @submit.prevent="addTask()">
-                <div class="mb-4">
-                    <label class="block text-gray-700 text-sm font-bold mb-2">Title</label>
-                    <input type="text" x-model="newTask.title" required
-                           class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-                </div>
-                <div class="mb-4">
-                    <label class="block text-gray-700 text-sm font-bold mb-2">Description</label>
-                    <textarea x-model="newTask.description" rows="3"
-                              class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"></textarea>
-                </div>
-                <div class="mb-4">
-                    <label class="block text-gray-700 text-sm font-bold mb-2">Priority (MoSCoW)</label>
-                    <select x-model="newTask.priority"
-                            class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-                        <option value="must">Must Have</option>
-                        <option value="should">Should Have</option>
-                        <option value="could">Could Have</option>
-                        <option value="wont">Won't Have</option>
-                    </select>
-                </div>
-                <div class="mb-6">
-                    <label class="block text-gray-700 text-sm font-bold mb-2">Due Date</label>
-                    <input type="datetime-local" x-model="newTask.due_date"
-                           class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-                </div>
-                <div class="flex items-center justify-between">
-                    <button type="submit"
-                            class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
-                        Add Task
-                    </button>
-                    <button type="button" @click="showAddTaskModal = false"
-                            class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
-                        Cancel
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
 </div>
 
 <script>
@@ -267,13 +214,6 @@ function kanbanBoard() {
             in_progress: [],
             review: [],
             done: []
-        },
-        showAddTaskModal: false,
-        newTask: {
-            title: '',
-            description: '',
-            priority: 'should',
-            due_date: ''
         },
         draggedTask: null,
 
@@ -297,28 +237,6 @@ function kanbanBoard() {
                     review: [],
                     done: []
                 };
-            }
-        },
-
-        async addTask() {
-            try {
-                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-                const response = await fetch('/tasks/api/tasks/', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': csrfToken
-                    },
-                    body: JSON.stringify(this.newTask)
-                });
-                
-                if (response.ok) {
-                    this.showAddTaskModal = false;
-                    this.newTask = { title: '', description: '', priority: 'should', due_date: '' };
-                    await this.loadTasks();
-                }
-            } catch (error) {
-                console.error('Error adding task:', error);
             }
         },
 

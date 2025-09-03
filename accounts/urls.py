@@ -1,5 +1,5 @@
 from django.urls import path
-from . import views
+from . import views, firebase_views
 
 app_name = 'accounts'
 
@@ -16,4 +16,9 @@ urlpatterns = [
     path('api/logout/', views.logout_user, name='api_logout'),
     path('api/profile/', views.user_profile, name='api_profile'),
     path('api/stats/', views.user_stats, name='api_stats'),
+    
+    # Firebase authentication endpoints
+    path('api/firebase/login/', firebase_views.firebase_login, name='firebase_login'),
+    path('api/firebase/logout/', firebase_views.firebase_logout, name='firebase_logout'),
+    path('api/firebase/status/', firebase_views.firebase_status, name='firebase_status'),
 ]
