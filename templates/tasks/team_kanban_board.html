@@ -1,0 +1,669 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ team.name }} - Team Kanban Board{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/kanban.css' %}">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+<style>
+    body {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    .main-container {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        margin: 20px;
+        padding: 30px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .drag-over {
+        background-color: rgba(34, 197, 94, 0.1);
+        border: 2px dashed #22c55e;
+        transform: scale(1.02);
+        transition: all 0.3s ease;
+    }
+
+    .dragging {
+        opacity: 0.7;
+        transform: rotate(2deg) scale(0.95);
+        z-index: 1000;
+    }
+
+    .task-card {
+        background: rgba(255, 255, 255, 0.95);
+        padding: 20px;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        cursor: move;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        margin-bottom: 16px;
+        backdrop-filter: blur(10px);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .task-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #667eea, #764ba2);
+        border-radius: 16px 16px 0 0;
+    }
+
+    .task-card:hover {
+        transform: translateY(-4px) scale(1.02);
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+        background: rgba(255, 255, 255, 1);
+    }
+
+    .task-card.assigned::before {
+        background: linear-gradient(90deg, #10b981, #34d399);
+    }
+    
+    .task-card.my-task {
+        background: linear-gradient(135deg, rgba(255, 243, 205, 0.9), rgba(254, 240, 138, 0.9));
+        border: 1px solid rgba(251, 191, 36, 0.3);
+    }
+
+    .task-card.my-task::before {
+        background: linear-gradient(90deg, #f59e0b, #fbbf24);
+    }
+    
+    .assignee-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
+        color: #374151;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        margin-top: 12px;
+        border: 1px solid rgba(156, 163, 175, 0.3);
+    }
+    
+    .assignee-badge.me {
+        background: linear-gradient(135deg, #fef3c7, #fde68a);
+        color: #92400e;
+        border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .assignee-badge i {
+        font-size: 0.7rem;
+    }
+    
+    .priority-badge {
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .priority-must { 
+        background: linear-gradient(135deg, #ef4444, #dc2626); 
+        color: white; 
+        box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
+    }
+    .priority-should { 
+        background: linear-gradient(135deg, #f97316, #ea580c); 
+        color: white; 
+        box-shadow: 0 4px 15px rgba(249, 115, 22, 0.4);
+    }
+    .priority-could { 
+        background: linear-gradient(135deg, #06b6d4, #0891b2); 
+        color: white; 
+        box-shadow: 0 4px 15px rgba(6, 182, 212, 0.4);
+    }
+    .priority-wont { 
+        background: linear-gradient(135deg, #6b7280, #4b5563); 
+        color: white; 
+        box-shadow: 0 4px 15px rgba(107, 114, 128, 0.4);
+    }
+    
+    .team-header {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.05));
+        backdrop-filter: blur(10px);
+        color: white;
+        padding: 40px;
+        border-radius: 20px;
+        margin-bottom: 30px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    }
+
+    .team-header h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 8px;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .team-header p {
+        font-size: 1.1rem;
+        opacity: 0.9;
+        margin-bottom: 20px;
+    }
+    
+    .member-list {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-top: 20px;
+    }
+    
+    .member-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.1));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        font-size: 1rem;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        backdrop-filter: blur(10px);
+        transition: all 0.3s ease;
+    }
+
+    .member-avatar:hover {
+        transform: scale(1.1);
+        border-color: rgba(255, 255, 255, 0.5);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    .kanban-column {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        padding: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        min-height: 500px;
+        transition: all 0.3s ease;
+    }
+
+    .kanban-column:hover {
+        background: rgba(255, 255, 255, 0.15);
+        transform: translateY(-2px);
+    }
+
+    .column-title {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: white;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .column-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .todo-column .column-icon { background: linear-gradient(135deg, #f87171, #ef4444); }
+    .progress-column .column-icon { background: linear-gradient(135deg, #60a5fa, #3b82f6); }
+    .review-column .column-icon { background: linear-gradient(135deg, #fbbf24, #f59e0b); }
+    .done-column .column-icon { background: linear-gradient(135deg, #34d399, #10b981); }
+
+    .task-count {
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        border-radius: 20px;
+        padding: 4px 12px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        margin-left: auto;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .drop-zone {
+        min-height: 400px;
+        transition: all 0.3s ease;
+        border-radius: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .empty-state {
+        text-align: center;
+        color: rgba(255, 255, 255, 0.7);
+        padding: 60px 20px;
+        border: 2px dashed rgba(255, 255, 255, 0.3);
+        border-radius: 16px;
+        margin-top: 20px;
+        transition: all 0.3s ease;
+    }
+
+    .empty-state:hover {
+        border-color: rgba(255, 255, 255, 0.5);
+        background: rgba(255, 255, 255, 0.05);
+    }
+
+    .empty-state i {
+        font-size: 2.5rem;
+        margin-bottom: 16px;
+        opacity: 0.6;
+    }
+
+    .empty-state p {
+        font-size: 1.1rem;
+        font-weight: 500;
+        margin-bottom: 8px;
+    }
+
+    .empty-state small {
+        font-size: 0.9rem;
+        opacity: 0.8;
+    }
+
+    .task-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #1f2937;
+        margin-bottom: 8px;
+        line-height: 1.4;
+    }
+
+    .task-description {
+        font-size: 0.9rem;
+        color: #6b7280;
+        line-height: 1.5;
+        margin-bottom: 12px;
+    }
+
+    .task-meta {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 16px;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .task-date {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.8rem;
+        color: #6b7280;
+        background: rgba(107, 114, 128, 0.1);
+        padding: 4px 8px;
+        border-radius: 12px;
+    }
+
+    .grid-cols-4 {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 24px;
+    }
+
+    @media (max-width: 1024px) {
+        .grid-cols-4 {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @media (max-width: 640px) {
+        .grid-cols-4 {
+            grid-template-columns: 1fr;
+        }
+        
+        .main-container {
+            margin: 10px;
+            padding: 20px;
+        }
+        
+        .team-header {
+            padding: 30px 20px;
+        }
+        
+        .team-header h1 {
+            font-size: 2rem;
+        }
+    }
+
+    /* Smooth scrolling */
+    .drop-zone {
+        scrollbar-width: thin;
+        scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+    }
+
+    .drop-zone::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .drop-zone::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .drop-zone::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 3px;
+    }
+
+    .drop-zone::-webkit-scrollbar-thumb:hover {
+        background: rgba(255, 255, 255, 0.5);
+    }
+
+    /* Loading animation */
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+
+    .loading {
+        animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+
+    .tasks-container::-webkit-scrollbar {
+        height: 8px;
+    }
+    
+    .tasks-container::-webkit-scrollbar-track {
+        background: rgba(255,255,255,0.3);
+        border-radius: 4px;
+    }
+    
+    .tasks-container::-webkit-scrollbar-thumb {
+        background: rgba(255,255,255,0.6);
+        border-radius: 4px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="main-container">
+    <!-- Team Header -->
+    <div class="team-header">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="mb-2">{{ team.name }} - Team Board</h1>
+                <p class="mb-0">{{ team.description|default:"Collaborative task management for your team" }}</p>
+                <div class="member-list">
+                    {% for member in team.members.all %}
+                    <div class="member-avatar" title="{{ member.get_full_name|default:member.username }}">
+                        {{ member.username|slice:":2"|upper }}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <div class="d-flex flex-column align-items-md-end gap-2">
+                    <span class="badge bg-light text-dark fs-6">{{ team.member_count }} members</span>
+                    <a href="{% url 'tasks:create' %}?team={{ team.id }}" class="btn btn-light">
+                        <i class="fas fa-plus me-2"></i>Add Task</a>
+                        <i class="fas fa-plus"></i> Add Team Task
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Kanban Board - Vertical Layout -->
+    <div class="container-fluid" id="kanban-board">
+    <!-- Kanban Columns -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <!-- To Do Column -->
+        <div class="kanban-column todo-column" data-status="todo">
+            <h3 class="column-title">
+                <div class="column-icon">
+                    <i class="fas fa-clipboard-list"></i>
+                </div>
+                To Do
+                <span class="task-count" id="todo-count">0</span>
+            </h3>
+            <div class="drop-zone" id="todo-tasks">
+                <div class="empty-state">
+                    <i class="fas fa-tasks"></i>
+                    <p>No tasks to do</p>
+                    <small>Drag tasks here or add new ones</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- In Progress Column -->
+        <div class="kanban-column progress-column" data-status="in_progress">
+            <h3 class="column-title">
+                <div class="column-icon">
+                    <i class="fas fa-spinner"></i>
+                </div>
+                In Progress
+                <span class="task-count" id="in_progress-count">0</span>
+            </h3>
+            <div class="drop-zone" id="in_progress-tasks">
+                <div class="empty-state">
+                    <i class="fas fa-cogs"></i>
+                    <p>No tasks in progress</p>
+                    <small>Drag tasks here to start working</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Review Column -->
+        <div class="kanban-column review-column" data-status="review">
+            <h3 class="column-title">
+                <div class="column-icon">
+                    <i class="fas fa-eye"></i>
+                </div>
+                Review
+                <span class="task-count" id="review-count">0</span>
+            </h3>
+            <div class="drop-zone" id="review-tasks">
+                <div class="empty-state">
+                    <i class="fas fa-search"></i>
+                    <p>No tasks in review</p>
+                    <small>Tasks ready for review appear here</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Done Column -->
+        <div class="kanban-column done-column" data-status="done">
+            <h3 class="column-title">
+                <div class="column-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                Done
+                <span class="task-count" id="done-count">0</span>
+            </h3>
+            <div class="drop-zone" id="done-tasks">
+                <div class="empty-state">
+                    <i class="fas fa-trophy"></i>
+                    <p>No completed tasks</p>
+                    <small>Completed tasks appear here</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const teamId = '{{ team.id }}';
+    const currentUserId = {{ request.user.id }};
+    let tasks = {};
+    let currentTaskId = null;
+
+    // Initialize Sortable for each column
+    const columns = ['todo', 'in_progress', 'review', 'done'];
+    columns.forEach(status => {
+        const container = document.getElementById(`${status}-tasks`);
+        new Sortable(container, {
+            group: 'kanban',
+            animation: 150,
+            ghostClass: 'sortable-ghost',
+            onEnd: function(evt) {
+                const taskId = evt.item.dataset.taskId;
+                const newStatus = evt.to.closest('.kanban-column').dataset.status;
+                updateTaskStatus(taskId, newStatus);
+            }
+        });
+    });
+
+    // Load team tasks
+    loadTeamTasks();
+
+    function loadTeamTasks() {
+        fetch(`/tasks/api/tasks/team_kanban_data/?team_id=${teamId}`)
+            .then(response => response.json())
+            .then(data => {
+                tasks = data;
+                renderTasks();
+            })
+            .catch(error => {
+                console.error('Error loading team tasks:', error);
+                showNotification('Error loading tasks', 'error');
+            });
+    }
+
+    function renderTasks() {
+        columns.forEach(status => {
+            const container = document.getElementById(`${status}-tasks`);
+            const statusTasks = tasks[status] || [];
+            
+            container.innerHTML = '';
+            
+            if (statusTasks.length === 0) {
+                container.innerHTML = '<div class="dropzone">Drop tasks here</div>';
+            } else {
+                statusTasks.forEach(task => {
+                    container.appendChild(createTaskCard(task));
+                });
+            }
+            
+            // Update count
+            document.getElementById(`${status}-count`).textContent = statusTasks.length;
+        });
+    }
+
+    function createTaskCard(task) {
+        const card = document.createElement('div');
+        card.className = 'task-card';
+        card.dataset.taskId = task.id;
+        
+        // Add classes based on assignment
+        if (task.assigned_to) {
+            card.classList.add('assigned');
+            if (task.assigned_to.id === currentUserId) {
+                card.classList.add('my-task');
+            }
+        }
+
+        const assigneeBadge = task.assigned_to_display ? 
+            `<div class="assignee-badge ${task.assigned_to && task.assigned_to.id === currentUserId ? 'me' : ''}">
+                <i class="fas fa-user"></i>
+                ${task.assigned_to_display}
+            </div>` : 
+            `<div class="assignee-badge">
+                <i class="fas fa-user-times"></i>
+                Unassigned
+            </div>`;
+
+        card.innerHTML = `
+            <div class="task-title">${task.title}</div>
+            ${task.description ? `<div class="task-description">${task.description.substring(0, 120)}${task.description.length > 120 ? '...' : ''}</div>` : ''}
+            ${assigneeBadge}
+            <div class="task-meta">
+                <span class="priority-badge priority-${task.priority}">${task.priority.replace('_', ' ')}</span>
+                ${task.due_date ? `<div class="task-date"><i class="fas fa-calendar-alt"></i> ${new Date(task.due_date).toLocaleDateString()}</div>` : ''}
+            </div>
+        `;
+
+        return card;
+    }
+
+    function updateTaskStatus(taskId, newStatus) {
+        fetch(`/tasks/api/tasks/${taskId}/change_status/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({ status: newStatus })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                showNotification(data.error, 'error');
+                loadTeamTasks(); // Reload to revert changes
+            } else {
+                showNotification(data.message, 'success');
+                loadTeamTasks(); // Reload to get updated data
+            }
+        })
+        .catch(error => {
+            console.error('Error updating task status:', error);
+            showNotification('Error updating task', 'error');
+            loadTeamTasks();
+        });
+    }
+
+    function findTaskById(taskId) {
+        for (const status of columns) {
+            const statusTasks = tasks[status] || [];
+            const task = statusTasks.find(t => t.id == taskId);
+            if (task) return task;
+        }
+        return null;
+    }
+
+    function showNotification(message, type) {
+        // Simple notification system
+        const notification = document.createElement('div');
+        notification.className = `alert alert-${type === 'error' ? 'danger' : 'success'} position-fixed`;
+        notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+        notification.textContent = message;
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.remove();
+        }, 3000);
+    }
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+});
+</script>
+{% endblock %}
