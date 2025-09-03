@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+
+{% block title %}Team Status - Debug{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <h2>🔍 Team System Status</h2>
+    
+    <div class="row mb-4">
+        <!-- Total Teams -->
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body text-center">
+                    <h3>{{ total_teams }}</h3>
+                    <p class="mb-0">Total Teams</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Total Invites -->
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body text-center">
+                    <h3>{{ total_invites }}</h3>
+                    <p class="mb-0">Total Invites</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Pending Invites -->
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body text-center">
+                    <h3>{{ pending_invites }}</h3>
+                    <p class="mb-0">Pending Invites</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Accepted Invites -->
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body text-center">
+                    <h3>{{ accepted_invites }}</h3>
+                    <p class="mb-0">Accepted Invites</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Teams -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5>📋 Recent Teams</h5>
+        </div>
+        <div class="card-body">
+            {% for team in recent_teams %}
+                <div class="row mb-2">
+                    <div class="col-md-4"><strong>{{ team.name }}</strong></div>
+                    <div class="col-md-3">{{ team.member_count }} members</div>
+                    <div class="col-md-3">Code: {{ team.invite_code }}</div>
+                    <div class="col-md-2"><small>{{ team.created_at|timesince }} ago</small></div>
+                </div>
+            {% empty %}
+                <p class="text-muted">No teams created yet.</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Recent Invites -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5>📧 Recent Email Invites</h5>
+        </div>
+        <div class="card-body">
+            {% for invite in recent_invites %}
+                <div class="row mb-2">
+                    <div class="col-md-3"><strong>{{ invite.email }}</strong></div>
+                    <div class="col-md-3">{{ invite.team.name }}</div>
+                    <div class="col-md-2">
+                        {% if invite.is_accepted %}
+                            <span class="badge bg-success">✓ Accepted</span>
+                        {% elif invite.is_expired %}
+                            <span class="badge bg-danger">⏰ Expired</span>
+                        {% else %}
+                            <span class="badge bg-warning">⏳ Pending</span>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-2"><small>{{ invite.created_at|timesince }} ago</small></div>
+                    <div class="col-md-2">
+                        {% if not invite.is_accepted and not invite.is_expired %}
+                            <small>Expires {{ invite.expires_at|timeuntil }}</small>
+                        {% endif %}
+                    </div>
+                </div>
+            {% empty %}
+                <p class="text-muted">No invites sent yet.</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- How to Test Section -->
+    <div class="card">
+        <div class="card-header bg-info text-white">
+            <h5>🚀 How to Test Email Invites</h5>
+        </div>
+        <div class="card-body">
+            <ol>
+                <li><strong>Create a Team:</strong> Go to <a href="{% url 'teams:list' %}">Teams</a> → Create Team</li>
+                <li><strong>Send Email Invite:</strong> Click "Email Invite" → Enter any email → Send</li>
+                <li><strong>Check Terminal:</strong> Look at your Django server terminal - you'll see the email content!</li>
+                <li><strong>Check This Page:</strong> Refresh this page to see invite status</li>
+                <li><strong>Test Invite Link:</strong> Copy the invite link from terminal and open it</li>
+            </ol>
+            
+            <div class="alert alert-warning mt-3">
+                <strong>📧 Email Backend:</strong> Using console backend - emails show in terminal, not sent to real addresses.
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

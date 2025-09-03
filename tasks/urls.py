@@ -18,10 +18,12 @@ urlpatterns = [
     path('delete/<int:task_id>/', views.task_delete, name='delete'),
     path('complete/<int:task_id>/', views.task_complete, name='complete'),
     path('kanban/', views.kanban_board, name='kanban_board'),
+    path('team/<uuid:team_id>/kanban/', views.team_kanban_board, name='team_kanban_board'),
     path('calendar/', views.task_calendar, name='calendar'),
     
     # API endpoints
     path('api/', include(router.urls)),
     path('api/statistics/', views.task_statistics, name='api_statistics'),
     path('api/schedule/suggestions/', views.smart_schedule_suggestion, name='api_schedule_suggestions'),
+    path('api/teams/<uuid:team_id>/members/', views.get_team_members, name='api_team_members'),
 ]

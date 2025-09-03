@@ -11,17 +11,29 @@ class UserSerializer(serializers.ModelSerializer):
 
 class TaskSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
+    assigned_to = UserSerializer(read_only=True)
+    assigned_to_display = serializers.SerializerMethodField()
     tag_list = serializers.ListField(read_only=True)
     is_overdue = serializers.BooleanField(read_only=True)
+    is_assigned = serializers.BooleanField(read_only=True)
+    assignment_status = serializers.CharField(read_only=True)
     
     class Meta:
         model = Task
         fields = [
             'id', 'title', 'description', 'due_date', 'estimated_duration',
             'priority', 'status', 'category', 'tags', 'points_awarded',
-            'created_at', 'updated_at', 'completed_at', 'user', 'tag_list', 'is_overdue'
+            'created_at', 'updated_at', 'completed_at', 'user', 'assigned_to',
+            'assigned_to_display', 'tag_list', 'is_overdue', 'is_assigned', 'assignment_status'
         ]
         read_only_fields = ('user', 'points_awarded', 'created_at', 'updated_at', 'completed_at')
+    
+    def get_assigned_to_display(self, obj):
+        if obj.assigned_to:
+            if obj.assigned_to.first_name and obj.assigned_to.last_name:
+                return f"{obj.assigned_to.first_name} {obj.assigned_to.last_name}"
+            return obj.assigned_to.username
+        return None
 
     def create(self, validated_data):
         validated_data['user'] = self.context['request'].user

@@ -52,9 +52,14 @@ class Task(models.Model):
         ('small', '✅ Small Thing (5)'),
     ]
 
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='tasks')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='owned_tasks')
     title = models.CharField(max_length=200)
     description = models.TextField(blank=True)
+    
+    # Team collaboration fields
+    team = models.ForeignKey('teams.Team', on_delete=models.CASCADE, null=True, blank=True, related_name='tasks')
+    assigned_to = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='assigned_tasks', help_text="Team member assigned to this task")
+    
     due_date = models.DateTimeField(null=True, blank=True)
     estimated_duration = models.IntegerField(default=60, help_text="Duration in minutes")
     priority = models.CharField(max_length=10, choices=PRIORITY_CHOICES, default='should')
@@ -91,11 +96,65 @@ class Task(models.Model):
         return False
     
     @property
+    def is_assigned(self):
+        """Check if task is assigned to someone"""
+        return self.assigned_to is not None
+    
+    @property
+    def assignment_status(self):
+        """Get assignment status for display"""
+        if not self.assigned_to:
+            return "Unassigned"
+        elif self.assigned_to == self.user:
+            return "Self-assigned"
+        else:
+            return f"Assigned to {self.assigned_to.username}"
+    
+    @property
     def tag_list(self):
         """Return tags as a list"""
         if self.tags:
             return [tag.strip() for tag in self.tags.split(',') if tag.strip()]
         return []
+    
+    # Team collaboration methods
+    def can_be_viewed_by(self, user):
+        """Check if user can view this task"""
+        # Task owner can always view
+        if self.user == user:
+            return True
+        # Assigned user can view
+        if self.assigned_to == user:
+            return True
+        # Team members can view team tasks
+        if self.team and user in self.team.members.all():
+            return True
+        return False
+    
+    def can_be_edited_by(self, user):
+        """Check if user can edit this task"""
+        # Task owner can always edit
+        if self.user == user:
+            return True
+        # Assigned user can edit their assigned tasks
+        if self.assigned_to == user:
+            return True
+        # Team creator can edit team tasks
+        if self.team and self.team.created_by == user:
+            return True
+        return False
+    
+    def can_change_status(self, user):
+        """Check if user can change task status"""
+        # Anyone who can edit can change status
+        return self.can_be_edited_by(user)
+    
+    @property
+    def assignee_display(self):
+        """Display name for assigned user"""
+        if self.assigned_to:
+            return self.assigned_to.get_full_name() or self.assigned_to.username
+        return "Unassigned"
     
     def calculate_priority_score(self):
         """
@@ -210,6 +269,20 @@ class TimeBlock(models.Model):
         elif self.estimated_hours:
             return self.estimated_hours
         return 0
+    
+    def can_view(self, user):
+        """Simple permission check - creator or team member"""
+        if self.team:
+            return user in self.team.members.all()
+        else:
+            return self.user == user
+    
+    def can_edit(self, user):
+        """Simple permission check - creator or team member"""
+        if self.team:
+            return user in self.team.members.all()
+        else:
+            return self.user == user
 
 
 class TaskComment(models.Model):

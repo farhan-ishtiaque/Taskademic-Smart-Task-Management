@@ -1,0 +1,280 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Invitation & Task Status - {{ team.name }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <!-- Team Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2><i class="fas fa-users me-2"></i>{{ team.name }}</h2>
+                    <p class="text-muted mb-0">Invitation & Task Assignment Status</p>
+                </div>
+                <div>
+                    <a href="{% url 'teams:detail' team.id %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left me-1"></i> Back to Team
+                    </a>
+                    <a href="{% url 'tasks:team_kanban_board' team.id %}" class="btn btn-primary">
+                        <i class="fas fa-columns me-1"></i> Team Kanban Board
+                    </a>
+                </div>
+            </div>
+
+            <!-- Summary Cards -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h5 class="card-title text-primary">{{ total_members }}</h5>
+                            <p class="card-text">Team Members</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h5 class="card-title text-warning">{{ pending_invites|length }}</h5>
+                            <p class="card-text">Pending Invites</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h5 class="card-title text-info">{{ team_tasks|length }}</h5>
+                            <p class="card-text">Total Tasks</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h5 class="card-title text-success">{{ assigned_tasks|length }}</h5>
+                            <p class="card-text">Assigned Tasks</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Invitation Status -->
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-envelope me-2"></i>Email Invitations</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if pending_invites %}
+                                <h6 class="text-warning">
+                                    <i class="fas fa-clock me-1"></i>Pending Invites ({{ pending_invites|length }})
+                                </h6>
+                                <div class="list-group mb-3">
+                                    {% for invite in pending_invites %}
+                                        <div class="list-group-item">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <strong>{{ invite.email }}</strong>
+                                                    <br>
+                                                    <small class="text-muted">
+                                                        Sent {{ invite.created_at|timesince }} ago by {{ invite.invited_by.username }}
+                                                    </small>
+                                                    <br>
+                                                    <small class="text-muted">
+                                                        Expires: {{ invite.expires_at|date:"M d, Y" }}
+                                                    </small>
+                                                </div>
+                                                <span class="badge bg-warning">Pending</span>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+
+                            {% if accepted_invites %}
+                                <h6 class="text-success">
+                                    <i class="fas fa-check me-1"></i>Accepted Invites ({{ accepted_invites|length }})
+                                </h6>
+                                <div class="list-group mb-3">
+                                    {% for invite in accepted_invites %}
+                                        <div class="list-group-item">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <strong>{{ invite.email }}</strong>
+                                                    <br>
+                                                    <small class="text-muted">
+                                                        Accepted {{ invite.accepted_at|timesince }} ago
+                                                    </small>
+                                                </div>
+                                                <span class="badge bg-success">Accepted</span>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+
+                            {% if expired_invites %}
+                                <h6 class="text-danger">
+                                    <i class="fas fa-times me-1"></i>Expired Invites ({{ expired_invites|length }})
+                                </h6>
+                                <div class="list-group mb-3">
+                                    {% for invite in expired_invites %}
+                                        <div class="list-group-item">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <strong>{{ invite.email }}</strong>
+                                                    <br>
+                                                    <small class="text-muted">
+                                                        Expired {{ invite.expires_at|timesince }} ago
+                                                    </small>
+                                                </div>
+                                                <span class="badge bg-danger">Expired</span>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+
+                            {% if not pending_invites and not accepted_invites and not expired_invites %}
+                                <p class="text-muted text-center">No email invitations sent yet.</p>
+                            {% endif %}
+
+                            <div class="mt-3">
+                                <a href="{% url 'teams:detail' team.id %}#email-invite" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-envelope me-1"></i> Send New Invite
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Task Assignment Status -->
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-tasks me-2"></i>Task Assignments</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if tasks_by_member %}
+                                {% for username, task_stats in tasks_by_member.items %}
+                                    {% if task_stats.total > 0 %}
+                                        <div class="border rounded p-3 mb-3">
+                                            <h6 class="mb-2">
+                                                <i class="fas fa-user me-1"></i>{{ username }}
+                                                <span class="badge bg-primary ms-2">{{ task_stats.total }} tasks</span>
+                                            </h6>
+                                            <div class="row text-center">
+                                                <div class="col-3">
+                                                    <small class="text-muted">To Do</small>
+                                                    <div class="fw-bold text-secondary">{{ task_stats.todo }}</div>
+                                                </div>
+                                                <div class="col-3">
+                                                    <small class="text-muted">In Progress</small>
+                                                    <div class="fw-bold text-warning">{{ task_stats.in_progress }}</div>
+                                                </div>
+                                                <div class="col-3">
+                                                    <small class="text-muted">Review</small>
+                                                    <div class="fw-bold text-info">{{ task_stats.review }}</div>
+                                                </div>
+                                                <div class="col-3">
+                                                    <small class="text-muted">Done</small>
+                                                    <div class="fw-bold text-success">{{ task_stats.done }}</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                {% endfor %}
+                            {% endif %}
+
+                            {% if unassigned_tasks %}
+                                <div class="border rounded p-3 mb-3 bg-light">
+                                    <h6 class="mb-2 text-muted">
+                                        <i class="fas fa-question-circle me-1"></i>Unassigned Tasks
+                                        <span class="badge bg-secondary ms-2">{{ unassigned_tasks|length }}</span>
+                                    </h6>
+                                    <p class="text-muted mb-0">
+                                        These tasks are not assigned to any team member yet.
+                                    </p>
+                                </div>
+                            {% endif %}
+
+                            {% if not team_tasks %}
+                                <p class="text-muted text-center">No tasks created for this team yet.</p>
+                            {% endif %}
+
+                            <div class="mt-3">
+                                <a href="{% url 'tasks:create' %}?team={{ team.id }}" class="btn btn-success btn-sm me-2">
+                                    <i class="fas fa-plus me-1"></i> Create Task
+                                </a>
+                                <a href="{% url 'tasks:team_kanban_board' team.id %}" class="btn btn-info btn-sm">
+                                    <i class="fas fa-columns me-1"></i> View Kanban Board
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- How to Guide -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-question-circle me-2"></i>How to Check if Your Invite Worked</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6><i class="fas fa-envelope-open me-1"></i> Email Invitation Status:</h6>
+                                    <ul class="list-unstyled">
+                                        <li class="mb-2">
+                                            <span class="badge bg-warning me-2">Pending</span>
+                                            Invite sent but not yet accepted. The person should check their email.
+                                        </li>
+                                        <li class="mb-2">
+                                            <span class="badge bg-success me-2">Accepted</span>
+                                            Person clicked the invite link and joined the team.
+                                        </li>
+                                        <li class="mb-2">
+                                            <span class="badge bg-danger me-2">Expired</span>
+                                            Invite was not accepted within 7 days. Send a new invite.
+                                        </li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6><i class="fas fa-tasks me-1"></i> Task Assignment:</h6>
+                                    <ul class="list-unstyled">
+                                        <li class="mb-2">
+                                            <strong>After accepting invite:</strong> The person becomes a team member and can be assigned tasks.
+                                        </li>
+                                        <li class="mb-2">
+                                            <strong>To assign tasks:</strong> Create a new task and select them from the "Assign to" dropdown.
+                                        </li>
+                                        <li class="mb-2">
+                                            <strong>View their tasks:</strong> Use the Team Kanban Board to see all assigned tasks.
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Auto-refresh every 30 seconds to check for invite status updates
+setInterval(function() {
+    // Only refresh if there are pending invites
+    if ({{ pending_invites|length }} > 0) {
+        location.reload();
+    }
+}, 30000);
+</script>
+{% endblock %}
