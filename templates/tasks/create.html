@@ -425,6 +425,40 @@
                         </div>
                     </div>
                     
+                    <!-- Team and Assignment Section -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="team" class="form-label">👥 Team (Optional)</label>
+                            <select id="team" name="team" class="form-select">
+                                <option value="">Personal Task</option>
+                                {% for team in form.team.field.queryset %}
+                                <option value="{{ team.id }}" {% if form.team.value == team.id %}selected{% endif %}>
+                                    {{ team.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <small class="form-help">Select a team to share this task with team members</small>
+                            {% if form.team.errors %}
+                                <div class="error-message">
+                                    ⚠️ {{ form.team.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="assigned_to" class="form-label">🎯 Assign To</label>
+                            <select id="assigned_to" name="assigned_to" class="form-select" disabled>
+                                <option value="">Select team first</option>
+                            </select>
+                            <small class="form-help">Choose a team member to assign this task</small>
+                            {% if form.assigned_to.errors %}
+                                <div class="error-message">
+                                    ⚠️ {{ form.assigned_to.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
                     <div class="form-group">
                         <label for="category" class="form-label">📂 Category</label>
                         <select id="category" name="category" class="form-select">
@@ -486,6 +520,64 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
+    
+    // Handle team selection change to load members
+    const teamSelect = document.getElementById('team');
+    const assignedToSelect = document.getElementById('assigned_to');
+    
+    if (teamSelect && assignedToSelect) {
+        teamSelect.addEventListener('change', function() {
+            const teamId = this.value;
+            console.log('Team selected:', teamId);
+            
+            // Clear current options
+            assignedToSelect.innerHTML = '<option value="">Assign to (Optional)</option>';
+            
+            if (teamId) {
+                // Enable the dropdown
+                assignedToSelect.disabled = false;
+                console.log('Fetching members for team:', teamId);
+                // Load team members
+                fetch(`/teams/${teamId}/members/`)
+                    .then(response => {
+                        console.log('Response status:', response.status);
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log('Team members data:', data);
+                        if (data.members && data.members.length > 0) {
+                            data.members.forEach(member => {
+                                const option = document.createElement('option');
+                                option.value = member.id;
+                                option.textContent = member.username;
+                                assignedToSelect.appendChild(option);
+                                console.log('Added member:', member.username);
+                            });
+                        } else {
+                            console.log('No members found for this team');
+                            const option = document.createElement('option');
+                            option.value = '';
+                            option.textContent = 'No team members found';
+                            assignedToSelect.appendChild(option);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error loading team members:', error);
+                        const option = document.createElement('option');
+                        option.value = '';
+                        option.textContent = 'Error loading members';
+                        assignedToSelect.appendChild(option);
+                    });
+            } else {
+                // Disable the dropdown when no team is selected
+                assignedToSelect.disabled = true;
+                assignedToSelect.innerHTML = '<option value="">Select team first</option>';
+            }
+        });
+    }
     
     // Priority is now handled automatically by AI
     
