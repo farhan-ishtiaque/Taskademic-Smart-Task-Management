@@ -1,0 +1,260 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Select Task to Edit - Taskademic{% endblock %}
+
+{% block extra_css %}
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+    .select-task-page {
+        font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif !important;
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%) !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        min-height: 100vh !important;
+    }
+
+    .select-task-page .page-container {
+        max-width: 1200px !important;
+        margin: 0 auto !important;
+        padding: 2rem !important;
+    }
+
+    .select-task-page .header-card {
+        background: white !important;
+        border-radius: 20px !important;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1) !important;
+        overflow: hidden !important;
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        margin-bottom: 2rem !important;
+    }
+
+    .select-task-page .header-content {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        padding: 2rem !important;
+        text-align: center !important;
+        color: white !important;
+    }
+
+    .select-task-page .page-title {
+        font-size: 1.875rem !important;
+        font-weight: 700 !important;
+        margin: 0 0 0.5rem 0 !important;
+        letter-spacing: -0.025em !important;
+    }
+
+    .select-task-page .page-subtitle {
+        font-size: 1rem !important;
+        opacity: 0.9 !important;
+        margin: 0 !important;
+        font-weight: 400 !important;
+    }
+
+    .select-task-page .tasks-grid {
+        display: grid !important;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)) !important;
+        gap: 1.5rem !important;
+    }
+
+    .select-task-page .task-card {
+        background: white !important;
+        border-radius: 12px !important;
+        padding: 1.5rem !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+        border: 1px solid #e5e7eb !important;
+        transition: all 0.2s ease !important;
+        cursor: pointer !important;
+    }
+
+    .select-task-page .task-card:hover {
+        transform: translateY(-4px) !important;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15) !important;
+        border-color: #667eea !important;
+    }
+
+    .select-task-page .task-title {
+        font-size: 1.125rem !important;
+        font-weight: 600 !important;
+        color: #1f2937 !important;
+        margin: 0 0 0.5rem 0 !important;
+        line-height: 1.4 !important;
+    }
+
+    .select-task-page .task-description {
+        color: #6b7280 !important;
+        font-size: 0.875rem !important;
+        line-height: 1.5 !important;
+        margin-bottom: 1rem !important;
+        max-height: 3rem !important;
+        overflow: hidden !important;
+        display: -webkit-box !important;
+        -webkit-line-clamp: 2 !important;
+        -webkit-box-orient: vertical !important;
+    }
+
+    .select-task-page .task-meta {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        margin-bottom: 1rem !important;
+    }
+
+    .select-task-page .priority-badge {
+        padding: 0.25rem 0.75rem !important;
+        border-radius: 9999px !important;
+        font-size: 0.75rem !important;
+        font-weight: 600 !important;
+        text-transform: uppercase !important;
+    }
+
+    .select-task-page .priority-must {
+        background: #fef3c7 !important;
+        color: #92400e !important;
+    }
+
+    .select-task-page .priority-should {
+        background: #dbeafe !important;
+        color: #1e40af !important;
+    }
+
+    .select-task-page .priority-could {
+        background: #d1fae5 !important;
+        color: #047857 !important;
+    }
+
+    .select-task-page .priority-wont {
+        background: #f3f4f6 !important;
+        color: #6b7280 !important;
+    }
+
+    .select-task-page .task-date {
+        font-size: 0.75rem !important;
+        color: #6b7280 !important;
+    }
+
+    .select-task-page .edit-button {
+        width: 100% !important;
+        padding: 0.75rem 1rem !important;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 8px !important;
+        font-weight: 600 !important;
+        font-size: 0.875rem !important;
+        text-decoration: none !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 0.5rem !important;
+        transition: all 0.2s ease !important;
+    }
+
+    .select-task-page .edit-button:hover {
+        transform: translateY(-1px) !important;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3) !important;
+    }
+
+    .select-task-page .no-tasks {
+        text-align: center !important;
+        padding: 3rem !important;
+        background: white !important;
+        border-radius: 12px !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+    }
+
+    .select-task-page .no-tasks-icon {
+        width: 4rem !important;
+        height: 4rem !important;
+        margin: 0 auto 1rem auto !important;
+        opacity: 0.5 !important;
+    }
+
+    @media (max-width: 768px) {
+        .select-task-page .page-container {
+            padding: 1rem !important;
+        }
+        
+        .select-task-page .tasks-grid {
+            grid-template-columns: 1fr !important;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="select-task-page">
+    <div class="page-container">
+        <!-- Page Header -->
+        <div class="header-card">
+            <div class="header-content">
+                <h1 class="page-title">✏️ Select Task to Edit</h1>
+                <p class="page-subtitle">Choose a task to modify its details, deadline, or duration</p>
+            </div>
+        </div>
+
+        <!-- Tasks Grid -->
+        {% if tasks %}
+            <div class="tasks-grid">
+                {% for task in tasks %}
+                    <div class="task-card" onclick="location.href='{% url 'tasks:edit' task.id %}'">
+                        <h3 class="task-title">{{ task.title }}</h3>
+                        
+                        {% if task.description %}
+                            <p class="task-description">{{ task.description }}</p>
+                        {% else %}
+                            <p class="task-description">No description provided</p>
+                        {% endif %}
+                        
+                        <div class="task-meta">
+                            <span class="priority-badge priority-{{ task.priority }}">
+                                {{ task.priority|upper }} HAVE
+                            </span>
+                            
+                            {% if task.due_date %}
+                                <span class="task-date">Due: {{ task.due_date|date:"M d, Y" }}</span>
+                            {% else %}
+                                <span class="task-date">No due date</span>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="task-meta">
+                            <span class="task-date">
+                                {% if task.estimated_duration %}
+                                    ⏱️ {{ task.estimated_duration }} min
+                                {% else %}
+                                    ⏱️ No duration set
+                                {% endif %}
+                            </span>
+                            
+                            <span class="task-date">
+                                📂 {{ task.category|default:"Uncategorized" }}
+                            </span>
+                        </div>
+                        
+                        <a href="{% url 'tasks:edit' task.id %}" class="edit-button">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                            </svg>
+                            Edit This Task
+                        </a>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="no-tasks">
+                <svg class="no-tasks-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">No tasks available to edit</h3>
+                <p class="text-gray-600 mb-4">You don't have any active tasks to edit. Create a new task first!</p>
+                <a href="{% url 'tasks:create' %}" class="edit-button" style="width: auto; padding: 0.75rem 2rem;">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                    </svg>
+                    Create New Task
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

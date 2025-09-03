@@ -10,7 +10,9 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+import os
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -43,6 +45,8 @@ INSTALLED_APPS = [
     'tasks',
     'analytics',
     'accounts',
+    'priority_analyzer',
+    'priority_ai',
 ]
 
 MIDDLEWARE = [
@@ -130,6 +134,9 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+
+# DeepSeek API Configuration
+DEEPSEEK_API_KEY = os.environ.get('DEEPSEEK_API_KEY', '')  # Set this in your environment variables
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
@@ -184,3 +191,6 @@ USE_X_FORWARDED_PORT = True
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# DeepSeek API Settings
+DEEPSEEK_API_KEY = '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'

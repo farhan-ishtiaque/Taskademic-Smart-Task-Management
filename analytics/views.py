@@ -299,11 +299,16 @@ def analytics_api(request):
     current_date = start_date
     
     while current_date <= end_date:
+        # Count tasks completed on this specific date
         completed_on_date = Task.objects.filter(
             user=user,
             completed_at__date=current_date,
             status='done'
         ).count()
+        
+        # Debug: Print today's completion count
+        if current_date == end_date:
+            print(f"DEBUG: Tasks completed today ({current_date}): {completed_on_date}")
         
         completion_trend.append({
             'date': current_date.isoformat(),

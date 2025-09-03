@@ -1,0 +1,390 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Edit Task - Taskademic{% endblock %}
+
+{% block extra_css %}
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+    /* Override Tailwind styles */
+    .edit-task-page {
+        font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif !important;
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%) !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        min-height: 100vh !important;
+    }
+
+    .edit-task-page .page-container {
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 2rem !important;
+    }
+
+    .edit-task-page .form-card {
+        background: white !important;
+        border-radius: 20px !important;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1) !important;
+        overflow: hidden !important;
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        max-width: none !important;
+        width: 100% !important;
+    }
+
+    .edit-task-page .form-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        padding: 2rem !important;
+        text-align: center !important;
+        color: white !important;
+        position: relative !important;
+    }
+
+    .edit-task-page .form-header::before {
+        content: '' !important;
+        position: absolute !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        background: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='white' fill-opacity='0.1'%3E%3Cpath d='M20 20c0-8.837-7.163-16-16-16s-16 7.163-16 16 7.163 16 16 16 16-7.163 16-16zm16 0c0-8.837-7.163-16-16-16s-16 7.163-16 16 7.163 16 16 16 16-7.163 16-16z'/%3E%3C/g%3E%3C/svg%3E") !important;
+    }
+
+    .edit-task-page .form-title {
+        font-size: 1.875rem !important;
+        font-weight: 700 !important;
+        margin: 0 0 0.5rem 0 !important;
+        letter-spacing: -0.025em !important;
+        position: relative !important;
+    }
+
+    .edit-task-page .form-subtitle {
+        font-size: 1rem !important;
+        opacity: 0.9 !important;
+        margin: 0 !important;
+        font-weight: 400 !important;
+        position: relative !important;
+    }
+
+    .edit-task-page .form-body {
+        padding: 2rem !important;
+    }
+
+    .edit-task-page .form-grid {
+        display: grid !important;
+        gap: 1.5rem !important;
+        max-width: none !important;
+    }
+
+    .edit-task-page .form-group {
+        position: relative !important;
+        opacity: 1 !important;
+    }
+
+    .edit-task-page .form-label {
+        display: block !important;
+        font-size: 0.875rem !important;
+        font-weight: 600 !important;
+        color: #374151 !important;
+        margin-bottom: 0.5rem !important;
+        text-transform: none !important;
+        letter-spacing: normal !important;
+    }
+
+    .edit-task-page .form-input, 
+    .edit-task-page .form-textarea, 
+    .edit-task-page .form-select {
+        width: 100% !important;
+        padding: 0.75rem 1rem !important;
+        border: 2px solid #e5e7eb !important;
+        border-radius: 8px !important;
+        font-size: 0.875rem !important;
+        background: white !important;
+        transition: all 0.2s ease !important;
+        font-family: 'Poppins', sans-serif !important;
+        color: #374151 !important;
+    }
+
+    .edit-task-page .form-input:focus, 
+    .edit-task-page .form-textarea:focus, 
+    .edit-task-page .form-select:focus {
+        outline: none !important;
+        border-color: #667eea !important;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1) !important;
+        transform: translateY(-1px) !important;
+    }
+
+    .edit-task-page .form-textarea {
+        resize: vertical !important;
+        min-height: 120px !important;
+    }
+
+    .edit-task-page .form-input::placeholder, 
+    .edit-task-page .form-textarea::placeholder {
+        color: #9ca3af !important;
+        font-style: italic !important;
+    }
+
+    .edit-task-page .form-row {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 1.5rem !important;
+    }
+
+    .edit-task-page .button-group {
+        display: flex !important;
+        gap: 1rem !important;
+        justify-content: center !important;
+        margin-top: 2rem !important;
+        padding-top: 2rem !important;
+        border-top: 1px solid #e5e7eb !important;
+    }
+
+    .edit-task-page .btn {
+        padding: 0.75rem 2rem !important;
+        border-radius: 8px !important;
+        font-weight: 600 !important;
+        font-size: 0.875rem !important;
+        cursor: pointer !important;
+        transition: all 0.2s ease !important;
+        text-decoration: none !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 0.5rem !important;
+        border: none !important;
+        font-family: 'Poppins', sans-serif !important;
+        min-width: 120px !important;
+        justify-content: center !important;
+    }
+
+    .edit-task-page .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        color: white !important;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3) !important;
+    }
+
+    .edit-task-page .btn-primary:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4) !important;
+    }
+
+    .edit-task-page .btn-secondary {
+        background: #f8fafc !important;
+        color: #475569 !important;
+        border: 2px solid #e2e8f0 !important;
+    }
+
+    .edit-task-page .btn-secondary:hover {
+        background: #f1f5f9 !important;
+        border-color: #cbd5e1 !important;
+        transform: translateY(-1px) !important;
+    }
+
+    .edit-task-page .error-message {
+        color: #ef4444 !important;
+        font-size: 0.75rem !important;
+        margin-top: 0.25rem !important;
+        font-weight: 500 !important;
+    }
+
+    @media (max-width: 1200px) {
+        .edit-task-page .form-body {
+            padding: 1.5rem !important;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .edit-task-page .form-row {
+            grid-template-columns: 1fr !important;
+        }
+        
+        .edit-task-page .page-container {
+            padding: 1rem !important;
+        }
+        
+        .edit-task-page .form-body {
+            padding: 1.5rem !important;
+        }
+        
+        .edit-task-page .form-header {
+            padding: 1.5rem !important;
+        }
+        
+        .edit-task-page .form-title {
+            font-size: 1.5rem !important;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="edit-task-page">
+    <div class="page-container">
+        <div class="form-card">
+            <!-- Header -->
+            <div class="form-header">
+                <h1 class="form-title">✏️ Edit Task</h1>
+                <p class="form-subtitle">Update your task details, deadline, or duration</p>
+            </div>
+
+            <!-- Form Body -->
+            <div class="form-body">
+                <form method="post" id="editTaskForm">
+                    {% csrf_token %}
+                    <div class="form-grid">
+                        <!-- Task Title -->
+                        <div class="form-group">
+                            <label for="title" class="form-label">
+                                🎯 Task Title
+                            </label>
+                            <input 
+                                type="text" 
+                                id="title" 
+                                name="title" 
+                                class="form-input" 
+                                placeholder="What needs to be accomplished?"
+                                value="{{ form.title.value|default:'' }}"
+                                required
+                            >
+                            {% if form.title.errors %}
+                                <div class="error-message">
+                                    ⚠️ {{ form.title.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Description -->
+                        <div class="form-group">
+                            <label for="description" class="form-label">
+                                📝 Description
+                            </label>
+                            <textarea 
+                                id="description" 
+                                name="description" 
+                                class="form-textarea" 
+                                placeholder="Provide detailed context and requirements for this task..."
+                                rows="4"
+                            >{{ form.description.value|default:'' }}</textarea>
+                            {% if form.description.errors %}
+                                <div class="error-message">
+                                    ⚠️ {{ form.description.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Priority is automatically determined by AI -->
+                        {{ form.priority }}
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="due_date" class="form-label">📅 Due Date</label>
+                                <input 
+                                    type="datetime-local" 
+                                    id="due_date" 
+                                    name="due_date" 
+                                    class="form-input"
+                                    value="{{ form.due_date.value|default:'' }}"
+                                >
+                                {% if form.due_date.errors %}
+                                    <div class="error-message">
+                                        ⚠️ {{ form.due_date.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="estimated_duration" class="form-label">⏱️ Duration (minutes)</label>
+                                <input 
+                                    type="number" 
+                                    id="estimated_duration" 
+                                    name="estimated_duration" 
+                                    class="form-input" 
+                                    min="1"
+                                    placeholder="30"
+                                    value="{{ form.estimated_duration.value|default:'30' }}"
+                                >
+                                {% if form.estimated_duration.errors %}
+                                    <div class="error-message">
+                                        ⚠️ {{ form.estimated_duration.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="category" class="form-label">📂 Category</label>
+                            <select id="category" name="category" class="form-select">
+                                <option value="">Choose a category for better organization</option>
+                                <option value="work" {% if form.category.value == 'work' %}selected{% endif %}>💼 Work</option>
+                                <option value="personal" {% if form.category.value == 'personal' %}selected{% endif %}>🏠 Personal</option>
+                                <option value="health" {% if form.category.value == 'health' %}selected{% endif %}>🏃 Health</option>
+                                <option value="learning" {% if form.category.value == 'learning' %}selected{% endif %}>📚 Learning</option>
+                                <option value="social" {% if form.category.value == 'social' %}selected{% endif %}>👥 Social</option>
+                                <option value="finance" {% if form.category.value == 'finance' %}selected{% endif %}>💰 Finance</option>
+                                <option value="creative" {% if form.category.value == 'creative' %}selected{% endif %}>🎨 Creative</option>
+                                <option value="other" {% if form.category.value == 'other' %}selected{% endif %}>📋 Other</option>
+                            </select>
+                            {% if form.category.errors %}
+                                <div class="error-message">
+                                    ⚠️ {{ form.category.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Buttons -->
+                    <div class="button-group">
+                        <a href="{% url 'tasks:edit_select' %}" class="btn btn-secondary">
+                            ← Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary" id="submitBtn">
+                            ✓ Update Task
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('editTaskForm');
+    const submitBtn = document.getElementById('submitBtn');
+    
+    // Form submission with loading state
+    form.addEventListener('submit', function() {
+        submitBtn.disabled = true;
+        submitBtn.classList.add('loading');
+        submitBtn.innerHTML = '⏳ Updating Task...';
+    });
+    
+    // Auto-resize textarea
+    const textarea = document.getElementById('description');
+    if (textarea) {
+        textarea.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.max(120, this.scrollHeight) + 'px';
+        });
+    }
+    
+    // Form validation feedback
+    const inputs = document.querySelectorAll('.form-input, .form-textarea, .form-select');
+    inputs.forEach(input => {
+        input.addEventListener('blur', function() {
+            if (this.hasAttribute('required') && !this.value.trim()) {
+                this.style.borderColor = '#ef4444';
+                this.style.boxShadow = '0 0 0 3px rgba(239, 68, 68, 0.1)';
+            } else {
+                this.style.borderColor = '';
+                this.style.boxShadow = '';
+            }
+        });
+        
+        input.addEventListener('input', function() {
+            this.style.borderColor = '';
+            this.style.boxShadow = '';
+        });
+    });
+});
+</script>
+{% endblock %}

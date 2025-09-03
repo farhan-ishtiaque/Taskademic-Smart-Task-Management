@@ -12,6 +12,8 @@ urlpatterns = [
     # Web views
     path('', views.task_list, name='list'),
     path('create/', views.task_create, name='create'),
+    path('edit/', views.task_edit_select, name='edit_select'),
+    path('edit/<int:task_id>/', views.task_edit, name='edit'),
     path('complete/<int:task_id>/', views.task_complete, name='complete'),
     path('kanban/', views.kanban_board, name='kanban_board'),
     path('calendar/', views.task_calendar, name='calendar'),
