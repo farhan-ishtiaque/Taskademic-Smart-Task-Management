@@ -264,7 +264,7 @@
     <script>
     // Load notification count and preview
     function loadNotifications() {
-        fetch('/notifications/unread-count/')
+        fetch('/notifications/recent/')
             .then(response => {
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
@@ -272,6 +272,7 @@
                 return response.json();
             })
             .then(data => {
+                // Update badge
                 const badge = document.getElementById('notification-badge');
                 if (badge) {
                     if (data.unread_count > 0) {
@@ -279,6 +280,34 @@
                         badge.classList.remove('hidden');
                     } else {
                         badge.classList.add('hidden');
+                    }
+                }
+                
+                // Update dropdown preview
+                const preview = document.getElementById('notification-preview');
+                if (preview) {
+                    if (data.notifications.length > 0) {
+                        preview.innerHTML = data.notifications.map(notification => `
+                            <div class="border-b border-gray-100 pb-2 mb-2 last:border-b-0 last:pb-0 last:mb-0" data-notification-id="${notification.id}">
+                                <div class="flex justify-between items-start">
+                                    <div class="flex-1">
+                                        <p class="text-sm font-medium text-gray-900">${notification.title}</p>
+                                        <p class="text-xs text-gray-600 mt-1">${notification.message}</p>
+                                        <p class="text-xs text-gray-400 mt-1">${notification.created_at}</p>
+                                    </div>
+                                </div>
+                                ${notification.action_url ? `
+                                    <div class="mt-2">
+                                        <a href="${notification.action_url}" 
+                                           class="inline-flex items-center px-2 py-1 text-xs font-medium text-blue-600 bg-blue-50 rounded hover:bg-blue-100">
+                                            ${notification.action_text || 'View'}
+                                        </a>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        `).join('');
+                    } else {
+                        preview.innerHTML = '<p class="text-gray-500 text-sm">No new notifications</p>';
                     }
                 }
             })
@@ -292,6 +321,26 @@
         loadNotifications();
         // Refresh every 30 seconds
         setInterval(loadNotifications, 30000);
+        
+        // Handle notification clicks to mark as read
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('[data-notification-id]')) {
+                const notificationElement = e.target.closest('[data-notification-id]');
+                const notificationId = notificationElement.getAttribute('data-notification-id');
+                
+                // Mark as read
+                fetch(`/notifications/mark-read/${notificationId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': document.querySelector('[name=csrf-token]').getAttribute('content'),
+                        'Content-Type': 'application/json',
+                    }
+                }).then(() => {
+                    // Reload notifications after marking as read
+                    setTimeout(loadNotifications, 500);
+                });
+            }
+        });
     });
     </script>
     {% endif %}

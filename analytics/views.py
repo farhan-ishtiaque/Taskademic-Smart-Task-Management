@@ -17,15 +17,16 @@ def analytics_dashboard(request):
     # Get basic analytics data for initial page load
     user = request.user
     
-    # Basic stats
-    total_tasks = Task.objects.filter(user=user).count()
-    completed_tasks = Task.objects.filter(user=user, status='done').count()
-    pending_tasks = Task.objects.filter(user=user, status__in=['todo', 'in_progress']).count()
+    # Basic stats - personal tasks only
+    total_tasks = Task.objects.filter(user=user, team__isnull=True).count()
+    completed_tasks = Task.objects.filter(user=user, team__isnull=True, status='done').count()
+    pending_tasks = Task.objects.filter(user=user, team__isnull=True, status__in=['todo', 'in_progress']).count()
     
-    # Calculate overdue tasks
+    # Calculate overdue tasks - personal tasks only
     now = timezone.now()
     overdue_tasks = Task.objects.filter(
         user=user,
+        team__isnull=True,  # Exclude team tasks
         due_date__lt=now,
         status__in=['todo', 'in_progress']
     ).count()

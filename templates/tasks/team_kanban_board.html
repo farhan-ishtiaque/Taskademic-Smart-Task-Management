@@ -603,6 +603,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function updateTaskStatus(taskId, newStatus) {
+        console.log(`DEBUG: Updating task ${taskId} to status ${newStatus}`);
+        
         fetch(`/tasks/api/tasks/${taskId}/change_status/`, {
             method: 'POST',
             headers: {
@@ -611,18 +613,24 @@ document.addEventListener('DOMContentLoaded', function() {
             },
             body: JSON.stringify({ status: newStatus })
         })
-        .then(response => response.json())
+        .then(response => {
+            console.log(`DEBUG: Response status: ${response.status}`);
+            return response.json();
+        })
         .then(data => {
+            console.log('DEBUG: Response data:', data);
             if (data.error) {
+                console.error('DEBUG: Error from server:', data.error);
                 showNotification(data.error, 'error');
                 loadTeamTasks(); // Reload to revert changes
             } else {
+                console.log('DEBUG: Success:', data.message);
                 showNotification(data.message, 'success');
                 loadTeamTasks(); // Reload to get updated data
             }
         })
         .catch(error => {
-            console.error('Error updating task status:', error);
+            console.error('DEBUG: Network error:', error);
             showNotification('Error updating task', 'error');
             loadTeamTasks();
         });

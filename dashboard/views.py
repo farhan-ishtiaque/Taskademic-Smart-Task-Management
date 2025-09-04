@@ -15,32 +15,34 @@ def dashboard_home(request):
     """Main dashboard view"""
     user = request.user
     
-    # Get task statistics
-    user_tasks = Task.objects.filter(user=user)
-    assigned_tasks = Task.objects.filter(assigned_to=user)  # Tasks assigned to current user
+    # Get task statistics - PERSONAL TASKS ONLY (exclude team tasks)
+    user_tasks = Task.objects.filter(user=user, team__isnull=True)
     
-    # Recent tasks (last 7 days) - both owned and assigned
+    # Tasks assigned to me (includes both personal and team tasks assigned to user)
+    assigned_tasks = Task.objects.filter(assigned_to=user)
+    
+    # Recent tasks (last 7 days) - personal tasks + tasks assigned to me
     recent_tasks = Task.objects.filter(
-        Q(user=user) | Q(assigned_to=user),
+        Q(user=user, team__isnull=True) | Q(assigned_to=user),
         created_at__gte=timezone.now() - timedelta(days=7)
     ).order_by('-created_at')[:5]
     
-    # Upcoming tasks (next 7 days) - both owned and assigned
+    # Upcoming tasks (next 7 days) - personal tasks + tasks assigned to me
     upcoming_tasks = Task.objects.filter(
-        Q(user=user) | Q(assigned_to=user),
+        Q(user=user, team__isnull=True) | Q(assigned_to=user),
         due_date__gte=timezone.now(),
         due_date__lte=timezone.now() + timedelta(days=7),
         status__in=['todo', 'in_progress']
     ).order_by('due_date')[:5]
     
-    # Overdue tasks - both owned and assigned
+    # Overdue tasks - personal tasks + tasks assigned to me
     overdue_tasks = Task.objects.filter(
-        Q(user=user) | Q(assigned_to=user),
+        Q(user=user, team__isnull=True) | Q(assigned_to=user),
         due_date__lt=timezone.now(),
         status__in=['todo', 'in_progress']
     ).order_by('due_date')[:5]
     
-    # Task completion rate
+    # Task completion rate (based on personal tasks only)
     total_tasks = user_tasks.count()
     completed_tasks = user_tasks.filter(status='done').count()
     completion_rate = (completed_tasks / total_tasks * 100) if total_tasks > 0 else 0
@@ -48,7 +50,7 @@ def dashboard_home(request):
     # Tasks by status
     task_stats = {
         'total': total_tasks,
-        'assigned_to_me': assigned_tasks.count(),
+        'assigned_to_me': assigned_tasks.filter(status__in=['todo', 'in_progress', 'review']).count(),  # Active assigned tasks (including review)
         'completed': completed_tasks,
         'in_progress': user_tasks.filter(status='in_progress').count(),
         'todo': user_tasks.filter(status='todo').count(),
@@ -67,7 +69,7 @@ def dashboard_home(request):
         'recent_tasks': recent_tasks,
         'upcoming_tasks': upcoming_tasks,
         'overdue_tasks': overdue_tasks,
-        'assigned_tasks': assigned_tasks.filter(status__in=['todo', 'in_progress'])[:5],  # Active assigned tasks
+        'assigned_tasks': assigned_tasks.filter(status__in=['todo', 'in_progress', 'review'])[:5],  # Active assigned tasks (including review)
     }
     
     return render(request, 'dashboard/home.html', context)
