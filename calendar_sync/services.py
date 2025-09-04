@@ -375,6 +375,22 @@ class GoogleCalendarService:
             'colorId': self._get_color_id(task.priority),
         }
         
+        # Add reminder notifications
+        reminders = {
+            'useDefault': False,
+            'overrides': [
+                {
+                    'method': 'popup',
+                    'minutes': getattr(task, 'reminder_minutes', 15)
+                },
+                {
+                    'method': 'email', 
+                    'minutes': getattr(task, 'reminder_minutes', 15)
+                }
+            ]
+        }
+        event_data['reminders'] = reminders
+        
         # Set time based on due date
         if task.due_date:
             if hasattr(task.due_date, 'hour') and task.due_date.hour != 0:

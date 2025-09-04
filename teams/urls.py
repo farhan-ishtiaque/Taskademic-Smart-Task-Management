@@ -11,6 +11,9 @@ urlpatterns = [
     path('<uuid:team_id>/members/', views.team_members_json, name='members_json'),  # For AJAX
     path('<uuid:team_id>/invite-status/', views.check_invite_status, name='invite_status'),  # Check invites and tasks
     
+    # Email search API
+    path('api/search-users/', views.search_users_api, name='search_users_api'),
+    
     # Simple email invite only
     path('<uuid:team_id>/invite/email/', views.team_invite_email, name='invite_email'),
     path('<uuid:team_id>/cancel-invite/<uuid:invite_id>/', views.cancel_invite, name='cancel_invite'),

@@ -1,4 +1,4 @@
-from django.db.models.signals import post_save, post_delete, pre_save
+from django.db.models.signals import post_save, pre_delete, pre_save
 from django.dispatch import receiver
 from tasks.models import Task
 from .services import GoogleCalendarService
@@ -30,17 +30,27 @@ def sync_task_on_save(sender, instance, created, **kwargs):
         logger.error(f"Error syncing task {instance.id} to calendar: {e}")
 
 
-@receiver(post_delete, sender=Task)
+@receiver(pre_delete, sender=Task)
 def sync_task_on_delete(sender, instance, **kwargs):
     """Automatically delete calendar event when task is deleted"""
     try:
-        calendar_service = GoogleCalendarService(instance.user)
+        # Get user from the instance before deletion
+        user = instance.user
+        if not user:
+            logger.warning(f"No user found for task {instance.id}")
+            return
+            
+        calendar_service = GoogleCalendarService(user)
         
         if not calendar_service.is_sync_enabled():
+            logger.info(f"Calendar sync not enabled for user {user.username}")
             return
         
-        calendar_service.delete_event(instance)
-        logger.info(f"Deleted calendar event for task: {instance.title}")
+        success = calendar_service.delete_event(instance)
+        if success:
+            logger.info(f"Successfully deleted calendar event for task: {instance.title}")
+        else:
+            logger.warning(f"Failed to delete calendar event for task: {instance.title}")
         
     except Exception as e:
         logger.error(f"Error deleting calendar event for task {instance.id}: {e}")

@@ -1,6 +1,7 @@
 from django.urls import path
 from . import views
 from .focus_timer import focus_timer, complete_task_ajax, update_timer_session
+from .moscow_matrix import refresh_moscow_matrix
 
 app_name = 'dashboard'
 
@@ -15,4 +16,7 @@ urlpatterns = [
     # AJAX endpoints for focus timer
     path('ajax/complete-task/', complete_task_ajax, name='complete_task_ajax'),
     path('ajax/timer-session/', update_timer_session, name='update_timer_session'),
+    
+    # MoSCoW matrix endpoints
+    path('ajax/refresh-moscow/', refresh_moscow_matrix, name='refresh_moscow_matrix'),
 ]
