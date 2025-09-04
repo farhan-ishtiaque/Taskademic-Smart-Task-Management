@@ -1,0 +1,168 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Daily Schedule - TaskAdemic{% endblock %}
+
+{% block extra_css %}
+<style>
+    .schedule-card {
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        border: none;
+        transition: transform 0.2s;
+    }
+    .schedule-card:hover {
+        transform: translateY(-2px);
+    }
+    .time-block {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 8px;
+        padding: 12px;
+        margin-bottom: 8px;
+    }
+    .schedule-btn {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        border: none;
+        border-radius: 25px;
+        padding: 12px 30px;
+        color: white;
+        font-weight: 600;
+        transition: all 0.3s;
+    }
+    .schedule-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+        color: white;
+    }
+    .ai-badge {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 20px;
+        padding: 4px 12px;
+        font-size: 0.8em;
+        font-weight: 600;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">
+                    <i class="fas fa-calendar-week text-primary me-2"></i>
+                    Weekly Time Blocks Overview
+                </h1>
+                <div>
+                    <a href="{% url 'dashboard:daily_routine' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-arrow-left me-1"></i> Back to Routine
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Weekly Time Blocks Overview -->
+
+    <div class="row">
+        <!-- Time Blocks Overview -->
+        <div class="col-12">
+            <div class="card schedule-card h-100">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-clock me-2"></i>
+                        Your Available Time Blocks
+                    </h5>
+                    <small class="text-muted">View your weekly availability schedule</small>
+                </div>
+                <div class="card-body">
+                    {% if time_blocks %}
+                        {% regroup time_blocks by day_of_week as blocks_by_day %}
+                        {% for day_group in blocks_by_day %}
+                        <div class="mb-3">
+                            <h6 class="text-primary d-flex align-items-center">
+                                <i class="fas fa-calendar-day me-2"></i>
+                                {% if day_group.grouper == 0 %}Monday
+                                {% elif day_group.grouper == 1 %}Tuesday
+                                {% elif day_group.grouper == 2 %}Wednesday
+                                {% elif day_group.grouper == 3 %}Thursday
+                                {% elif day_group.grouper == 4 %}Friday
+                                {% elif day_group.grouper == 5 %}Saturday
+                                {% elif day_group.grouper == 6 %}Sunday
+                                {% else %}Day {{ day_group.grouper }}
+                                {% endif %}
+                                <span class="badge bg-light text-dark ms-2">{{ day_group.list|length }} block{{ day_group.list|length|pluralize }}</span>
+                            </h6>
+                            {% for block in day_group.list %}
+                            <div class="time-block">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>
+                                            {% if day_group.grouper == 0 %}Monday
+                                            {% elif day_group.grouper == 1 %}Tuesday
+                                            {% elif day_group.grouper == 2 %}Wednesday
+                                            {% elif day_group.grouper == 3 %}Thursday
+                                            {% elif day_group.grouper == 4 %}Friday
+                                            {% elif day_group.grouper == 5 %}Saturday
+                                            {% elif day_group.grouper == 6 %}Sunday
+                                            {% endif %} Time Block
+                                        </strong>
+                                        <br>
+                                        <small>
+                                            <i class="fas fa-clock me-1"></i>
+                                            {{ block.start_time|time:"H:i" }} - {{ block.end_time|time:"H:i" }}
+                                            <span class="text-light ms-2">
+                                                <i class="fas fa-calendar me-1"></i>
+                                                Every {% if day_group.grouper == 0 %}Monday
+                                                {% elif day_group.grouper == 1 %}Tuesday
+                                                {% elif day_group.grouper == 2 %}Wednesday
+                                                {% elif day_group.grouper == 3 %}Thursday
+                                                {% elif day_group.grouper == 4 %}Friday
+                                                {% elif day_group.grouper == 5 %}Saturday
+                                                {% elif day_group.grouper == 6 %}Sunday
+                                                {% endif %}
+                                            </span>
+                                        </small>
+                                    </div>
+                                    <div class="text-end">
+                                        <span class="badge bg-light text-dark">{{ block.duration_minutes }}m</span>
+                                        <br>
+                                        <small class="text-light">Available time</small>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endfor %}
+                        
+                        <div class="mt-4 p-3 bg-light rounded">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">Need to modify your time blocks?</h6>
+                                    <small class="text-muted">Add, edit, or remove your available time slots</small>
+                                </div>
+                                <a href="{% url 'dashboard:manage_time_blocks' %}" class="btn btn-primary">
+                                    <i class="fas fa-edit me-1"></i> Manage Time Blocks
+                                </a>
+                            </div>
+                        </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-clock fa-4x text-muted mb-3"></i>
+                        <h5 class="text-muted">No time blocks set up yet</h5>
+                        <p class="text-muted mb-4">Set up your weekly availability to start scheduling tasks efficiently.</p>
+                        <a href="{% url 'dashboard:manage_time_blocks' %}" class="btn btn-primary btn-lg">
+                            <i class="fas fa-plus me-2"></i> Set Up Time Blocks
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+
+    </div>
+</div>
+{% endblock %}

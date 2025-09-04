@@ -254,6 +254,12 @@ class TimeBlock(models.Model):
     class Meta:
         unique_together = ['user', 'day_of_week', 'start_time']
     
+    def duration_minutes(self):
+        """Calculate duration in minutes"""
+        start_minutes = self.start_time.hour * 60 + self.start_time.minute
+        end_minutes = self.end_time.hour * 60 + self.end_time.minute
+        return end_minutes - start_minutes
+    
     def __str__(self):
         days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
         return f"{self.user.username} - {days[self.day_of_week]} {self.start_time}-{self.end_time}"

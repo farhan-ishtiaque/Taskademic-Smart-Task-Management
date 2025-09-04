@@ -1,0 +1,596 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<!-- Hidden CSRF token for JavaScript -->
+{% csrf_token %}
+<div class="container-fluid py-4">
+    <!-- Professional Header Section -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="hero-section">
+                <div class="hero-content">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h1 class="hero-title">
+                                <i class="fas fa-calendar-check me-3"></i>
+                                Manage Your Available Time
+                            </h1>
+                            <p class="hero-subtitle">
+                                Set your free time blocks and let AI create an optimized schedule for your tasks
+                            </p>
+                        </div>
+                        <div>
+                            <a href="{% url 'dashboard:daily_routine' %}" class="btn btn-outline-light btn-lg">
+                                <i class="fas fa-arrow-left me-2"></i> Back to Routine
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Time Blocks Management Section -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="time-management-section">
+                <div class="section-header d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h3 class="section-title">Your Time Blocks</h3>
+                        <p class="section-subtitle">Manage your available time slots for each day</p>
+                    </div>
+                    <button class="btn btn-primary btn-lg add-new-block-btn" data-bs-toggle="modal" data-bs-target="#addTimeBlockModal">
+                        <i class="fas fa-plus me-2"></i>
+                        Add New Block
+                    </button>
+                </div>
+
+                <!-- Weekly Calendar View -->
+                <div class="weekly-calendar">
+                    <div class="row g-3">
+                        {% for day in days_of_week %}
+                        <div class="col-xl-1-7 col-lg-4 col-md-6">
+                            <div class="day-column">
+                                <div class="day-header">
+                                    <h5 class="day-name">{{ day.name }}</h5>
+                                    <span class="day-date">{{ day.date|date:"M d" }}</span>
+                                </div>
+                                <div class="time-blocks-container">
+                                    {% for block in day.time_blocks %}
+                                    <div class="time-block-item">
+                                        <div class="time-range">
+                                            <span class="start-time">{{ block.start_time|time:"g:i A" }}</span>
+                                            <span class="separator">-</span>
+                                            <span class="end-time">{{ block.end_time|time:"g:i A" }}</span>
+                                        </div>
+                                        <div class="time-actions">
+                                            <button class="btn btn-sm btn-outline-primary edit-btn" 
+                                                    data-block-id="{{ block.id }}"
+                                                    data-start="{{ block.start_time|time:'H:i' }}"
+                                                    data-end="{{ block.end_time|time:'H:i' }}">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-danger delete-btn" 
+                                                    data-block-id="{{ block.id }}">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    {% empty %}
+                                    <div class="no-blocks-message">
+                                        <i class="fas fa-plus-circle"></i>
+                                        <p>No time blocks</p>
+                                        <small>Click "Add New Block" to get started</small>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Time Block Modal -->
+    <div class="modal fade" id="addTimeBlockModal" tabindex="-1" aria-labelledby="addTimeBlockModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addTimeBlockModalLabel">
+                        <i class="fas fa-plus-circle me-2"></i>
+                        Add New Time Block
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form method="post" id="timeBlockForm">
+                    {% csrf_token %}
+                    <div class="modal-body">
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <label for="day_of_week" class="form-label">Day of Week</label>
+                                <select class="form-select" id="day_of_week" name="day_of_week" required>
+                                    <option value="">Select a day</option>
+                                    <option value="monday">Monday</option>
+                                    <option value="tuesday">Tuesday</option>
+                                    <option value="wednesday">Wednesday</option>
+                                    <option value="thursday">Thursday</option>
+                                    <option value="friday">Friday</option>
+                                    <option value="saturday">Saturday</option>
+                                    <option value="sunday">Sunday</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Apply to Multiple Days</label>
+                                <div class="form-check-group">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="apply_all_weekdays">
+                                        <label class="form-check-label" for="apply_all_weekdays">
+                                            All Weekdays (Mon-Fri)
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="apply_all_weekend">
+                                        <label class="form-check-label" for="apply_all_weekend">
+                                            Weekend (Sat-Sun)
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="start_time" class="form-label">Start Time</label>
+                                <input type="time" class="form-control" id="start_time" name="start_time" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="end_time" class="form-label">End Time</label>
+                                <input type="time" class="form-control" id="end_time" name="end_time" required>
+                            </div>
+                            <div class="col-12">
+                                <div class="duration-display">
+                                    <i class="fas fa-hourglass-half me-2"></i>
+                                    <span class="duration-text">Duration will be calculated automatically</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                            <i class="fas fa-times me-2"></i>Cancel
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Save Time Block
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block title %}Time Blocks - TaskAdemic{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Hero Section */
+    .hero-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 20px;
+        padding: 60px 40px;
+        margin-bottom: 40px;
+        box-shadow: 0 20px 40px rgba(102, 126, 234, 0.3);
+    }
+    
+    .hero-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: white;
+        margin-bottom: 15px;
+    }
+    
+    .hero-subtitle {
+        font-size: 1.2rem;
+        color: rgba(255, 255, 255, 0.9);
+        margin-bottom: 0;
+    }
+
+    /* Section Headers */
+    .section-header {
+        margin-bottom: 30px;
+    }
+    
+    .section-title {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 10px;
+    }
+    
+    .section-subtitle {
+        font-size: 1.1rem;
+        color: #7f8c8d;
+        margin-bottom: 0;
+    }
+
+    /* Time Management Section */
+    .time-management-section {
+        background: white;
+        border-radius: 20px;
+        padding: 40px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+    
+    .add-new-block-btn {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        border-radius: 15px;
+        padding: 15px 30px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .add-new-block-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+    }
+
+    /* Weekly Calendar */
+    .weekly-calendar {
+        margin-top: 30px;
+    }
+    
+    .day-column {
+        background: #f8f9fa;
+        border-radius: 15px;
+        overflow: hidden;
+        height: 100%;
+        min-height: 400px;
+    }
+    
+    .day-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px;
+        text-align: center;
+    }
+    
+    .day-name {
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin-bottom: 5px;
+    }
+    
+    .day-date {
+        font-size: 0.9rem;
+        opacity: 0.9;
+    }
+    
+    .time-blocks-container {
+        padding: 20px;
+    }
+    
+    .time-block-item {
+        background: white;
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 15px;
+        transition: all 0.3s ease;
+    }
+    
+    .time-block-item:hover {
+        border-color: #667eea;
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+    }
+    
+    .time-range {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 10px;
+    }
+    
+    .start-time, .end-time {
+        font-weight: 600;
+        color: #2c3e50;
+    }
+    
+    .separator {
+        margin: 0 10px;
+        color: #7f8c8d;
+    }
+    
+    .time-actions {
+        display: flex;
+        gap: 8px;
+        justify-content: center;
+    }
+    
+    .no-blocks-message {
+        text-align: center;
+        color: #7f8c8d;
+        padding: 40px 20px;
+    }
+    
+    .no-blocks-message i {
+        font-size: 3rem;
+        margin-bottom: 15px;
+        color: #bdc3c7;
+    }
+    
+    .no-blocks-message p {
+        font-size: 1.1rem;
+        margin-bottom: 5px;
+    }
+
+    /* Modal Styling */
+    .modal-content {
+        border-radius: 20px;
+        border: none;
+        overflow: hidden;
+    }
+    
+    .modal-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-bottom: none;
+        padding: 25px 30px;
+    }
+    
+    .modal-body {
+        padding: 30px;
+    }
+    
+    .form-label {
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 8px;
+    }
+    
+    .form-control, .form-select {
+        border-radius: 10px;
+        border: 2px solid #e9ecef;
+        padding: 12px 15px;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+    
+    .form-check-group {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .form-check {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 10px 15px;
+        border: 1px solid #e9ecef;
+    }
+    
+    .duration-display {
+        background: #e3f2fd;
+        border-radius: 10px;
+        padding: 15px;
+        text-align: center;
+        color: #1976d2;
+        font-weight: 500;
+    }
+    
+    .modal-footer {
+        border-top: none;
+        padding: 20px 30px 30px;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .hero-title {
+            font-size: 2rem;
+        }
+        
+        .hero-subtitle {
+            font-size: 1rem;
+        }
+        
+        .hero-section {
+            padding: 40px 20px;
+        }
+        
+        .step-card {
+            margin-bottom: 20px;
+        }
+        
+        .day-column {
+            margin-bottom: 20px;
+        }
+    }
+
+    /* Custom Grid for 7 columns */
+    @media (min-width: 1200px) {
+        .col-xl-1-7 {
+            flex: 0 0 auto;
+            width: 14.2857%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Form elements
+    const startTimeInput = document.getElementById('start_time');
+    const endTimeInput = document.getElementById('end_time');
+    const durationDisplay = document.querySelector('.duration-text');
+    const timeBlockForm = document.getElementById('timeBlockForm');
+    const daySelect = document.getElementById('day_of_week');
+    
+    // Duration calculation
+    function updateDurationDisplay() {
+        const startTime = startTimeInput.value;
+        const endTime = endTimeInput.value;
+        
+        if (startTime && endTime) {
+            const start = new Date(`2000-01-01T${startTime}`);
+            const end = new Date(`2000-01-01T${endTime}`);
+            
+            if (end > start) {
+                const diff = end - start;
+                const hours = Math.floor(diff / (1000 * 60 * 60));
+                const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                
+                durationDisplay.textContent = `Duration: ${hours}h ${minutes}m`;
+            } else {
+                durationDisplay.textContent = 'End time must be after start time';
+                durationDisplay.style.color = '#dc3545';
+            }
+        } else {
+            durationDisplay.textContent = 'Duration will be calculated automatically';
+            durationDisplay.style.color = '#1976d2';
+        }
+    }
+    
+    // Time input validation
+    startTimeInput.addEventListener('change', updateDurationDisplay);
+    endTimeInput.addEventListener('change', updateDurationDisplay);
+    
+    // Multi-day application
+    const applyWeekdaysCheck = document.getElementById('apply_all_weekdays');
+    const applyWeekendCheck = document.getElementById('apply_all_weekend');
+    
+    applyWeekdaysCheck.addEventListener('change', function() {
+        if (this.checked) {
+            applyWeekendCheck.checked = false;
+            daySelect.value = 'monday';
+            daySelect.disabled = true;
+        } else {
+            daySelect.disabled = false;
+        }
+    });
+    
+    applyWeekendCheck.addEventListener('change', function() {
+        if (this.checked) {
+            applyWeekdaysCheck.checked = false;
+            daySelect.value = 'saturday';
+            daySelect.disabled = true;
+        } else {
+            daySelect.disabled = false;
+        }
+    });
+    
+    // Form submission handling
+    const timeBlockForm = document.getElementById('timeBlockForm');
+    timeBlockForm.addEventListener('submit', function(e) {
+        const startTime = document.getElementById('start_time').value;
+        const endTime = document.getElementById('end_time').value;
+        
+        // Validate times
+        if (startTime >= endTime) {
+            e.preventDefault();
+            alert('End time must be after start time');
+            return;
+        }
+        
+        // Show loading state
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Saving...';
+        submitBtn.disabled = true;
+        
+        // Let the form submit normally (don't prevent default)
+        // The form will submit to the current URL since no action is specified
+    });
+    
+    // Delete functionality
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.delete-btn')) {
+            const button = e.target.closest('.delete-btn');
+            const blockId = button.dataset.blockId;
+            
+            if (confirm('Are you sure you want to delete this time block?')) {
+                // Create a form and submit it
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = `/dashboard/time-blocks/delete/${blockId}/`;
+                
+                // Add CSRF token
+                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+                const csrfInput = document.createElement('input');
+                csrfInput.type = 'hidden';
+                csrfInput.name = 'csrfmiddlewaretoken';
+                csrfInput.value = csrfToken;
+                form.appendChild(csrfInput);
+                
+                // Add to body and submit
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+    });
+    
+    // Edit functionality
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.edit-btn')) {
+            const button = e.target.closest('.edit-btn');
+            const blockId = button.dataset.blockId;
+            const startTime = button.dataset.start;
+            const endTime = button.dataset.end;
+            
+            // Populate form with existing data
+            startTimeInput.value = startTime;
+            endTimeInput.value = endTime;
+            updateDurationDisplay();
+            
+            // Change form action to edit mode
+            timeBlockForm.action = `/dashboard/time-blocks/edit/${blockId}/`;
+            
+            // Update modal title
+            document.getElementById('addTimeBlockModalLabel').innerHTML = 
+                '<i class="fas fa-edit me-2"></i>Edit Time Block';
+            
+            // Hide day selection and multi-day options for editing
+            daySelect.closest('.col-md-6').style.display = 'none';
+            document.querySelector('.col-md-6:has(.form-check-group)').style.display = 'none';
+            
+            // Show modal
+            const modal = new bootstrap.Modal(document.getElementById('addTimeBlockModal'));
+            modal.show();
+        }
+    });
+    
+    // Reset modal when closed
+    document.getElementById('addTimeBlockModal').addEventListener('hidden.bs.modal', function() {
+        timeBlockForm.reset();
+        timeBlockForm.action = '';
+        document.getElementById('addTimeBlockModalLabel').innerHTML = 
+            '<i class="fas fa-plus-circle me-2"></i>Add New Time Block';
+        daySelect.disabled = false;
+        durationDisplay.textContent = 'Duration will be calculated automatically';
+        durationDisplay.style.color = '#1976d2';
+        
+        // Show day selection and multi-day options
+        daySelect.closest('.col-md-6').style.display = 'block';
+        document.querySelector('.col-md-6:has(.form-check-group)').style.display = 'block';
+    });
+    
+    // Smooth scrolling for better UX
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+                target.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

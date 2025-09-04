@@ -54,9 +54,10 @@ class MoSCoWCacheService:
             if cached_result:
                 return cached_result
         
-        # Get user's active tasks
+        # Get user's active tasks (both owned and assigned)
+        from django.db.models import Q
         tasks = Task.objects.filter(
-            user=user,
+            Q(user=user) | Q(assigned_to=user),
             status__in=['todo', 'in_progress']
         )
         

@@ -1,0 +1,311 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Schedule History - TaskAdemic{% endblock %}
+
+{% block extra_css %}
+<style>
+    .history-card {
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        border: none;
+        transition: transform 0.2s;
+        margin-bottom: 20px;
+    }
+    .history-card:hover {
+        transform: translateY(-2px);
+    }
+    .history-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 12px 12px 0 0;
+    }
+    .metric-card {
+        background: linear-gradient(135deg, #f6f9fc 0%, #ffffff 100%);
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        text-align: center;
+        padding: 15px;
+    }
+    .efficiency-badge {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        color: white;
+        border-radius: 20px;
+        padding: 5px 15px;
+        font-size: 0.85em;
+        font-weight: 600;
+    }
+    .date-navigation {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 20px;
+    }
+    .empty-state {
+        text-align: center;
+        color: #6c757d;
+        padding: 50px 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">
+                    <i class="fas fa-history text-primary me-2"></i>
+                    Schedule History
+                </h1>
+                <a href="{% url 'dashboard:daily_schedule_home' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-1"></i> Back to Schedules
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Date Range Filter -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="date-navigation">
+                <form method="GET" class="row g-3 align-items-end">
+                    <div class="col-md-3">
+                        <label for="start_date" class="form-label">From Date</label>
+                        <input type="date" 
+                               class="form-control" 
+                               id="start_date" 
+                               name="start_date" 
+                               value="{{ start_date|date:'Y-m-d' }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="end_date" class="form-label">To Date</label>
+                        <input type="date" 
+                               class="form-control" 
+                               id="end_date" 
+                               name="end_date" 
+                               value="{{ end_date|date:'Y-m-d' }}">
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-filter me-1"></i> Filter
+                        </button>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="btn-group" role="group">
+                            <a href="?days=7" class="btn btn-outline-secondary btn-sm">Last 7 Days</a>
+                            <a href="?days=30" class="btn btn-outline-secondary btn-sm">Last 30 Days</a>
+                            <a href="?days=90" class="btn btn-outline-secondary btn-sm">Last 3 Months</a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overall Statistics -->
+    {% if schedules %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card history-card">
+                <div class="history-header p-3">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-line me-2"></i>
+                        Period Overview ({{ start_date|date:"M d" }} - {{ end_date|date:"M d, Y" }})
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-2">
+                            <div class="metric-card">
+                                <div class="h4 text-primary mb-1">{{ stats.total_schedules }}</div>
+                                <small class="text-muted">Schedules Created</small>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="metric-card">
+                                <div class="h4 text-success mb-1">{{ stats.total_tasks_scheduled }}</div>
+                                <small class="text-muted">Tasks Scheduled</small>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="metric-card">
+                                <div class="h4 text-info mb-1">{{ stats.total_tasks_completed }}</div>
+                                <small class="text-muted">Tasks Completed</small>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="metric-card">
+                                <div class="h4 text-warning mb-1">{{ stats.avg_efficiency|floatformat:0 }}%</div>
+                                <small class="text-muted">Avg Efficiency</small>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="metric-card">
+                                <div class="h4 text-purple mb-1">{{ stats.total_work_hours|floatformat:1 }}h</div>
+                                <small class="text-muted">Work Hours</small>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="metric-card">
+                                <div class="h4 text-dark mb-1">{{ stats.total_pomodoros }}</div>
+                                <small class="text-muted">Pomodoro Sessions</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Schedule History List -->
+    <div class="row">
+        {% for schedule in schedules %}
+        <div class="col-md-6 col-lg-4">
+            <div class="card history-card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">
+                        <i class="fas fa-calendar me-2"></i>
+                        {{ schedule.target_date|date:"M d, Y" }}
+                    </h6>
+                    <span class="efficiency-badge">
+                        {{ schedule.completion_rate|floatformat:0 }}% done
+                    </span>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center mb-3">
+                        <div class="col-4">
+                            <div class="h6 text-primary mb-0">{{ schedule.tasks_count }}</div>
+                            <small class="text-muted">Tasks</small>
+                        </div>
+                        <div class="col-4">
+                            <div class="h6 text-success mb-0">{{ schedule.completed_tasks_count }}</div>
+                            <small class="text-muted">Done</small>
+                        </div>
+                        <div class="col-4">
+                            <div class="h6 text-info mb-0">{{ schedule.total_scheduled_minutes }}m</div>
+                            <small class="text-muted">Time</small>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar bg-success" 
+                                 role="progressbar" 
+                                 style="width: {{ schedule.completion_rate }}%"
+                                 aria-valuenow="{{ schedule.completion_rate }}" 
+                                 aria-valuemin="0" 
+                                 aria-valuemax="100">
+                            </div>
+                        </div>
+                        <small class="text-muted">
+                            {{ schedule.completed_tasks_count }}/{{ schedule.tasks_count }} tasks completed
+                        </small>
+                    </div>
+                    
+                    <div class="row text-center mb-3">
+                        <div class="col-6">
+                            <small class="text-muted">
+                                <strong>Must Tasks:</strong><br>
+                                {{ schedule.moscow_must_count }}
+                            </small>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted">
+                                <strong>Should Tasks:</strong><br>
+                                {{ schedule.moscow_should_count }}
+                            </small>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'dashboard:view_schedule' schedule.target_date.year schedule.target_date.month schedule.target_date.day %}" 
+                           class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-eye me-1"></i> View
+                        </a>
+                        <small class="text-muted align-self-center">
+                            {{ schedule.generation_timestamp|date:"M d, g:i A" }}
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if is_paginated %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <nav aria-label="Schedule history pagination">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?{% if request.GET.start_date %}start_date={{ request.GET.start_date }}&{% endif %}{% if request.GET.end_date %}end_date={{ request.GET.end_date }}&{% endif %}page={{ page_obj.previous_page_number }}">
+                                <i class="fas fa-chevron-left"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+                    
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ num }}</span>
+                            </li>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link" href="?{% if request.GET.start_date %}start_date={{ request.GET.start_date }}&{% endif %}{% if request.GET.end_date %}end_date={{ request.GET.end_date }}&{% endif %}page={{ num }}">{{ num }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?{% if request.GET.start_date %}start_date={{ request.GET.start_date }}&{% endif %}{% if request.GET.end_date %}end_date={{ request.GET.end_date }}&{% endif %}page={{ page_obj.next_page_number }}">
+                                <i class="fas fa-chevron-right"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </div>
+    {% endif %}
+
+    {% else %}
+    <!-- Empty State -->
+    <div class="row">
+        <div class="col-12">
+            <div class="empty-state">
+                <i class="fas fa-calendar-times fa-4x mb-3"></i>
+                <h4>No Schedule History</h4>
+                <p class="mb-4">You haven't created any schedules yet. Start by creating your first daily schedule!</p>
+                <a href="{% url 'dashboard:daily_schedule_home' %}" class="btn btn-primary">
+                    <i class="fas fa-plus me-1"></i> Create Schedule
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Set max date for date inputs to today
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('start_date').max = today;
+    document.getElementById('end_date').max = today;
+    
+    // Ensure end date is not before start date
+    document.getElementById('start_date').addEventListener('change', function() {
+        document.getElementById('end_date').min = this.value;
+    });
+    
+    document.getElementById('end_date').addEventListener('change', function() {
+        document.getElementById('start_date').max = this.value;
+    });
+});
+</script>
+{% endblock %}

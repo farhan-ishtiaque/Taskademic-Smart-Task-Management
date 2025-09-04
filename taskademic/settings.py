@@ -197,8 +197,8 @@ USE_X_FORWARDED_PORT = True
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# DeepSeek API Settings
-DEEPSEEK_API_KEY = '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'
+# OpenRouter API Settings (for DeepSeek access)
+DEEPSEEK_API_KEY = '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'
 
 # Email Configuration (for development - console backend)
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'

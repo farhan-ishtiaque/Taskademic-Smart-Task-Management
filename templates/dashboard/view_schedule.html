@@ -1,0 +1,355 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Schedule for {{ target_date|date:"F d, Y" }} - TaskAdemic{% endblock %}
+
+{% block extra_css %}
+<style>
+    .schedule-card {
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        border: none;
+        transition: transform 0.2s;
+    }
+    .task-card {
+        background: linear-gradient(135deg, #f6f9fc 0%, #ffffff 100%);
+        border-left: 4px solid #2196f3;
+        margin-bottom: 12px;
+        border-radius: 8px;
+    }
+    .task-card.completed {
+        background: linear-gradient(135deg, #e8f5e8 0%, #f5f5f5 100%);
+        border-left-color: #4caf50;
+    }
+    .time-badge {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 20px;
+        padding: 4px 12px;
+        font-size: 0.85em;
+        font-weight: 600;
+    }
+    .priority-badge {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 3px 10px;
+        font-size: 0.75em;
+        font-weight: 600;
+    }
+    .ai-insight {
+        background: linear-gradient(135deg, #e3f2fd 0%, #f8f9fa 100%);
+        border-left: 3px solid #2196f3;
+        border-radius: 6px;
+        padding: 12px;
+        margin-top: 8px;
+    }
+    
+    /* Timetable Styles */
+    .timetable-container {
+        max-height: 600px;
+        overflow-y: auto;
+    }
+    .timeline {
+        position: relative;
+        padding: 20px 0;
+    }
+    .timeline::before {
+        content: '';
+        position: absolute;
+        left: 80px;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: linear-gradient(to bottom, #4299e1, #667eea);
+    }
+    .timeline-item {
+        position: relative;
+        display: flex;
+        margin-bottom: 25px;
+        min-height: 80px;
+    }
+    .timeline-time {
+        width: 100px;
+        text-align: center;
+        padding-right: 20px;
+        position: relative;
+    }
+    .timeline-time::after {
+        content: '';
+        position: absolute;
+        right: -6px;
+        top: 15px;
+        width: 12px;
+        height: 12px;
+        background: #4299e1;
+        border-radius: 50%;
+        border: 3px solid white;
+        box-shadow: 0 0 0 3px #4299e1;
+    }
+    .duration-info {
+        font-size: 0.75em;
+        color: #666;
+        margin-top: 4px;
+    }
+    .timeline-content {
+        flex: 1;
+        margin-left: 20px;
+    }
+    .task-timeline-card {
+        background: white;
+        border-radius: 12px;
+        padding: 16px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        border-left: 4px solid #4299e1;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .task-timeline-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    }
+    .task-timeline-card.must-priority {
+        border-left-color: #e53e3e;
+        background: linear-gradient(135deg, #fed7d7 0%, #ffffff 100%);
+    }
+    .task-timeline-card.should-priority {
+        border-left-color: #ed8936;
+        background: linear-gradient(135deg, #feebc8 0%, #ffffff 100%);
+    }
+    .task-meta {
+        margin-top: 8px;
+    }
+    .task-meta .badge {
+        margin-right: 6px;
+        font-size: 0.7em;
+    }
+    .task-actions {
+        margin-left: 12px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">
+                    <i class="fas fa-calendar-day text-primary me-2"></i>
+                    Schedule for {{ target_date|date:"F d, Y" }}
+                </h1>
+                <div class="d-flex gap-2">
+                    <a href="{% url 'dashboard:focus_timer' %}" class="btn btn-success">
+                        <i class="fas fa-stopwatch me-1"></i> 🍅 Pomodoro Timer
+                    </a>
+                    <a href="{% url 'dashboard:daily_schedule_home' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-1"></i> Back to Schedules
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Schedule Summary -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card schedule-card">
+                <div class="card-header bg-gradient-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-bar me-2"></i>
+                        Schedule Summary
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-3">
+                            <div class="border rounded p-3">
+                                <div class="h4 text-primary mb-1">{{ schedule.tasks_count }}</div>
+                                <small class="text-muted">Tasks Scheduled</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="border rounded p-3">
+                                <div class="h4 text-success mb-1">{{ schedule.total_scheduled_minutes }}m</div>
+                                <small class="text-muted">Work Time</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="border rounded p-3">
+                                <div class="h4 text-warning mb-1">{{ schedule.total_break_minutes }}m</div>
+                                <small class="text-muted">Break Time</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="border rounded p-3">
+                                <div class="h4 text-info mb-1">{{ schedule.total_available_minutes }}m</div>
+                                <small class="text-muted">Total Available</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <small class="text-muted">
+                                <strong>Priority Distribution:</strong> 
+                                Must: {{ schedule.moscow_must_count }} | 
+                                Should: {{ schedule.moscow_should_count }}
+                            </small>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <small class="text-muted">
+                                Generated: {{ schedule.generation_timestamp|date:"M d, Y g:i A" }}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Timetable View -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card schedule-card">
+                <div class="card-header bg-gradient-info text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-clock me-2"></i>
+                        Daily Timetable - {{ target_date|date:"l, F d" }}
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="timetable-container">
+                        {% if scheduled_tasks %}
+                            <div class="timeline">
+                                {% for task in scheduled_tasks %}
+                                <div class="timeline-item">
+                                    <div class="timeline-time">
+                                        <div class="time-badge">{{ task.start_time|time:"H:i" }}</div>
+                                        <div class="duration-info">{{ task.estimated_duration_minutes }}min</div>
+                                    </div>
+                                    <div class="timeline-content">
+                                        <div class="task-timeline-card {% if task.task.priority == 'must' %}must-priority{% elif task.task.priority == 'should' %}should-priority{% endif %}">
+                                            <div class="d-flex justify-content-between align-items-start">
+                                                <div class="flex-grow-1">
+                                                    <h6 class="mb-1">{{ task.task.title }}</h6>
+                                                    <p class="text-muted small mb-2">{{ task.start_time|time:"H:i" }} - {{ task.end_time|time:"H:i" }}</p>
+                                                    {% if task.task.description %}
+                                                    <p class="text-muted small mb-2">{{ task.task.description|truncatechars:80 }}</p>
+                                                    {% endif %}
+                                                    <div class="task-meta">
+                                                        <span class="badge bg-primary">{{ task.pomodoro_sessions }} sessions</span>
+                                                        <span class="badge bg-secondary">{{ task.break_minutes }}min break</span>
+                                                        {% if task.task.due_date %}
+                                                        <span class="badge bg-warning">Due: {{ task.task.due_date|date:"M d" }}</span>
+                                                        {% endif %}
+                                                    </div>
+                                                    
+                                                    <!-- Break Schedule for Pomodoro Sessions -->
+                                                    {% if task.pomodoro_sessions > 1 %}
+                                                    <div class="pomodoro-schedule mt-2 p-2 bg-light border-start border-info border-3">
+                                                        <small class="text-muted d-flex align-items-center mb-1">
+                                                            <i class="fas fa-stopwatch me-1"></i> 
+                                                            <strong>Pomodoro Schedule:</strong>
+                                                        </small>
+                                                        <div class="pomodoro-timeline">
+                                                            <small class="text-primary">
+                                                                {% if task.pomodoro_sessions == 2 %}
+                                                                    🍅 Session 1 (25min) → ☕ Break ({{ task.break_minutes }}min) → 🍅 Session 2 (25min)
+                                                                {% elif task.pomodoro_sessions == 3 %}
+                                                                    🍅 S1 (25min) → ☕ Break ({{ task.break_minutes }}min) → 🍅 S2 (25min) → ☕ Break ({{ task.break_minutes }}min) → 🍅 S3 (25min)
+                                                                {% elif task.pomodoro_sessions == 4 %}
+                                                                    🍅 S1 → ☕ Break → 🍅 S2 → ☕ Break → 🍅 S3 → ☕ Break → 🍅 S4 (25min each + {{ task.break_minutes }}min breaks)
+                                                                {% elif task.pomodoro_sessions >= 5 %}
+                                                                    🍅 {{ task.pomodoro_sessions }} sessions of 25min each with {{ task.break_minutes }}min breaks between sessions
+                                                                {% endif %}
+                                                            </small>
+                                                        </div>
+                                                        <div class="mt-1">
+                                                            <a href="{% url 'dashboard:focus_timer' %}" class="btn btn-outline-primary btn-sm">
+                                                                <i class="fas fa-play-circle"></i> Start Pomodoro Timer
+                                                            </a>
+                                                        </div>
+                                                    </div>
+                                                    {% endif %}
+                                                </div>
+                                                <div class="task-actions">
+                                                    {% if not task.is_completed %}
+                                                    <button class="btn btn-success btn-sm mark-completed" 
+                                                            data-task-id="{{ task.id }}" 
+                                                            title="Mark as completed">
+                                                        <i class="fas fa-check"></i>
+                                                    </button>
+                                                    {% else %}
+                                                    <span class="badge bg-success">
+                                                        <i class="fas fa-check me-1"></i>Done
+                                                    </span>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="text-center py-5">
+                                <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+                                <h5 class="text-muted">No Schedule Generated</h5>
+                                <p class="text-muted">Generate a schedule to see your optimized daily timetable.</p>
+                                <a href="{% url 'dashboard:daily_schedule_home' %}" class="btn btn-primary">
+                                    <i class="fas fa-magic me-1"></i> Generate Schedule
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle mark completed buttons
+    document.querySelectorAll('.mark-completed').forEach(button => {
+        button.addEventListener('click', function() {
+            const taskId = this.dataset.taskId;
+            const button = this;
+            
+            if (confirm('Mark this task as completed?')) {
+                fetch(`/dashboard/ajax/mark-completed/${taskId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || '',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        complete_original_task: 'true'
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Update UI
+                        const taskCard = button.closest('.task-card');
+                        taskCard.classList.add('completed');
+                        
+                        const title = taskCard.querySelector('h6');
+                        title.classList.add('text-muted', 'text-decoration-line-through');
+                        
+                        button.outerHTML = '<span class="badge bg-success"><i class="fas fa-check me-1"></i>Completed</span>';
+                    } else {
+                        alert('Error: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error marking task as completed');
+                });
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

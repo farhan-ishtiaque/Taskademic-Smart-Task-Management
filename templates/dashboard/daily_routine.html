@@ -13,6 +13,76 @@
             <p class="mt-2 text-gray-600">Focus on your daily tasks and routines</p>
         </div>
 
+        <!-- Schedule Generation Section -->
+        <div class="mb-8">
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">
+                    <svg class="w-6 h-6 inline mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2v16a2 2 0 002 2z"></path>
+                    </svg>
+                    Schedule Management
+                </h2>
+                <p class="text-gray-600 mb-6">Generate AI-powered schedules or create your own custom schedule</p>
+                
+                <div class="grid md:grid-cols-2 gap-6">
+                    <!-- AI Schedule Generation -->
+                    <div class="bg-gradient-to-br from-purple-50 to-blue-50 rounded-lg p-6 border border-purple-200">
+                        <div class="flex items-center mb-4">
+                            <div class="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center mr-3">
+                                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-900">AI Schedule Generator</h3>
+                                <p class="text-sm text-gray-600">Powered by DeepSeek AI</p>
+                            </div>
+                        </div>
+                        <p class="text-gray-700 mb-4">Let AI automatically create an optimized schedule based on your tasks, priorities, and available time blocks.</p>
+                        <div class="flex space-x-3">
+                            <button onclick="openAIScheduleModal()" 
+                               class="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors duration-200">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                </svg>
+                                Generate AI Schedule
+                            </button>
+                            <a href="{% url 'dashboard:manage_time_blocks' %}" 
+                               class="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors duration-200">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                Manage Time Blocks
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- Custom Schedule Creation -->
+                    <div class="bg-gradient-to-br from-green-50 to-teal-50 rounded-lg p-6 border border-green-200">
+                        <div class="flex items-center mb-4">
+                            <div class="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center mr-3">
+                                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-900">Custom Schedule</h3>
+                                <p class="text-sm text-gray-600">Manual control</p>
+                            </div>
+                        </div>
+                        <p class="text-gray-700 mb-4">Create your own schedule manually with full control over task timing and organization.</p>
+                        <button onclick="openCustomScheduleModal()" 
+                                class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                            </svg>
+                            Create Custom Schedule
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Content -->
         <main>
             <div class="max-w-6xl mx-auto">
@@ -137,7 +207,239 @@
 
 {% csrf_token %}
 
+<!-- AI Schedule Modal -->
+<div id="aiScheduleModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+    <div class="bg-white rounded-lg p-6 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+        <div class="flex justify-content-between items-center mb-6">
+            <h3 class="text-lg font-semibold text-gray-900">Generate AI Schedule</h3>
+            <button onclick="closeAIScheduleModal()" class="text-gray-500 hover:text-gray-700">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        
+        <form id="aiScheduleForm" method="post" action="{% url 'dashboard:generate_schedule' %}">
+            {% csrf_token %}
+            
+            <div class="mb-6">
+                <label for="aiScheduleDate" class="block text-sm font-medium text-gray-700 mb-2">Select Date</label>
+                <input type="date" id="aiScheduleDate" name="target_date" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500" required>
+            </div>
+            
+            <div class="mb-6">
+                <h4 class="text-sm font-medium text-gray-700 mb-3">AI Scheduling</h4>
+                <div class="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                    <div class="flex items-start">
+                        <div class="flex-shrink-0">
+                            <svg class="w-5 h-5 text-purple-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <h5 class="text-sm font-medium text-purple-900">Smart Time-Block Scheduling with DeepSeek AI</h5>
+                            <p class="text-sm text-purple-700 mt-1">
+                                AI will analyze your available time blocks for the selected day, predict optimal task durations, 
+                                and schedule tasks with appropriate Pomodoro breaks between them.
+                            </p>
+                            <input type="hidden" name="schedule_type" value="ai_time_blocks">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex justify-end space-x-3">
+                <button type="button" onclick="closeAIScheduleModal()" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">Cancel</button>
+                <button type="submit" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700">
+                    <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
+                    Generate AI Schedule
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Custom Schedule Modal -->
+<div id="customScheduleModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+    <div class="bg-white rounded-lg p-6 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="text-lg font-semibold text-gray-900">Create Custom Schedule</h3>
+            <button onclick="closeCustomScheduleModal()" class="text-gray-500 hover:text-gray-700">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        
+        <form id="customScheduleForm">
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Select Date</label>
+                <input type="date" id="customScheduleDate" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500" required>
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Schedule Title</label>
+                <input type="text" id="customScheduleTitle" placeholder="e.g., My Custom Schedule" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500" required>
+            </div>
+            
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Select Tasks to Schedule</label>
+                <div id="customTasksList" class="space-y-2 max-h-48 overflow-y-auto border border-gray-200 rounded-lg p-3">
+                    {% if todays_tasks %}
+                        {% for task in todays_tasks %}
+                        <div class="flex items-center">
+                            <input type="checkbox" id="custom-task-{{ task.id }}" value="{{ task.id }}" class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded">
+                            <label for="custom-task-{{ task.id }}" class="ml-2 text-sm text-gray-900">{{ task.title }}</label>
+                            <span class="ml-auto text-xs text-gray-500">{{ task.get_priority_display }}</span>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-gray-500 text-sm">No tasks available. <a href="{% url 'tasks:create' %}" class="text-green-600 hover:text-green-800">Create some tasks first</a>.</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="mb-6">
+                <h4 class="text-sm font-medium text-gray-700 mb-3">Schedule Options</h4>
+                <div class="space-y-3">
+                    <div class="flex items-center">
+                        <input type="radio" id="simpleSchedule" name="scheduleType" value="simple" class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300" checked>
+                        <label for="simpleSchedule" class="ml-2 text-sm text-gray-900">Simple Schedule (Tasks only)</label>
+                    </div>
+                    <div class="flex items-center">
+                        <input type="radio" id="timeBlockSchedule" name="scheduleType" value="time_blocks" class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300">
+                        <label for="timeBlockSchedule" class="ml-2 text-sm text-gray-900">Use Time Blocks</label>
+                        <a href="{% url 'dashboard:manage_time_blocks' %}" class="ml-2 text-xs text-blue-600 hover:text-blue-800">(Manage Time Blocks)</a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex justify-end space-x-3">
+                <button type="button" onclick="closeCustomScheduleModal()" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">Cancel</button>
+                <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">Create Schedule</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script>
+// Custom Schedule Modal Functions
+function openCustomScheduleModal() {
+    document.getElementById('customScheduleModal').classList.remove('hidden');
+    // Set tomorrow as default date
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    document.getElementById('customScheduleDate').value = tomorrow.toISOString().split('T')[0];
+}
+
+function closeCustomScheduleModal() {
+    document.getElementById('customScheduleModal').classList.add('hidden');
+}
+
+// AI Schedule Modal Functions
+function openAIScheduleModal() {
+    document.getElementById('aiScheduleModal').classList.remove('hidden');
+    // Set tomorrow as default date
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    document.getElementById('aiScheduleDate').value = tomorrow.toISOString().split('T')[0];
+}
+
+function closeAIScheduleModal() {
+    document.getElementById('aiScheduleModal').classList.add('hidden');
+}
+
+// Handle AI schedule form submission
+document.getElementById('aiScheduleForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const submitBtn = this.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    
+    // Show loading state
+    submitBtn.innerHTML = '<svg class="w-4 h-4 inline mr-2 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>Generating...';
+    submitBtn.disabled = true;
+    
+    fetch(this.action, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': formData.get('csrfmiddlewaretoken'),
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Close modal and redirect to view the generated schedule
+            closeAIScheduleModal();
+            window.location.href = data.redirect_url;
+        } else {
+            alert('Error: ' + (data.error || 'Failed to generate schedule'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while generating the schedule');
+    })
+    .finally(() => {
+        // Restore button state
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+    });
+});
+
+// Handle custom schedule form submission
+document.getElementById('customScheduleForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const selectedTasks = Array.from(document.querySelectorAll('#customTasksList input[type="checkbox"]:checked')).map(cb => cb.value);
+    const scheduleDate = document.getElementById('customScheduleDate').value;
+    const scheduleTitle = document.getElementById('customScheduleTitle').value;
+    const scheduleType = document.querySelector('input[name="scheduleType"]:checked').value;
+    
+    if (selectedTasks.length === 0) {
+        showNotification('Please select at least one task', 'error');
+        return;
+    }
+    
+    // Create custom schedule (simplified version)
+    fetch('/dashboard/custom-schedule/', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || '',
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            date: scheduleDate,
+            title: scheduleTitle,
+            tasks: selectedTasks,
+            type: scheduleType
+        })
+    }).then(response => response.json())
+      .then(data => {
+          if (data.success) {
+              showNotification('Custom schedule created successfully!', 'success');
+              closeCustomScheduleModal();
+              // Redirect to view the created schedule
+              if (data.schedule_url) {
+                  setTimeout(() => {
+                      window.location.href = data.schedule_url;
+                  }, 1500);
+              }
+          } else {
+              showNotification(data.error || 'Failed to create custom schedule', 'error');
+          }
+      })
+      .catch(error => {
+          console.error('Error:', error);
+          showNotification('Failed to create custom schedule', 'error');
+      });
+});
+
 function updateTaskStatus(taskId, completed) {
     // Update task status via AJAX
     fetch(`/tasks/${taskId}/toggle/`, {
