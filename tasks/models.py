@@ -43,6 +43,11 @@ class Task(models.Model):
         ('personal', 'Personal'),
         ('study', 'Study'),
         ('health', 'Health'),
+        ('learning', 'Learning'),
+        ('social', 'Social'),
+        ('finance', 'Finance'),
+        ('creative', 'Creative'),
+        ('other', 'Other'),
     ]
     
     FOCUS_CATEGORY_CHOICES = [
@@ -61,7 +66,7 @@ class Task(models.Model):
     assigned_to = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='assigned_tasks', help_text="Team member assigned to this task")
     
     due_date = models.DateTimeField(null=True, blank=True)
-    estimated_duration = models.IntegerField(default=60, help_text="Duration in minutes")
+    reminder_minutes = models.IntegerField(default=15, help_text="Minutes before due date to send reminder")
     priority = models.CharField(max_length=10, choices=PRIORITY_CHOICES, default='should')
     status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='todo')
     category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default='work')
@@ -156,75 +161,87 @@ class Task(models.Model):
             return self.assigned_to.get_full_name() or self.assigned_to.username
         return "Unassigned"
     
-    def calculate_priority_score(self):
+    def get_moscow_priority(self):
         """
-        Calculate priority score using the formula:
-        priority_score = (importance_weight × α) + (β ÷ max(days_left, 1)) + γ
-        
-        Where:
-        - α = 10 (importance scaling factor)
-        - β = 40 (urgency scaling factor, set to beat lower priority tasks)
-        - γ = 0 (additional factors, not used currently)
+        Get MoSCoW priority using the new deterministic planner.
+        This replaces the old priority calculation methods.
         """
-        from datetime import datetime
+        from priority_analyzer.services import MoSCoWPriorityPlanner
         
-        # MoSCoW importance weights
-        importance_weights = {
-            'must': 40,    # Must Have
-            'should': 30,  # Should Have  
-            'could': 20,   # Could Have
-            'wont': 10     # Won't Have
+        planner = MoSCoWPriorityPlanner()
+        
+        # Create task data for analysis
+        tasks_data = {
+            'now': timezone.now().isoformat(),
+            'timezone': 'UTC',
+            'tasks': [{
+                'id': str(self.id),
+                'title': self.title,
+                'description': self.description or '',
+                'due_at': self.due_date.isoformat() if self.due_date else None,
+                'estimated_size': getattr(self, 'estimated_size', None),
+                'course_weight': getattr(self, 'course_weight', None)
+            }]
         }
         
-        # Constants for the formula
-        alpha = 10  # Importance scaling factor
-        beta = 40   # Urgency scaling factor
-        gamma = 0   # Additional factors (not used)
+        result = planner.analyze_tasks(tasks_data)
         
-        # Get importance weight
-        importance_weight = importance_weights.get(self.priority, 20)
+        # Find this task in the results
+        for category, tasks in result['buckets'].items():
+            for task in tasks:
+                if task['id'] == str(self.id):
+                    return category
         
-        # Calculate days left until deadline
-        if self.due_date:
-            days_left = (self.due_date.date() - timezone.now().date()).days
-            # Ensure minimum of 1 day for the formula
-            days_left = max(days_left, 1)
-        else:
-            # If no deadline, assume far future (low urgency)
-            days_left = 365
-        
-        # Apply the priority formula
-        priority_score = (importance_weight * alpha) + (beta / days_left) + gamma
-        
-        return round(priority_score, 2)
+        # Fallback to 'should' if not found
+        return 'should'
     
-    def get_auto_priority(self):
+    def get_moscow_details(self):
         """
-        Automatically determine MoSCoW priority based on score and deadline.
-        This method considers both the selected MoSCoW option and deadline urgency.
+        Get detailed MoSCoW analysis including score and reasoning.
         """
-        score = self.calculate_priority_score()
+        from priority_analyzer.services import MoSCoWPriorityPlanner
         
-        # If task is due soon (within 1-2 days), escalate priority
-        if self.due_date:
-            days_left = (self.due_date.date() - timezone.now().date()).days
-            
-            # Tasks due tomorrow or today get boosted
-            if days_left <= 1:
-                if self.priority in ['should', 'could']:
-                    return 'must'  # Escalate to Must Have
-                elif self.priority == 'wont':
-                    return 'should'  # Escalate Won't to Should
-            
-            # Tasks due within 3 days get moderate boost
-            elif days_left <= 3:
-                if self.priority == 'could':
-                    return 'should'  # Escalate Could to Should
-                elif self.priority == 'wont':
-                    return 'could'  # Escalate Won't to Could
+        planner = MoSCoWPriorityPlanner()
         
-        # Return original priority if no escalation needed
-        return self.priority
+        # Create task data for analysis
+        tasks_data = {
+            'now': timezone.now().isoformat(),
+            'timezone': 'UTC',
+            'tasks': [{
+                'id': str(self.id),
+                'title': self.title,
+                'description': self.description or '',
+                'due_at': self.due_date.isoformat() if self.due_date else None,
+                'estimated_size': getattr(self, 'estimated_size', None),
+                'course_weight': getattr(self, 'course_weight', None)
+            }]
+        }
+        
+        result = planner.analyze_tasks(tasks_data)
+        
+        # Find this task in the decision log
+        for log_entry in result['decision_log']:
+            if log_entry['id'] == str(self.id):
+                return {
+                    'category': log_entry['final'],
+                    'score': log_entry['score'],
+                    'task_type': log_entry['type'],
+                    'importance': log_entry['importance'],
+                    'urgency': log_entry['urgency'],
+                    'due_in_days': log_entry['due_in_days'],
+                    'reasoning': log_entry['matched_rule']
+                }
+        
+        # Fallback
+        return {
+            'category': 'should',
+            'score': 30,
+            'task_type': 'Regular coursework',
+            'importance': 3,
+            'urgency': 0,
+            'due_in_days': None,
+            'reasoning': 'Default classification'
+        }
 
 
 class TimeBlock(models.Model):
@@ -240,49 +257,6 @@ class TimeBlock(models.Model):
     def __str__(self):
         days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
         return f"{self.user.username} - {days[self.day_of_week]} {self.start_time}-{self.end_time}"
-        self.status = 'done'
-        self.save()
-    
-    @property
-    def is_overdue(self):
-        if self.due_date and self.status not in ['done', 'cancelled']:
-            return timezone.now() > self.due_date
-        return False
-    
-    @property
-    def tag_list(self):
-        """Return tags as a list"""
-        if self.tags:
-            return [tag.strip() for tag in self.tags.split(',') if tag.strip()]
-        return []
-    
-    def get_time_spent(self):
-        """Calculate time spent on task"""
-        if self.actual_hours:
-            return self.actual_hours
-        return 0
-    
-    def get_time_remaining(self):
-        """Calculate estimated time remaining"""
-        if self.estimated_hours and self.actual_hours:
-            return max(0, self.estimated_hours - self.actual_hours)
-        elif self.estimated_hours:
-            return self.estimated_hours
-        return 0
-    
-    def can_view(self, user):
-        """Simple permission check - creator or team member"""
-        if self.team:
-            return user in self.team.members.all()
-        else:
-            return self.user == user
-    
-    def can_edit(self, user):
-        """Simple permission check - creator or team member"""
-        if self.team:
-            return user in self.team.members.all()
-        else:
-            return self.user == user
 
 
 class TaskComment(models.Model):

@@ -2,7 +2,7 @@ from django import forms
 from django.contrib.auth.models import User
 from .models import Task
 from teams.models import Team
-from priority_analyzer.services import DeepSeekPriorityAnalyzer
+from priority_analyzer.services import MoSCoWPriorityPlanner
 
 class TaskForm(forms.ModelForm):
     """Form for creating and updating tasks with AI priority prediction"""
@@ -69,10 +69,21 @@ class TaskForm(forms.ModelForm):
         })
     )
     
+    reminder_minutes = forms.IntegerField(
+        initial=15,
+        required=False,
+        widget=forms.NumberInput(attrs={
+            'class': 'form-input',
+            'min': '1',
+            'max': '1440',  # Max 24 hours
+            'placeholder': '15'
+        }),
+        help_text="How many minutes before the due date do you want to be reminded?"
+    )
+
     class Meta:
         model = Task
-
-        fields = ['title', 'description', 'team', 'assigned_to', 'priority', 'due_date', 'estimated_duration', 'category']
+        fields = ['title', 'description', 'team', 'assigned_to', 'priority', 'due_date', 'reminder_minutes', 'category']
     
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)
@@ -127,18 +138,16 @@ class TaskForm(forms.ModelForm):
         return cleaned_data
     
     def save(self, commit=True):
-        """Override save to ensure priority is set by DeepSeek API"""
+        """Override save to ensure priority is set"""
         instance = super().save(commit=False)
         
-        # Get priority from DeepSeek API
-        analyzer = DeepSeekPriorityAnalyzer()
-        priority = analyzer.analyze_priority(
-            self.cleaned_data['title'],
-            self.cleaned_data.get('description', '')
-        )
+        # Set a default priority if not set (skip DeepSeek for now to debug)
+        if not instance.priority:
+            instance.priority = 'should'  # Default priority
         
-        # Set the priority
-        instance.priority = priority
+        # Note: Priority is now calculated dynamically using the MoSCoW planner
+        # The priority field here is just the user's manual preference
+        # The actual MoSCoW classification is done in the moscow_matrix view
         
         if commit:
             instance.save()

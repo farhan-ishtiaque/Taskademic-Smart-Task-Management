@@ -965,10 +965,70 @@
         }).then(response => response.json())
           .then(data => {
               if (data.success) {
-                  // console.log('Task status updated');
+                  if (data.remove_task && completed) {
+                      // Remove task from UI with animation
+                      const taskElement = document.querySelector(`[data-task-id="${taskId}"]`);
+                      if (taskElement) {
+                          taskElement.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                          taskElement.style.opacity = '0';
+                          taskElement.style.transform = 'translateX(100%)';
+                          setTimeout(() => {
+                              taskElement.remove();
+                              // Update task counts
+                              updateTaskCounts();
+                          }, 300);
+                      }
+                      
+                      // Show success message
+                      if (data.message) {
+                          showNotification(data.message, 'success');
+                      }
+                  }
+              } else {
+                  console.error('Error updating task:', data.error);
+                  showNotification('Failed to update task', 'error');
               }
           })
-          .catch(error => console.error('Error:', error));
+          .catch(error => {
+              console.error('Error:', error);
+              showNotification('Failed to update task', 'error');
+          });
+    }
+    
+    function updateTaskCounts() {
+        // Count remaining tasks in each category
+        const mustDoCount = document.querySelectorAll('.task-category[data-category="must"] .task-item').length;
+        const shouldDoCount = document.querySelectorAll('.task-category[data-category="should"] .task-item').length;
+        const couldDoCount = document.querySelectorAll('.task-category[data-category="could"] .task-item').length;
+        
+        // Update count displays if they exist
+        const mustCountElement = document.querySelector('.must-count');
+        const shouldCountElement = document.querySelector('.should-count');
+        const couldCountElement = document.querySelector('.could-count');
+        
+        if (mustCountElement) mustCountElement.textContent = mustDoCount;
+        if (shouldCountElement) shouldCountElement.textContent = shouldDoCount;
+        if (couldCountElement) couldCountElement.textContent = couldDoCount;
+    }
+    
+    function showNotification(message, type = 'info') {
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg z-50 ${
+            type === 'success' ? 'bg-green-500 text-white' : 
+            type === 'error' ? 'bg-red-500 text-white' : 
+            'bg-blue-500 text-white'
+        }`;
+        notification.textContent = message;
+        
+        document.body.appendChild(notification);
+        
+        // Remove after 3 seconds
+        setTimeout(() => {
+            notification.style.transition = 'opacity 0.3s ease';
+            notification.style.opacity = '0';
+            setTimeout(() => notification.remove(), 300);
+        }, 3000);
     }
     
     // Initialize timer when page loads

@@ -423,6 +423,25 @@
                                 </div>
                             {% endif %}
                         </div>
+                        
+                        <div class="form-group">
+                            <label for="reminder_minutes" class="form-label">⏰ Reminder</label>
+                            <select id="reminder_minutes" name="reminder_minutes" class="form-input">
+                                <option value="5" {% if form.reminder_minutes.value == 5 %}selected{% endif %}>5 minutes before</option>
+                                <option value="10" {% if form.reminder_minutes.value == 10 %}selected{% endif %}>10 minutes before</option>
+                                <option value="15" {% if form.reminder_minutes.value == 15 or not form.reminder_minutes.value %}selected{% endif %}>15 minutes before (default)</option>
+                                <option value="30" {% if form.reminder_minutes.value == 30 %}selected{% endif %}>30 minutes before</option>
+                                <option value="60" {% if form.reminder_minutes.value == 60 %}selected{% endif %}>1 hour before</option>
+                                <option value="120" {% if form.reminder_minutes.value == 120 %}selected{% endif %}>2 hours before</option>
+                                <option value="1440" {% if form.reminder_minutes.value == 1440 %}selected{% endif %}>1 day before</option>
+                            </select>
+                            <small class="form-help">When to notify you before the task is due</small>
+                            {% if form.reminder_minutes.errors %}
+                                <div class="error-message">
+                                    ⚠️ {{ form.reminder_minutes.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
                     </div>
                     
                     <!-- Team and Assignment Section -->

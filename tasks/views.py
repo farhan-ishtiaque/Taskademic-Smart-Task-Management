@@ -3,9 +3,12 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
+from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Q, Count
 from django.utils import timezone
 from datetime import timedelta
+import json
+import logging
 from rest_framework import viewsets, status
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
@@ -13,6 +16,8 @@ from rest_framework.permissions import IsAuthenticated
 from .models import Task, TimeBlock
 from .serializers import TaskSerializer, TaskCreateSerializer, TimeBlockSerializer, KanbanBoardSerializer
 from .forms import TaskForm
+
+logger = logging.getLogger(__name__)
 
 
 @login_required
@@ -30,6 +35,9 @@ def task_create(request):
         print(f"DEBUG: POST data: {request.POST}")
         form = TaskForm(request.POST, user=request.user)  # Pass user to form
         print(f"DEBUG: Form is valid: {form.is_valid()}")
+        if not form.is_valid():
+            print(f"DEBUG: Form errors: {form.errors}")
+            print(f"DEBUG: Form non-field errors: {form.non_field_errors()}")
 
         
         if form.is_valid():
@@ -41,14 +49,15 @@ def task_create(request):
                 # Save first to get the ID, then calculate priority
                 task.save()
                 
-                # Calculate priority information
-                priority_score = task.calculate_priority_score()
-                auto_priority = task.get_auto_priority()
+                # Calculate priority information using MoSCoW
+                moscow_details = task.get_moscow_details()
+                moscow_priority = task.get_moscow_priority()
                 
                 messages.success(request, 
                     f'Task "{task.title}" created successfully! '
-                    f'Priority Score: {priority_score} | '
-                    f'Auto Priority: {auto_priority.title()} Have'
+                    f'MoSCoW: {moscow_priority.title()} Have | '
+                    f'Score: {moscow_details["score"]} | '
+                    f'Type: {moscow_details["task_type"]}'
                 )
                 
                 # Return JSON for AJAX requests
@@ -57,8 +66,8 @@ def task_create(request):
                         'success': True,
                         'message': 'Task created successfully!',
                         'task_id': task.id,
-                        'priority_score': priority_score,
-                        'auto_priority': auto_priority
+                        'priority_score': moscow_details["score"],
+                        'auto_priority': moscow_priority
                     })
                 
                 return redirect('dashboard:home')
@@ -89,6 +98,57 @@ def task_complete(request, task_id):
         messages.success(request, f'Task "{task.title}" completed! +10 points')
     
     return redirect('dashboard:home')
+
+
+@login_required
+@csrf_exempt
+@require_http_methods(["POST"])
+def task_toggle(request, task_id):
+    """Toggle task completion status via AJAX"""
+    try:
+        task = get_object_or_404(Task, id=task_id)
+        
+        # Check if user has permission to modify this task
+        if task.user != request.user and task.assigned_to != request.user:
+            return JsonResponse({'success': False, 'error': 'Permission denied'}, status=403)
+        
+        # Parse request body
+        data = json.loads(request.body)
+        completed = data.get('completed', False)
+        
+        if completed:
+            # Mark as complete and delete from Google Calendar
+            if task.status != 'done':
+                task.mark_complete()
+                
+                # Try to delete from Google Calendar if it exists
+                try:
+                    from calendar_sync.services import GoogleCalendarService
+                    calendar_service = GoogleCalendarService(request.user)
+                    calendar_service.delete_event(task)
+                except Exception as e:
+                    # Calendar deletion failed, but task completion should still succeed
+                    print(f"Failed to delete from Google Calendar: {e}")
+                
+                return JsonResponse({
+                    'success': True, 
+                    'message': f'Task "{task.title}" completed! +10 points',
+                    'remove_task': True  # Signal to remove from UI
+                })
+        else:
+            # Mark as incomplete
+            task.status = 'todo'
+            task.completed_at = None
+            task.save()
+            
+            return JsonResponse({
+                'success': True, 
+                'message': f'Task "{task.title}" marked as incomplete',
+                'remove_task': False
+            })
+            
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 
 @login_required
@@ -149,9 +209,10 @@ def task_delete(request, task_id):
     
     if request.method == 'POST':
         task_title = task.title
+        # Google Calendar deletion is handled automatically by signals
         task.delete()
         messages.success(request, f'Task "{task_title}" has been deleted successfully.')
-        return redirect('tasks:list')
+        return redirect('dashboard:home')
     
     return render(request, 'tasks/delete_confirm.html', {'task': task})
 
@@ -240,18 +301,32 @@ class TaskViewSet(viewsets.ModelViewSet):
     serializer_class = TaskSerializer
     permission_classes = [IsAuthenticated]
     
+    def get_object(self):
+        """
+        Override get_object to ensure user has access to the task.
+        """
+        pk = self.kwargs.get('pk')
+        if pk:
+            try:
+                # Get the task directly, ensuring user has access
+                task = Task.objects.filter(
+                    Q(user=self.request.user) | Q(team__members=self.request.user)
+                ).get(pk=pk)
+                return task
+            except Task.DoesNotExist:
+                from django.http import Http404
+                raise Http404("Task not found or access denied")
+        return super().get_object()
+    
     def get_queryset(self):
         try:
-            # Get personal tasks
-            personal_tasks = Task.objects.filter(user=self.request.user, team__isnull=True)
+            # Simple query without union to improve performance
+            user = self.request.user
+            queryset = Task.objects.filter(
+                Q(user=user) | Q(team__members=user)
+            ).distinct().order_by('-created_at')
             
-            # Get team tasks where user is a member
-            team_tasks = Task.objects.filter(team__members=self.request.user)
-            
-            # Combine both
-            queryset = personal_tasks.union(team_tasks).order_by('-created_at')
-            
-            print(f"TaskViewSet: Found {queryset.count()} tasks for user {self.request.user}")
+            print(f"TaskViewSet: Found {queryset.count()} tasks for user {user}")
         except Exception as e:
             print(f"TaskViewSet error: {e}")
             queryset = Task.objects.none()
@@ -287,6 +362,62 @@ class TaskViewSet(viewsets.ModelViewSet):
         
         return queryset
     
+    def update(self, request, *args, **kwargs):
+        """Override update to handle Google Calendar deletion when task is completed"""
+        task = self.get_object()
+        old_status = task.status
+        
+        # Perform the update first for fast response
+        response = super().update(request, *args, **kwargs)
+        
+        if response.status_code == 200:
+            # Check if task was moved to done - do this asynchronously
+            new_status = request.data.get('status')
+            if new_status == 'done' and old_status != 'done':
+                # Use threading to handle Google Calendar deletion in background
+                import threading
+                def delete_from_calendar():
+                    try:
+                        from calendar_sync.services import GoogleCalendarService
+                        calendar_service = GoogleCalendarService(request.user)
+                        calendar_service.delete_event(task)
+                        print(f"Task {task.id} removed from Google Calendar")
+                    except Exception as e:
+                        print(f"Failed to delete from Google Calendar: {e}")
+                
+                # Start background thread for calendar deletion
+                threading.Thread(target=delete_from_calendar, daemon=True).start()
+        
+        return response
+    
+    def partial_update(self, request, *args, **kwargs):
+        """Override partial_update to handle Google Calendar deletion when task is completed"""
+        task = self.get_object()
+        old_status = task.status
+        
+        # Perform the update first for fast response
+        response = super().partial_update(request, *args, **kwargs)
+        
+        if response.status_code == 200:
+            # Check if task was moved to done - do this asynchronously
+            new_status = request.data.get('status')
+            if new_status == 'done' and old_status != 'done':
+                # Use threading to handle Google Calendar deletion in background
+                import threading
+                def delete_from_calendar():
+                    try:
+                        from calendar_sync.services import GoogleCalendarService
+                        calendar_service = GoogleCalendarService(request.user)
+                        calendar_service.delete_event(task)
+                        print(f"Task {task.id} removed from Google Calendar")
+                    except Exception as e:
+                        print(f"Failed to delete from Google Calendar: {e}")
+                
+                # Start background thread for calendar deletion
+                threading.Thread(target=delete_from_calendar, daemon=True).start()
+        
+        return response
+    
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
     
@@ -306,33 +437,22 @@ class TaskViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def kanban_board_data(self, request):
         """Get tasks organized by Kanban board columns"""
-        # Get personal tasks
-        personal_tasks = Task.objects.filter(
-            user=request.user, 
-            team__isnull=True,
+        # Optimized query with minimal data needed for Kanban
+        all_tasks = Task.objects.filter(
+            Q(user=request.user) | Q(team__members=request.user),
             status__in=['todo', 'in_progress', 'review', 'done']
+        ).distinct().select_related('user', 'assigned_to').only(
+            'id', 'title', 'description', 'status', 'priority', 'due_date', 
+            'user_id', 'assigned_to_id', 'created_at'
         )
         
-        # Get team tasks where user is a member
-        team_tasks = Task.objects.filter(
-            team__members=request.user,
-            status__in=['todo', 'in_progress', 'review', 'done']
-        )
-        
-        # Combine all tasks
-        all_tasks = list(personal_tasks) + list(team_tasks)
-        
-        # Organize tasks by status
+        # Organize tasks by status using list comprehension for better performance
         data = {
-            'todo': [],
-            'in_progress': [],
-            'review': [],
-            'done': []
+            'todo': [TaskSerializer(task, context={'request': request}).data for task in all_tasks if task.status == 'todo'],
+            'in_progress': [TaskSerializer(task, context={'request': request}).data for task in all_tasks if task.status == 'in_progress'],
+            'review': [TaskSerializer(task, context={'request': request}).data for task in all_tasks if task.status == 'review'],
+            'done': [TaskSerializer(task, context={'request': request}).data for task in all_tasks if task.status == 'done']
         }
-        
-        for task in all_tasks:
-            task_data = TaskSerializer(task, context={'request': request}).data
-            data[task.status].append(task_data)
         
         return Response(data)
     

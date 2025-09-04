@@ -211,72 +211,107 @@
         </div>
     </div>
 
-<!-- Modern Email Invite Modal -->
+<!-- Enhanced Email Invite Modal -->
 <div class="modal fade" id="inviteModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content rounded-xl border-0 shadow-2xl">
-            <div class="modal-header bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-t-xl border-0">
-                <h5 class="modal-title font-bold flex items-center">
-                    <svg class="w-6 h-6 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"></path>
-                        <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"></path>
-                    </svg>
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content rounded-2xl border-0 shadow-2xl">
+            <div class="modal-header bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-t-2xl border-0 pb-4">
+                <h5 class="modal-title font-bold text-xl flex items-center">
+                    <div class="bg-white bg-opacity-20 rounded-full p-2 mr-3">
+                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M8 9a3 3 0 100-6 3 3 0 000 6zM8 11a6 6 0 016 6H2a6 6 0 016-6zM16 7a1 1 0 10-2 0v1h-1a1 1 0 100 2h1v1a1 1 0 102 0v-1h1a1 1 0 100-2h-1V7z"></path>
+                        </svg>
+                    </div>
                     Invite Team Member
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body p-6">
-                <form method="post" action="{% url 'teams:invite_email' team.id %}">
-                    {% csrf_token %}
-                    <div class="mb-4">
-                        <label for="email" class="form-label text-gray-700 font-semibold mb-2 flex items-center">
-                            <svg class="w-4 h-4 mr-2 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
-                                <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"></path>
-                                <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"></path>
-                            </svg>
-                            Email Address
-                        </label>
-                        <div class="relative">
-                            {{ email_invite_form.email }}
-                        </div>
-                    </div>
-                    <button type="submit" class="w-100 btn bg-gradient-to-r from-green-500 to-emerald-600 text-white font-semibold py-3 rounded-lg shadow-lg hover:from-green-600 hover:to-emerald-700 transform hover:scale-105 transition-all duration-200">
-                        <svg class="w-5 h-5 me-2 d-inline" fill="currentColor" viewBox="0 0 20 20">
+                <!-- Search and Invite Form -->
+                <div class="mb-6">
+                    <label class="form-label text-gray-800 font-semibold mb-3 flex items-center text-lg">
+                        <svg class="w-5 h-5 mr-2 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
                             <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"></path>
                             <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"></path>
                         </svg>
-                        Send Invitation
-                    </button>
-                </form>
+                        Search and Invite Members
+                    </label>
+                    
+                    <div class="position-relative">
+                        <input type="text" 
+                               id="userSearchInput" 
+                               class="form-control form-control-lg rounded-xl border-2 ps-5" 
+                               placeholder="Type email, name, or username to search..."
+                               autocomplete="off">
+                        <div class="position-absolute top-50 start-0 translate-middle-y ms-3">
+                            <svg class="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"></path>
+                            </svg>
+                        </div>
+                        
+                        <!-- Loading indicator -->
+                        <div id="searchLoading" class="position-absolute top-50 end-0 translate-middle-y me-3 d-none">
+                            <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                <span class="visually-hidden"></span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Search Results -->
+                    <div id="searchResults" class="mt-3 d-none">
+                        <div class="bg-light rounded-xl p-3 border-2 border-primary border-opacity-25">
+                            <h6 class="text-gray-700 font-semibold mb-3 flex items-center">
+                                <svg class="w-4 h-4 mr-2 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                Found Users
+                            </h6>
+                            <div id="userList" class="space-y-2"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Hidden form for CSRF token -->
+                    <form style="display: none;">
+                        {% csrf_token %}
+                    </form>
+                </div>
 
                 <!-- Pending Invites Section -->
                 {% if pending_invites %}
-                <div class="mt-6 pt-4 border-t border-gray-200">
-                    <h6 class="text-gray-800 font-semibold mb-3 flex items-center">
-                        <svg class="w-5 h-5 text-yellow-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path>
-                        </svg>
-                        Pending Invitations
+                <div class="border-top pt-4">
+                    <h6 class="text-gray-800 font-bold mb-4 flex items-center text-lg">
+                        <div class="bg-yellow-100 rounded-full p-2 mr-3">
+                            <svg class="w-5 h-5 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path>
+                            </svg>
+                        </div>
+                        Pending Invitations ({{ pending_invites.count }})
                     </h6>
-                    <div class="space-y-2">
+                    <div class="row g-3">
                         {% for invite in pending_invites %}
-                        <div class="flex justify-content-between align-items-center p-3 bg-gray-50 rounded-lg">
-                            <div class="flex items-center">
-                                <div class="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center mr-3">
-                                    <svg class="w-4 h-4 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
-                                        <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"></path>
-                                    </svg>
+                        <div class="col-12">
+                            <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-4 d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center">
+                                    <div class="bg-yellow-100 rounded-full p-2 me-3">
+                                        <svg class="w-5 h-5 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
+                                            <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"></path>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <div class="font-semibold text-gray-800">{{ invite.email }}</div>
+                                        <small class="text-gray-600">Invited {{ invite.created_at|timesince }} ago</small>
+                                    </div>
                                 </div>
-                                <span class="text-gray-800 font-medium">{{ invite.email }}</span>
+                                <form method="post" action="{% url 'teams:cancel_invite' team.id invite.id %}" class="d-inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-3 hover-effect">
+                                        <svg class="w-4 h-4 me-1" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                                        </svg>
+                                        Cancel
+                                    </button>
+                                </form>
                             </div>
-                            <form method="post" action="{% url 'teams:cancel_invite' team.id invite.id %}" class="d-inline">
-                                {% csrf_token %}
-                                <button type="submit" class="btn btn-sm btn-outline-danger rounded-full px-3 py-1 hover:bg-red-50 transition-colors">
-                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
-                                    </svg>
-                                </button>
-                            </form>
                         </div>
                         {% endfor %}
                     </div>
@@ -286,4 +321,192 @@
         </div>
     </div>
 </div>
+
+<style>
+.hover-effect:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.user-result-item {
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.user-result-item:hover {
+    background: #f8fafc !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('userSearchInput');
+    const searchResults = document.getElementById('searchResults');
+    const userList = document.getElementById('userList');
+    const searchLoading = document.getElementById('searchLoading');
+    
+    let searchTimeout;
+    
+    searchInput.addEventListener('input', function() {
+        const query = this.value.trim();
+        
+        // Clear previous timeout
+        clearTimeout(searchTimeout);
+        
+        if (query.length < 2) {
+            searchResults.classList.add('d-none');
+            return;
+        }
+        
+        // Show loading
+        searchLoading.classList.remove('d-none');
+        
+        // Debounce search
+        searchTimeout = setTimeout(() => {
+            searchUsers(query);
+        }, 300);
+    });
+    
+    function searchUsers(query) {
+        fetch(`/teams/api/search-users/?q=${encodeURIComponent(query)}&team_id={{ team.id }}`)
+            .then(response => response.json())
+            .then(data => {
+                searchLoading.classList.add('d-none');
+                
+                if (data.users && data.users.length > 0) {
+                    displayUsers(data.users);
+                    searchResults.classList.remove('d-none');
+                } else {
+                    searchResults.classList.add('d-none');
+                }
+            })
+            .catch(error => {
+                console.error('Search error:', error);
+                searchLoading.classList.add('d-none');
+                searchResults.classList.add('d-none');
+            });
+    }
+    
+    function displayUsers(users) {
+        userList.innerHTML = '';
+        
+        users.forEach(user => {
+            const userItem = document.createElement('div');
+            userItem.className = 'user-result-item bg-white rounded-lg p-3 border border-gray-200 d-flex align-items-center justify-content-between';
+            
+            const avatarColor = getAvatarColor(user.email);
+            
+            userItem.innerHTML = `
+                <div class="d-flex align-items-center">
+                    <div class="user-avatar me-3" style="background: ${avatarColor}; color: white;">
+                        ${user.initials}
+                    </div>
+                    <div>
+                        <div class="font-semibold text-gray-800">${user.display_name}</div>
+                        <div class="text-gray-600 small">${user.email}</div>
+                    </div>
+                </div>
+                <button class="btn btn-primary btn-sm rounded-pill px-3 invite-user-btn" data-email="${user.email}">
+                    <svg class="w-4 h-4 me-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M8 9a3 3 0 100-6 3 3 0 000 6zM8 11a6 6 0 016 6H2a6 6 0 016-6zM16 7a1 1 0 10-2 0v1h-1a1 1 0 100 2h1v1a1 1 0 102 0v-1h1a1 1 0 100-2h-1V7z"></path>
+                    </svg>
+                    Invite
+                </button>
+            `;
+            
+            userList.appendChild(userItem);
+        });
+        
+        // Add click handlers for invite buttons
+        document.querySelectorAll('.invite-user-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const email = this.dataset.email;
+                console.log('Button clicked, email from dataset:', email);
+                console.log('Button element:', this);
+                console.log('All datasets:', this.dataset);
+                inviteUser(email, this);
+            });
+        });
+    }
+    
+    function inviteUser(email, button) {
+        console.log('inviteUser called with email:', email);
+        
+        if (!email || email.trim() === '') {
+            console.error('Email is empty or undefined');
+            alert('Error: No email address provided');
+            return;
+        }
+        
+        const originalText = button.innerHTML;
+        button.disabled = true;
+        button.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Inviting...';
+        
+        // Create form data
+        const formData = new FormData();
+        formData.append('email', email);
+        formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+        
+        console.log('FormData contents:');
+        for (let [key, value] of formData.entries()) {
+            console.log(key, value);
+        }
+        
+        fetch('{% url "teams:invite_email" team.id %}', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            if (response.ok) {
+                button.innerHTML = '<svg class="w-4 h-4 me-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>Invited!';
+                button.classList.remove('btn-primary');
+                button.classList.add('btn-success');
+                
+                // Reload page after short delay to update pending invites
+                setTimeout(() => {
+                    location.reload();
+                }, 1500);
+            } else {
+                button.innerHTML = originalText;
+                button.disabled = false;
+                alert('Failed to send invitation. Please try again.');
+            }
+        })
+        .catch(error => {
+            console.error('Invite error:', error);
+            button.innerHTML = originalText;
+            button.disabled = false;
+            alert('Failed to send invitation. Please try again.');
+        });
+    }
+    
+    function getAvatarColor(email) {
+        const colors = [
+            '#667eea', '#764ba2', '#f093fb', '#f5576c',
+            '#4facfe', '#00f2fe', '#43e97b', '#38f9d7',
+            '#ffecd2', '#fcb69f', '#a8edea', '#fed6e3'
+        ];
+        
+        let hash = 0;
+        for (let i = 0; i < email.length; i++) {
+            hash = email.charCodeAt(i) + ((hash << 5) - hash);
+        }
+        
+        return colors[Math.abs(hash) % colors.length];
+    }
+});
+</script>
 {% endblock %}

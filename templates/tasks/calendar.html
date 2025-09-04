@@ -2,6 +2,50 @@
 
 {% block title %}Calendar - Taskademic{% endblock %}
 
+{% block extra_css %}
+<style>
+    .task-completed {
+        position: relative;
+        opacity: 0.6;
+        background-color: #f3f4f6 !important;
+    }
+    
+    .task-completed .task-title {
+        text-decoration: line-through;
+        color: #6b7280;
+    }
+    
+    .task-completed .task-description {
+        text-decoration: line-through;
+        color: #9ca3af;
+    }
+    
+    .task-completed::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: repeating-linear-gradient(
+            45deg,
+            transparent,
+            transparent 2px,
+            rgba(0, 0, 0, 0.1) 2px,
+            rgba(0, 0, 0, 0.1) 4px
+        );
+        pointer-events: none;
+        border-radius: inherit;
+    }
+    
+    .checkmark {
+        color: #10b981;
+        font-weight: bold;
+        text-shadow: 0 0 2px rgba(16, 185, 129, 0.5);
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="px-4 py-6 sm:px-0" x-data="taskCalendar()">
     <!-- Page Header -->
@@ -76,10 +120,11 @@
                             <div class="space-y-1">
                                 <template x-for="task in getTasksForDay(day.date)" :key="task.id">
                                     <div class="text-xs p-1 rounded cursor-pointer hover:opacity-80"
-                                         :class="getPriorityClass(task.priority)"
+                                         :class="[getPriorityClass(task.priority), task.status === 'done' ? 'task-completed' : '']"
                                          @click="selectTask(task)"
                                          :title="task.description">
-                                        <span x-text="task.title.substring(0, 20) + (task.title.length > 20 ? '...' : '')"></span>
+                                        <span class="task-title" x-text="task.title.substring(0, 20) + (task.title.length > 20 ? '...' : '')"></span>
+                                        <span x-show="task.status === 'done'" class="ml-1 checkmark">✓</span>
                                     </div>
                                 </template>
                             </div>
@@ -112,11 +157,13 @@
                             <div class="space-y-2">
                                 <template x-for="task in getTasksForDay(day.date)" :key="task.id">
                                     <div class="text-sm p-2 rounded cursor-pointer hover:opacity-80"
-                                         :class="getPriorityClass(task.priority)"
+                                         :class="[getPriorityClass(task.priority), task.status === 'done' ? 'task-completed' : '']"
                                          @click="selectTask(task)"
                                          :title="task.description">
-                                        <div class="font-medium" x-text="task.title"></div>
-                                        <div class="text-xs opacity-75" x-text="task.description.substring(0, 50) + (task.description.length > 50 ? '...' : '')"></div>
+                                        <div class="font-medium task-title" x-text="task.title">
+                                            <span x-show="task.status === 'done'" class="ml-1 checkmark">✓</span>
+                                        </div>
+                                        <div class="text-xs opacity-75 task-description" x-text="task.description.substring(0, 50) + (task.description.length > 50 ? '...' : '')"></div>
                                     </div>
                                 </template>
                             </div>
@@ -147,10 +194,12 @@
                                         <div class="flex-1 ml-4">
                                             <template x-for="task in getTasksForHour(hour.time)" :key="task.id">
                                                 <div class="mb-2 p-3 rounded-lg cursor-pointer hover:opacity-80"
-                                                     :class="getPriorityClass(task.priority)"
+                                                     :class="[getPriorityClass(task.priority), task.status === 'done' ? 'task-completed' : '']"
                                                      @click="selectTask(task)">
-                                                    <div class="font-medium" x-text="task.title"></div>
-                                                    <div class="text-sm opacity-75" x-text="task.description"></div>
+                                                    <div class="font-medium task-title" x-text="task.title">
+                                                        <span x-show="task.status === 'done'" class="ml-1 checkmark">✓</span>
+                                                    </div>
+                                                    <div class="text-sm opacity-75 task-description" x-text="task.description"></div>
                                                     <div class="text-xs mt-1 opacity-60" x-text="'Due: ' + formatTime(task.due_date)"></div>
                                                 </div>
                                             </template>

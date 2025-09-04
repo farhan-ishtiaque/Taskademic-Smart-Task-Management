@@ -6,6 +6,7 @@ from django.contrib.auth.models import User
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 from django.utils import timezone
+from django.db.models import Q
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -112,8 +113,14 @@ def team_invite_email(request, team_id):
     
     if request.method == 'POST':
         form = EmailInviteForm(request.POST)
+        print(f"DEBUG: Form data: {request.POST}")
+        print(f"DEBUG: Email from POST: '{request.POST.get('email', 'NOT_FOUND')}'")
+        print(f"DEBUG: CSRF token present: {bool(request.POST.get('csrfmiddlewaretoken'))}")
+        print(f"DEBUG: Form is valid: {form.is_valid()}")
+        
         if form.is_valid():
             email = form.cleaned_data['email']
+            print(f"DEBUG: Inviting email: {email}")
             
             try:
                 # Validate email format
@@ -121,8 +128,9 @@ def team_invite_email(request, team_id):
                 
                 # Check if user already exists and is a member
                 try:
-                    existing_user = User.objects.get(email=email)
-                    if existing_user in team.members.all():
+                    existing_user = User.objects.filter(email=email).first()
+                    if existing_user and existing_user in team.members.all():
+                        print(f"DEBUG: User {email} is already a member")
                         messages.warning(request, f"{email} is already a member of this team.")
                         return redirect('teams:detail', team_id=team.id)
                 except User.DoesNotExist:
@@ -137,34 +145,52 @@ def team_invite_email(request, team_id):
                 ).first()
                 
                 if existing_invite:
+                    print(f"DEBUG: Existing invite found for {email}")
                     messages.info(request, f"An invitation has already been sent to {email}.")
                     return redirect('teams:detail', team_id=team.id)
                 
                 # Create new invitation
+                print(f"DEBUG: Creating new invite for {email}")
                 invite = TeamInvite.objects.create(
                     team=team,
                     email=email,
                     invited_by=request.user
                 )
+                print(f"DEBUG: Created invite with ID: {invite.id}")
                 
                 # Check if user is registered on the website
                 try:
-                    registered_user = User.objects.get(email=email)
-                    # User is registered - send in-app notification
-                    from notifications.views import create_team_invite_notification
-                    create_team_invite_notification(registered_user, team, request.user, invite.id)
-                    messages.success(request, f"In-app notification sent to {email} (registered user)!")
+                    registered_user = User.objects.filter(email=email).first()
+                    if registered_user:
+                        print(f"DEBUG: User {email} is registered, sending notification")
+                        # User is registered - send in-app notification
+                        from notifications.views import create_team_invite_notification
+                        create_team_invite_notification(registered_user, team, request.user, invite.id)
+                        print(f"DEBUG: Notification created successfully")
+                        messages.success(request, f"In-app notification sent to {email} (registered user)!")
+                    else:
+                        print(f"DEBUG: User {email} is not registered, sending email")
+                        # User not registered - send email invitation
+                        if invite.send_invite_email():
+                            print(f"DEBUG: Email sent successfully")
+                            messages.success(request, f"Email invitation sent to {email} (unregistered user)!")
+                        else:
+                            print(f"DEBUG: Email sending failed")
+                            messages.error(request, f"Failed to send invitation to {email}. Please try again.")
                     
-                except User.DoesNotExist:
-                    # User not registered - send email invitation
+                except Exception as e:
+                    print(f"DEBUG: Exception occurred: {e}")
+                    # Fallback to email invitation if there's any issue
                     if invite.send_invite_email():
-                        messages.success(request, f"Email invitation sent to {email} (unregistered user)!")
+                        messages.success(request, f"Email invitation sent to {email}!")
                     else:
                         messages.error(request, f"Failed to send invitation to {email}. Please try again.")
                 
-            except ValidationError:
+            except ValidationError as e:
+                print(f"DEBUG: Validation error: {e}")
                 messages.error(request, "Please enter a valid email address.")
         else:
+            print(f"DEBUG: Form errors: {form.errors}")
             messages.error(request, "Please correct the form errors.")
     
     return redirect('teams:detail', team_id=team.id)
@@ -340,3 +366,67 @@ def check_invite_status(request, team_id):
     }
     
     return render(request, 'teams/invite_status.html', context)
+
+
+@login_required
+def search_users_api(request):
+    """API endpoint to search users by email for team invites"""
+    from django.http import JsonResponse
+    from django.contrib.auth.models import User
+    from django.db.models import Q
+    
+    query = request.GET.get('q', '').strip()
+    team_id = request.GET.get('team_id', '')
+    
+    if len(query) < 2:
+        return JsonResponse({'users': []})
+    
+    # Get team to exclude existing members
+    team = None
+    if team_id:
+        try:
+            team = Team.objects.get(id=team_id)
+            # Check if user has access to this team
+            if request.user not in team.members.all():
+                return JsonResponse({'error': 'Access denied'}, status=403)
+        except Team.DoesNotExist:
+            return JsonResponse({'error': 'Team not found'}, status=404)
+    
+    # Search users by email, username, or name
+    users_query = User.objects.filter(
+        Q(email__icontains=query) |
+        Q(username__icontains=query) |
+        Q(first_name__icontains=query) |
+        Q(last_name__icontains=query)
+    ).exclude(id=request.user.id).order_by('email')  # Exclude current user
+    
+    # Exclude team members if team is specified
+    if team:
+        users_query = users_query.exclude(id__in=team.members.values_list('id', flat=True))
+    
+    # Limit results
+    users = users_query[:10]
+    
+    # Format response (remove duplicates by email)
+    user_data = []
+    seen_emails = set()
+    
+    for user in users:
+        # Skip if we've already seen this email
+        if user.email.lower() in seen_emails:
+            continue
+        seen_emails.add(user.email.lower())
+        
+        full_name = user.get_full_name().strip()
+        display_name = full_name if full_name else user.username
+        
+        user_data.append({
+            'id': user.id,
+            'email': user.email,
+            'username': user.username,
+            'display_name': display_name,
+            'full_name': full_name,
+            'initials': ''.join([name[0].upper() for name in display_name.split()[:2]])
+        })
+    
+    return JsonResponse({'users': user_data})

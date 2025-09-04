@@ -17,6 +17,7 @@ urlpatterns = [
     path('delete/', views.task_delete_select, name='delete_select'),
     path('delete/<int:task_id>/', views.task_delete, name='delete'),
     path('complete/<int:task_id>/', views.task_complete, name='complete'),
+    path('<int:task_id>/toggle/', views.task_toggle, name='toggle'),
     path('kanban/', views.kanban_board, name='kanban_board'),
     path('team/<uuid:team_id>/kanban/', views.team_kanban_board, name='team_kanban_board'),
     path('calendar/', views.task_calendar, name='calendar'),

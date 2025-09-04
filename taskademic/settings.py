@@ -48,7 +48,6 @@ INSTALLED_APPS = [
     'accounts',
     'notifications',
     'priority_analyzer',
-    'priority_ai',
     'calendar_sync',
     'points',
 ]

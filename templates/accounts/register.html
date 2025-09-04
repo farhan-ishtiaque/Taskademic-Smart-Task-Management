@@ -20,13 +20,34 @@
         <form class="mt-8 space-y-6" method="post">
             {% csrf_token %}
             <div class="rounded-md shadow-sm space-y-4">
+                <!-- Email -->
                 <div>
-                    <label for="{{ form.username.id_for_label }}" class="block text-sm font-medium text-gray-700">Username</label>
-                    {{ form.username }}
-                    {% if form.username.errors %}
-                        <div class="text-red-600 text-sm mt-1">{{ form.username.errors }}</div>
+                    <label for="{{ form.email.id_for_label }}" class="block text-sm font-medium text-gray-700">Email address</label>
+                    {{ form.email }}
+                    {% if form.email.errors %}
+                        <div class="text-red-600 text-sm mt-1">{{ form.email.errors }}</div>
                     {% endif %}
                 </div>
+                
+                <!-- First Name -->
+                <div>
+                    <label for="{{ form.first_name.id_for_label }}" class="block text-sm font-medium text-gray-700">First name</label>
+                    {{ form.first_name }}
+                    {% if form.first_name.errors %}
+                        <div class="text-red-600 text-sm mt-1">{{ form.first_name.errors }}</div>
+                    {% endif %}
+                </div>
+                
+                <!-- Last Name -->
+                <div>
+                    <label for="{{ form.last_name.id_for_label }}" class="block text-sm font-medium text-gray-700">Last name</label>
+                    {{ form.last_name }}
+                    {% if form.last_name.errors %}
+                        <div class="text-red-600 text-sm mt-1">{{ form.last_name.errors }}</div>
+                    {% endif %}
+                </div>
+                
+                <!-- Password -->
                 <div>
                     <label for="{{ form.password1.id_for_label }}" class="block text-sm font-medium text-gray-700">Password</label>
                     {{ form.password1 }}
@@ -34,12 +55,44 @@
                         <div class="text-red-600 text-sm mt-1">{{ form.password1.errors }}</div>
                     {% endif %}
                 </div>
+                
+                <!-- Confirm Password -->
                 <div>
                     <label for="{{ form.password2.id_for_label }}" class="block text-sm font-medium text-gray-700">Confirm Password</label>
                     {{ form.password2 }}
                     {% if form.password2.errors %}
                         <div class="text-red-600 text-sm mt-1">{{ form.password2.errors }}</div>
                     {% endif %}
+                </div>
+                
+                <!-- Preferred Study Technique -->
+                <div>
+                    <label for="{{ form.preferred_technique.id_for_label }}" class="block text-sm font-medium text-gray-700">Preferred Study Technique</label>
+                    {{ form.preferred_technique }}
+                    {% if form.preferred_technique.errors %}
+                        <div class="text-red-600 text-sm mt-1">{{ form.preferred_technique.errors }}</div>
+                    {% endif %}
+                    <p class="text-xs text-gray-500 mt-1">Choose your preferred time management technique</p>
+                </div>
+                
+                <!-- Study Hours Per Day -->
+                <div>
+                    <label for="{{ form.study_hours_per_day.id_for_label }}" class="block text-sm font-medium text-gray-700">Study Hours Per Day</label>
+                    {{ form.study_hours_per_day }}
+                    {% if form.study_hours_per_day.errors %}
+                        <div class="text-red-600 text-sm mt-1">{{ form.study_hours_per_day.errors }}</div>
+                    {% endif %}
+                    <p class="text-xs text-gray-500 mt-1">How many hours do you plan to study per day? (1-16)</p>
+                </div>
+                
+                <!-- Timezone -->
+                <div>
+                    <label for="{{ form.timezone.id_for_label }}" class="block text-sm font-medium text-gray-700">Timezone</label>
+                    {{ form.timezone }}
+                    {% if form.timezone.errors %}
+                        <div class="text-red-600 text-sm mt-1">{{ form.timezone.errors }}</div>
+                    {% endif %}
+                    <p class="text-xs text-gray-500 mt-1">Your local timezone (e.g., America/New_York, Europe/London, UTC)</p>
                 </div>
             </div>
 

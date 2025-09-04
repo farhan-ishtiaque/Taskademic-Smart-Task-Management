@@ -22,21 +22,22 @@ def focus_timer(request):
     
     print(f"DEBUG: Found {user_tasks.count()} tasks for user {request.user.username}")
     for task in user_tasks:
-        print(f"  - {task.title}: priority={task.priority}, status={task.status}, score={task.calculate_priority_score()}")
+        moscow_details = task.get_moscow_details()
+        print(f"  - {task.title}: priority={task.priority}, status={task.status}, score={moscow_details['score']}")
     
     # Convert to list and sort by priority score (calculated in Python)
     user_tasks = list(user_tasks)
-    user_tasks.sort(key=lambda x: x.calculate_priority_score(), reverse=True)
+    user_tasks.sort(key=lambda x: x.get_moscow_details()['score'], reverse=True)
     
     # Separate tasks by calculated priority for 1-3-5 method
     # Big Things: Tasks with highest priority scores (urgent/overdue)
-    big_tasks = [task for task in user_tasks if task.calculate_priority_score() >= 400][:1]
+    big_tasks = [task for task in user_tasks if task.get_moscow_details()['score'] >= 400][:1]
     
     # Medium Things: High-medium priority tasks
-    medium_tasks = [task for task in user_tasks if 200 <= task.calculate_priority_score() < 400][:3]
+    medium_tasks = [task for task in user_tasks if 200 <= task.get_moscow_details()['score'] < 400][:3]
     
     # Small Things: Lower priority or quick tasks
-    small_tasks = [task for task in user_tasks if task.calculate_priority_score() < 200][:5]
+    small_tasks = [task for task in user_tasks if task.get_moscow_details()['score'] < 200][:5]
     
     # If not enough tasks in categories, fill from general pool
     if not big_tasks:

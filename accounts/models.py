@@ -21,7 +21,7 @@ class UserProfile(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     
     def __str__(self):
-        return f"{self.user.username} - Level {self.level}"
+        return f"{self.user.email} - Level {self.level}"
     
     def update_level(self):
         """Update user level based on points"""

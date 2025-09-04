@@ -5,507 +5,419 @@
 {% block extra_css %}
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 <style>
-body {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    min-height: 100vh;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+/* Kanban Board Styles */
+.kanban-container {
+    padding: 1.5rem;
+    max-width: 100%;
+    overflow-x: auto;
 }
 
-.main-container {
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
-    border-radius: 20px;
-    margin: 20px;
-    padding: 30px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+.kanban-header {
+    margin-bottom: 2rem;
+    text-align: center;
 }
 
-.drag-over {
-    background-color: rgba(34, 197, 94, 0.1);
-    border: 2px dashed #22c55e;
-    transform: scale(1.02);
-    transition: all 0.3s ease;
-}
-
-.dragging {
-    opacity: 0.7;
-    transform: rotate(2deg) scale(0.95);
-    z-index: 1000;
-}
-
-.task-card {
-    background: rgba(255, 255, 255, 0.95);
-    padding: 20px;
-    border-radius: 16px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    cursor: move;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    margin-bottom: 16px;
-    backdrop-filter: blur(10px);
-    position: relative;
-    overflow: hidden;
-}
-
-.task-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, #667eea, #764ba2);
-    border-radius: 16px 16px 0 0;
-}
-
-.task-card:hover {
-    transform: translateY(-4px) scale(1.02);
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
-    background: rgba(255, 255, 255, 1);
-}
-
-.page-header {
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.05));
-    backdrop-filter: blur(10px);
-    color: white;
-    padding: 40px;
-    border-radius: 20px;
-    margin-bottom: 30px;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-}
-
-.page-header h1 {
-    font-size: 2.5rem;
-    font-weight: 700;
-    margin-bottom: 8px;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.page-header p {
-    font-size: 1.1rem;
-    opacity: 0.9;
+.kanban-board {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(280px, 1fr));
+    gap: 1.5rem;
+    min-height: 600px;
 }
 
 .kanban-column {
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
-    border-radius: 20px;
-    padding: 20px;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    min-height: 500px;
+    background: #f8fafc;
+    border-radius: 12px;
+    padding: 1rem;
+    border: 2px solid #e2e8f0;
+    display: flex;
+    flex-direction: column;
     transition: all 0.3s ease;
 }
 
-.kanban-column:hover {
-    background: rgba(255, 255, 255, 0.15);
-    transform: translateY(-2px);
+.kanban-column.drag-over {
+    border-color: #3b82f6;
+    background: #eff6ff;
+    transform: scale(1.02);
 }
 
-.column-title {
-    font-size: 1.2rem;
-    font-weight: 700;
-    color: white;
-    margin-bottom: 20px;
+.column-header {
     display: flex;
     align-items: center;
-    gap: 12px;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    padding: 0.75rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
 
-.column-icon {
-    width: 32px;
-    height: 32px;
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.1rem;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.todo-column .column-icon { background: linear-gradient(135deg, #f87171, #ef4444); }
-.progress-column .column-icon { background: linear-gradient(135deg, #60a5fa, #3b82f6); }
-.review-column .column-icon { background: linear-gradient(135deg, #fbbf24, #f59e0b); }
-.done-column .column-icon { background: linear-gradient(135deg, #34d399, #10b981); }
+.todo-header { background: #fee2e2; color: #991b1b; }
+.progress-header { background: #dbeafe; color: #1e40af; }
+.review-header { background: #fef3c7; color: #92400e; }
+.done-header { background: #dcfce7; color: #166534; }
 
 .task-count {
-    background: rgba(255, 255, 255, 0.2);
-    color: white;
+    background: rgba(255, 255, 255, 0.8);
+    padding: 0.25rem 0.5rem;
     border-radius: 20px;
-    padding: 4px 12px;
-    font-size: 0.8rem;
-    font-weight: 600;
-    margin-left: auto;
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    font-size: 0.75rem;
+    font-weight: 700;
+    min-width: 1.5rem;
+    text-align: center;
 }
 
 .drop-zone {
+    flex: 1;
     min-height: 400px;
-    transition: all 0.3s ease;
-    border-radius: 16px;
     display: flex;
     flex-direction: column;
-    gap: 16px;
-}
-
-.empty-state {
-    text-align: center;
-    color: rgba(255, 255, 255, 0.7);
-    padding: 60px 20px;
-    border: 2px dashed rgba(255, 255, 255, 0.3);
-    border-radius: 16px;
-    margin-top: 20px;
+    gap: 0.75rem;
+    padding: 0.5rem;
+    border-radius: 8px;
     transition: all 0.3s ease;
 }
 
-.empty-state:hover {
-    border-color: rgba(255, 255, 255, 0.5);
-    background: rgba(255, 255, 255, 0.05);
+.task-card {
+    background: white;
+    border-radius: 8px;
+    padding: 1rem;
+    border: 1px solid #e5e7eb;
+    cursor: move;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-.empty-state i {
-    font-size: 2.5rem;
-    margin-bottom: 16px;
-    opacity: 0.6;
+.task-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    border-color: #d1d5db;
 }
 
-.empty-state p {
-    font-size: 1.1rem;
-    font-weight: 500;
-    margin-bottom: 8px;
-}
-
-.empty-state small {
-    font-size: 0.9rem;
-    opacity: 0.8;
+.task-card.dragging {
+    opacity: 0.5;
+    transform: rotate(3deg);
 }
 
 .task-title {
-    font-size: 1.1rem;
     font-weight: 600;
-    color: #1f2937;
-    margin-bottom: 8px;
+    color: #111827;
+    margin-bottom: 0.5rem;
     line-height: 1.4;
+    font-size: 0.95rem;
 }
 
 .task-description {
-    font-size: 0.9rem;
     color: #6b7280;
-    line-height: 1.5;
-    margin-bottom: 12px;
+    font-size: 0.85rem;
+    line-height: 1.4;
+    margin-bottom: 0.75rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
 
 .task-meta {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-top: 16px;
+    gap: 0.5rem;
     flex-wrap: wrap;
-    gap: 8px;
-}
-
-.task-date {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 0.8rem;
-    color: #6b7280;
-    background: rgba(107, 114, 128, 0.1);
-    padding: 4px 8px;
-    border-radius: 12px;
 }
 
 .priority-badge {
-    padding: 4px 12px;
-    border-radius: 20px;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
     font-size: 0.7rem;
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    letter-spacing: 0.025em;
 }
 
-.priority-must { 
-    background: linear-gradient(135deg, #ef4444, #dc2626); 
-    color: white; 
-    box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
-}
-.priority-should { 
-    background: linear-gradient(135deg, #f97316, #ea580c); 
-    color: white; 
-    box-shadow: 0 4px 15px rgba(249, 115, 22, 0.4);
-}
-.priority-could { 
-    background: linear-gradient(135deg, #06b6d4, #0891b2); 
-    color: white; 
-    box-shadow: 0 4px 15px rgba(6, 182, 212, 0.4);
-}
-.priority-wont { 
-    background: linear-gradient(135deg, #6b7280, #4b5563); 
-    color: white; 
-    box-shadow: 0 4px 15px rgba(107, 114, 128, 0.4);
+.priority-must { background: #fecaca; color: #991b1b; }
+.priority-should { background: #fed7aa; color: #9a3412; }
+.priority-could { background: #bfdbfe; color: #1e40af; }
+.priority-wont { background: #e5e7eb; color: #374151; }
+
+.task-due-date {
+    font-size: 0.7rem;
+    color: #6b7280;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
 }
 
-.grid-cols-4 {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 24px;
+.task-assignment {
+    font-size: 0.7rem;
+    color: #7c3aed;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    background: #f3f4f6;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    margin-top: 0.5rem;
 }
 
+.empty-state {
+    text-align: center;
+    padding: 2rem 1rem;
+    color: #9ca3af;
+    border: 2px dashed #e5e7eb;
+    border-radius: 8px;
+    margin-top: 1rem;
+}
+
+.empty-state i {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+/* Mobile responsiveness */
 @media (max-width: 1024px) {
-    .grid-cols-4 {
+    .kanban-board {
         grid-template-columns: repeat(2, 1fr);
     }
 }
 
 @media (max-width: 640px) {
-    .grid-cols-4 {
+    .kanban-container {
+        padding: 1rem;
+    }
+    
+    .kanban-board {
         grid-template-columns: 1fr;
+        gap: 1rem;
     }
     
-    .main-container {
-        margin: 10px;
-        padding: 20px;
+    .kanban-column {
+        min-height: auto;
     }
     
-    .page-header {
-        padding: 30px 20px;
+    .drop-zone {
+        min-height: 200px;
     }
-    
-    .page-header h1 {
-        font-size: 2rem;
-    }
+}
+
+/* Animation for drag feedback */
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+.drag-feedback {
+    animation: pulse 1s infinite;
 }
 </style>
 {% endblock %}
 
 {% block content %}
 {% csrf_token %}
-<div class="main-container" x-data="kanbanBoard()">
-    <!-- Page Header -->
-    <div class="page-header">
-        <h1>Personal Kanban Board</h1>
-        <p>Drag tasks between columns to update their status and stay organized</p>
+<div class="kanban-container" x-data="kanbanBoard()">
+    <!-- Header -->
+    <div class="kanban-header">
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">Personal Kanban Board</h1>
+        <p class="text-gray-600">Drag and drop tasks between columns to manage your workflow</p>
     </div>
 
-    <!-- Kanban Columns -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+    <!-- Kanban Board -->
+    <div class="kanban-board">
         <!-- To Do Column -->
-        <div class="kanban-column todo-column">
-            <h3 class="column-title">
-                <div class="column-icon">
+        <div class="kanban-column todo-column" 
+             @dragover.prevent="handleDragOver($event)"
+             @dragenter.prevent="handleDragEnter($event)"
+             @dragleave="handleDragLeave($event)"
+             @drop.prevent="dropTask($event, 'todo')">
+            
+            <div class="column-header todo-header">
+                <div class="flex items-center gap-2">
                     <i class="fas fa-clipboard-list"></i>
+                    <span>To Do</span>
                 </div>
-                To Do
                 <span class="task-count" x-text="tasks.todo.length"></span>
-            </h3>
-            <div class="drop-zone" 
-                 @dragover.prevent="handleDragOver($event)"
-                 @dragenter.prevent="handleDragEnter($event)" 
-                 @dragleave="handleDragLeave($event)"
-                 @drop.prevent="dropTask($event, 'todo')"
-                 data-status="todo">
+            </div>
+            
+            <div class="drop-zone">
                 <template x-for="task in tasks.todo" :key="task.id">
                     <div class="task-card"
                          draggable="true"
                          @dragstart="dragTask($event, task)"
                          @dragend="handleDragEnd($event)">
                         <div class="task-title" x-text="task.title"></div>
-                        <div class="task-description" x-text="task.description" x-show="task.description"></div>
+                        <div class="task-description" x-show="task.description" x-text="task.description"></div>
                         
                         <div class="task-meta">
-                            <span class="priority-badge" :class="'priority-' + task.priority" x-text="task.priority.replace('_', ' ')"></span>
-                            <div class="task-date" x-show="task.due_date">
+                            <span class="priority-badge" :class="'priority-' + task.priority" x-text="task.priority.toUpperCase()"></span>
+                            <div class="task-due-date" x-show="task.due_date">
                                 <i class="fas fa-calendar-alt"></i>
-                                <span x-text="task.due_date ? new Date(task.due_date).toLocaleDateString() : ''"></span>
+                                <span x-text="formatDate(task.due_date)"></span>
                             </div>
+                        </div>
+                        
+                        <div class="task-assignment" x-show="task.assigned_to">
+                            <i class="fas fa-user"></i>
+                            <span x-text="task.assigned_to ? task.assigned_to.username : ''"></span>
                         </div>
                     </div>
                 </template>
                 
                 <div class="empty-state" x-show="tasks.todo.length === 0">
-                    <i class="fas fa-tasks"></i>
-                    <p>No tasks to do</p>
-                    <small>Add tasks to get started</small>
-                </div>
-            </div>
-        </div>
-                            <div class="flex items-center text-xs text-purple-600">
-                                <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path>
-                                </svg>
-                                <span x-text="task.assigned_to ? `👤 ${task.assigned_to.username}` : ''"></span>
-                            </div>
-                        </div>
-                        
-                        <div class="flex items-center justify-between">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
-                                  :class="getPriorityClass(task.priority)" x-text="task.priority.toUpperCase()"></span>
-                            <span class="text-xs text-gray-500" x-text="formatDate(task.due_date)"></span>
-                        </div>
-                    </div>
-                </template>
-                <div x-show="tasks.todo.length === 0" class="text-center text-gray-500 py-8">
-                    <svg class="w-12 h-12 mx-auto mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                    </svg>
-                    <p>No tasks in To Do</p>
-                    <p class="text-xs mt-1">Drag tasks here or add new ones</p>
+                    <i class="fas fa-plus-circle"></i>
+                    <p>No tasks in backlog</p>
+                    <small>Create new tasks to get started</small>
                 </div>
             </div>
         </div>
 
         <!-- In Progress Column -->
-        <div class="bg-blue-50 rounded-lg p-4 kanban-column">
-            <h3 class="font-semibold text-gray-900 mb-4 flex items-center">
-                <span class="w-3 h-3 bg-blue-500 rounded-full mr-2"></span>
-                In Progress
-                <span class="ml-auto bg-blue-200 text-blue-700 text-xs px-2 py-1 rounded-full" x-text="tasks.in_progress.length"></span>
-            </h3>
-            <div class="space-y-3 drop-zone"
-                 @dragover.prevent="handleDragOver($event)"
-                 @dragenter.prevent="handleDragEnter($event)"
-                 @dragleave="handleDragLeave($event)"
-                 @drop.prevent="dropTask($event, 'in_progress')"
-                 data-status="in_progress">
+        <div class="kanban-column progress-column"
+             @dragover.prevent="handleDragOver($event)"
+             @dragenter.prevent="handleDragEnter($event)"
+             @dragleave="handleDragLeave($event)"
+             @drop.prevent="dropTask($event, 'in_progress')">
+            
+            <div class="column-header progress-header">
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-play-circle"></i>
+                    <span>In Progress</span>
+                </div>
+                <span class="task-count" x-text="tasks.in_progress.length"></span>
+            </div>
+            
+            <div class="drop-zone">
                 <template x-for="task in tasks.in_progress" :key="task.id">
-                    <div class="bg-white p-4 rounded-lg shadow-sm border cursor-move task-card"
+                    <div class="task-card"
                          draggable="true"
                          @dragstart="dragTask($event, task)"
                          @dragend="handleDragEnd($event)">
-                        <h4 class="font-medium text-gray-900 mb-2" x-text="task.title"></h4>
-                        <p class="text-sm text-gray-600 mb-3" x-text="task.description"></p>
+                        <div class="task-title" x-text="task.title"></div>
+                        <div class="task-description" x-show="task.description" x-text="task.description"></div>
                         
-                        <!-- Assignment Status -->
-                        <div class="mb-3" x-show="task.assigned_to">
-                            <div class="flex items-center text-xs text-purple-600">
-                                <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path>
-                                </svg>
-                                <span x-text="task.assigned_to ? `👤 ${task.assigned_to.username}` : ''"></span>
+                        <div class="task-meta">
+                            <span class="priority-badge" :class="'priority-' + task.priority" x-text="task.priority.toUpperCase()"></span>
+                            <div class="task-due-date" x-show="task.due_date">
+                                <i class="fas fa-calendar-alt"></i>
+                                <span x-text="formatDate(task.due_date)"></span>
                             </div>
                         </div>
                         
-                        <div class="flex items-center justify-between">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
-                                  :class="getPriorityClass(task.priority)" x-text="task.priority.toUpperCase()"></span>
-                            <span class="text-xs text-gray-500" x-text="formatDate(task.due_date)"></span>
+                        <div class="task-assignment" x-show="task.assigned_to">
+                            <i class="fas fa-user"></i>
+                            <span x-text="task.assigned_to ? task.assigned_to.username : ''"></span>
                         </div>
                     </div>
                 </template>
-                <div x-show="tasks.in_progress.length === 0" class="text-center text-gray-500 py-8">
-                    <svg class="w-12 h-12 mx-auto mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                    </svg>
-                    <p>No tasks in progress</p>
-                    <p class="text-xs mt-1">Drag tasks here to start working</p>
+                
+                <div class="empty-state" x-show="tasks.in_progress.length === 0">
+                    <i class="fas fa-arrow-right"></i>
+                    <p>No active tasks</p>
+                    <small>Drag tasks here to start working</small>
                 </div>
             </div>
         </div>
 
         <!-- Review Column -->
-        <div class="bg-yellow-50 rounded-lg p-4 kanban-column">
-            <h3 class="font-semibold text-gray-900 mb-4 flex items-center">
-                <span class="w-3 h-3 bg-yellow-500 rounded-full mr-2"></span>
-                Review
-                <span class="ml-auto bg-yellow-200 text-yellow-700 text-xs px-2 py-1 rounded-full" x-text="tasks.review.length"></span>
-            </h3>
-            <div class="space-y-3 drop-zone"
-                 @dragover.prevent="handleDragOver($event)"
-                 @dragenter.prevent="handleDragEnter($event)"
-                 @dragleave="handleDragLeave($event)"
-                 @drop.prevent="dropTask($event, 'review')"
-                 data-status="review">
+        <div class="kanban-column review-column"
+             @dragover.prevent="handleDragOver($event)"
+             @dragenter.prevent="handleDragEnter($event)"
+             @dragleave="handleDragLeave($event)"
+             @drop.prevent="dropTask($event, 'review')">
+            
+            <div class="column-header review-header">
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-eye"></i>
+                    <span>Review</span>
+                </div>
+                <span class="task-count" x-text="tasks.review.length"></span>
+            </div>
+            
+            <div class="drop-zone">
                 <template x-for="task in tasks.review" :key="task.id">
-                    <div class="bg-white p-4 rounded-lg shadow-sm border cursor-move task-card"
+                    <div class="task-card"
                          draggable="true"
                          @dragstart="dragTask($event, task)"
                          @dragend="handleDragEnd($event)">
-                        <h4 class="font-medium text-gray-900 mb-2" x-text="task.title"></h4>
-                        <p class="text-sm text-gray-600 mb-3" x-text="task.description"></p>
+                        <div class="task-title" x-text="task.title"></div>
+                        <div class="task-description" x-show="task.description" x-text="task.description"></div>
                         
-                        <!-- Assignment Status -->
-                        <div class="mb-3" x-show="task.assigned_to">
-                            <div class="flex items-center text-xs text-purple-600">
-                                <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path>
-                                </svg>
-                                <span x-text="task.assigned_to ? `👤 ${task.assigned_to.username}` : ''"></span>
+                        <div class="task-meta">
+                            <span class="priority-badge" :class="'priority-' + task.priority" x-text="task.priority.toUpperCase()"></span>
+                            <div class="task-due-date" x-show="task.due_date">
+                                <i class="fas fa-calendar-alt"></i>
+                                <span x-text="formatDate(task.due_date)"></span>
                             </div>
                         </div>
                         
-                        <div class="flex items-center justify-between">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
-                                  :class="getPriorityClass(task.priority)" x-text="task.priority.toUpperCase()"></span>
-                            <span class="text-xs text-gray-500" x-text="formatDate(task.due_date)"></span>
-                        </div>
-                        <div class="mt-2">
-                            <span x-show="task.priority === 'must'" 
-                                  class="text-xs bg-yellow-200 text-yellow-800 px-2 py-1 rounded">High Priority Review</span>
-                            <span x-show="task.priority !== 'must'" 
-                                  class="text-xs bg-blue-200 text-blue-800 px-2 py-1 rounded">Needs Review</span>
+                        <div class="task-assignment" x-show="task.assigned_to">
+                            <i class="fas fa-user"></i>
+                            <span x-text="task.assigned_to ? task.assigned_to.username : ''"></span>
                         </div>
                     </div>
                 </template>
-                <div x-show="tasks.review.length === 0" class="text-center text-gray-500 py-8">
-                    <svg class="w-12 h-12 mx-auto mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-                    </svg>
-                    <p>No tasks in review</p>
-                    <p class="text-xs mt-1">High priority tasks appear here</p>
+                
+                <div class="empty-state" x-show="tasks.review.length === 0">
+                    <i class="fas fa-search"></i>
+                    <p>No tasks for review</p>
+                    <small>Completed work appears here for review</small>
                 </div>
             </div>
         </div>
 
         <!-- Done Column -->
-        <div class="bg-green-50 rounded-lg p-4 kanban-column">
-            <h3 class="font-semibold text-gray-900 mb-4 flex items-center">
-                <span class="w-3 h-3 bg-green-500 rounded-full mr-2"></span>
-                Done
-                <span class="ml-auto bg-green-200 text-green-700 text-xs px-2 py-1 rounded-full" x-text="tasks.done.length"></span>
-            </h3>
-            <div class="space-y-3 drop-zone"
-                 @dragover.prevent="handleDragOver($event)"
-                 @dragenter.prevent="handleDragEnter($event)"
-                 @dragleave="handleDragLeave($event)"
-                 @drop.prevent="dropTask($event, 'done')"
-                 data-status="done">
+        <div class="kanban-column done-column"
+             @dragover.prevent="handleDragOver($event)"
+             @dragenter.prevent="handleDragEnter($event)"
+             @dragleave="handleDragLeave($event)"
+             @drop.prevent="dropTask($event, 'done')">
+            
+            <div class="column-header done-header">
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-check-circle"></i>
+                    <span>Done</span>
+                </div>
+                <span class="task-count" x-text="tasks.done.length"></span>
+            </div>
+            
+            <div class="drop-zone">
                 <template x-for="task in tasks.done" :key="task.id">
-                    <div class="bg-white p-4 rounded-lg shadow-sm border cursor-move task-card opacity-75"
+                    <div class="task-card" style="opacity: 0.75;"
                          draggable="true"
                          @dragstart="dragTask($event, task)"
                          @dragend="handleDragEnd($event)">
-                        <h4 class="font-medium text-gray-900 mb-2 line-through" x-text="task.title"></h4>
-                        <p class="text-sm text-gray-600 mb-3" x-text="task.description"></p>
+                        <div class="task-title" style="text-decoration: line-through;" x-text="task.title"></div>
+                        <div class="task-description" x-show="task.description" x-text="task.description"></div>
                         
-                        <!-- Assignment Status -->
-                        <div class="mb-3" x-show="task.assigned_to">
-                            <div class="flex items-center text-xs text-purple-600">
-                                <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path>
-                                </svg>
-                                <span x-text="task.assigned_to ? `👤 ${task.assigned_to.username}` : ''"></span>
+                        <div class="task-meta">
+                            <span class="priority-badge bg-green-100 text-green-800">COMPLETED</span>
+                            <div class="task-due-date" x-show="task.completed_at">
+                                <i class="fas fa-check"></i>
+                                <span x-text="formatDate(task.completed_at)"></span>
                             </div>
                         </div>
                         
-                        <div class="flex items-center justify-between">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">COMPLETED</span>
-                            <span class="text-xs text-gray-500" x-text="formatDate(task.completed_at)"></span>
-                        </div>
-                        <div class="mt-2">
-                            <span class="text-xs bg-green-200 text-green-800 px-2 py-1 rounded">✓ Completed</span>
+                        <div class="task-assignment" x-show="task.assigned_to">
+                            <i class="fas fa-user"></i>
+                            <span x-text="task.assigned_to ? task.assigned_to.username : ''"></span>
                         </div>
                     </div>
                 </template>
-                <div x-show="tasks.done.length === 0" class="text-center text-gray-500 py-8">
-                    <svg class="w-12 h-12 mx-auto mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
+                
+                <div class="empty-state" x-show="tasks.done.length === 0">
+                    <i class="fas fa-trophy"></i>
                     <p>No completed tasks</p>
-                    <p class="text-xs mt-1">Completed tasks appear here</p>
+                    <small>Finished tasks will appear here</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
+                    <p>No tasks in progress</p>
+                    <p class="text-xs mt-1">Drag tasks here to start working</p>
                 </div>
             </div>
         </div>
@@ -522,6 +434,7 @@ function kanbanBoard() {
             done: []
         },
         draggedTask: null,
+        draggedElement: null,
 
         async init() {
             await this.loadTasks();
@@ -531,12 +444,9 @@ function kanbanBoard() {
             try {
                 const response = await fetch('/tasks/api/tasks/kanban_board_data/');
                 const data = await response.json();
-                
-                // The API now returns properly structured data
                 this.tasks = data;
             } catch (error) {
                 console.error('Error loading tasks:', error);
-                // Set empty arrays in case of error
                 this.tasks = {
                     todo: [],
                     in_progress: [],
@@ -548,70 +458,154 @@ function kanbanBoard() {
 
         dragTask(event, task) {
             this.draggedTask = task;
+            this.draggedElement = event.target;
             event.dataTransfer.effectAllowed = 'move';
+            
+            // Add visual feedback
+            setTimeout(() => {
+                if (this.draggedElement) {
+                    this.draggedElement.classList.add('dragging');
+                }
+            }, 0);
+        },
+
+        handleDragEnd(event) {
+            if (this.draggedElement) {
+                this.draggedElement.classList.remove('dragging');
+            }
+            
+            // Remove drag-over class from all columns
+            document.querySelectorAll('.kanban-column').forEach(col => {
+                col.classList.remove('drag-over');
+            });
+            
+            this.draggedTask = null;
+            this.draggedElement = null;
+        },
+
+        handleDragOver(event) {
+            if (this.draggedTask) {
+                event.preventDefault();
+            }
+        },
+
+        handleDragEnter(event) {
+            if (this.draggedTask) {
+                event.target.closest('.kanban-column').classList.add('drag-over');
+            }
+        },
+
+        handleDragLeave(event) {
+            // Only remove if we're actually leaving the column
+            const column = event.target.closest('.kanban-column');
+            if (column && !column.contains(event.relatedTarget)) {
+                column.classList.remove('drag-over');
+            }
         },
 
         async dropTask(event, newStatus) {
             if (!this.draggedTask) return;
             
+            const originalTask = this.draggedTask;
+            const originalStatus = originalTask.status;
+            
+            // Immediately move task in UI for instant feedback
+            this.moveTaskInUI(originalTask, newStatus);
+            
             try {
                 const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
                 
-                // Map Kanban statuses to actual model statuses
-                let actualStatus = newStatus;
-                let updateData = {};
-                
-                if (newStatus === 'review') {
-                    // Review column: set status to 'review' and keep original priority
-                    actualStatus = 'review';
-                    updateData = { 
-                        status: actualStatus
-                        // Keep original priority - don't force change it
-                    };
-                } else {
-                    updateData = { status: actualStatus };
-                }
-                
-                const response = await fetch(`/tasks/api/tasks/${this.draggedTask.id}/`, {
+                const response = await fetch(`/tasks/api/tasks/${originalTask.id}/`, {
                     method: 'PATCH',
                     headers: {
                         'Content-Type': 'application/json',
                         'X-CSRFToken': csrfToken
                     },
-                    body: JSON.stringify(updateData)
+                    body: JSON.stringify({ status: newStatus })
                 });
                 
                 if (response.ok) {
-                    await this.loadTasks();
+                    // Update the task with server response
+                    const updatedTask = await response.json();
+                    this.updateTaskInUI(updatedTask);
+                    
+                    // Show feedback for completed tasks
+                    if (newStatus === 'done') {
+                        this.showFeedback('Task completed! 🎉', 'success');
+                    } else {
+                        this.showFeedback('Task moved successfully!', 'success');
+                    }
                 } else {
-                    console.error('Error updating task:', await response.text());
+                    // Revert the move on error
+                    this.moveTaskInUI(originalTask, originalStatus);
+                    this.showFeedback('Error moving task', 'error');
                 }
             } catch (error) {
-                console.error('Error updating task:', error);
+                // Revert the move on error
+                this.moveTaskInUI(originalTask, originalStatus);
+                this.showFeedback('Error moving task', 'error');
             }
             
+            // Clean up
             this.draggedTask = null;
+            if (this.draggedElement) {
+                this.draggedElement.classList.remove('dragging');
+                this.draggedElement = null;
+            }
+            
+            // Remove drag-over styling
+            event.target.closest('.kanban-column').classList.remove('drag-over');
         },
 
-        getPriorityClass(priority) {
-            const classes = {
-                // MoSCoW priority mapping
-                'must': 'bg-red-100 text-red-800',
-                'should': 'bg-orange-100 text-orange-800', 
-                'could': 'bg-yellow-100 text-yellow-800',
-                'wont': 'bg-green-100 text-green-800',
-                // Legacy priority mapping (in case some tasks still use old format)
-                'urgent': 'bg-red-100 text-red-800',
-                'high': 'bg-orange-100 text-orange-800',
-                'medium': 'bg-yellow-100 text-yellow-800',
-                'low': 'bg-green-100 text-green-800'
-            };
-            return classes[priority] || classes.could;
+        moveTaskInUI(task, newStatus) {
+            // Remove task from current column
+            Object.keys(this.tasks).forEach(status => {
+                this.tasks[status] = this.tasks[status].filter(t => t.id !== task.id);
+            });
+            
+            // Update task status
+            task.status = newStatus;
+            
+            // Add task to new column
+            if (this.tasks[newStatus]) {
+                this.tasks[newStatus].push(task);
+            }
+        },
+
+        updateTaskInUI(updatedTask) {
+            // Find and update the task in the current UI
+            Object.keys(this.tasks).forEach(status => {
+                const taskIndex = this.tasks[status].findIndex(t => t.id === updatedTask.id);
+                if (taskIndex !== -1) {
+                    this.tasks[status][taskIndex] = updatedTask;
+                }
+            });
         },
 
         formatDate(dateString) {
             if (!dateString) return '';
-            return new Date(dateString).toLocaleDateString();
+            try {
+                return new Date(dateString).toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric'
+                });
+            } catch (error) {
+                return '';
+            }
+        },
+
+        showFeedback(message, type) {
+            // Simple feedback system
+            const feedback = document.createElement('div');
+            feedback.className = `fixed top-4 right-4 px-4 py-2 rounded-lg text-white z-50 ${
+                type === 'success' ? 'bg-green-500' : 'bg-red-500'
+            }`;
+            feedback.textContent = message;
+            document.body.appendChild(feedback);
+            
+            setTimeout(() => {
+                feedback.remove();
+            }, 3000);
         }
     }
 }

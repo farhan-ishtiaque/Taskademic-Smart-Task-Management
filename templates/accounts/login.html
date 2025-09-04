@@ -24,18 +24,24 @@
             {% csrf_token %}
             <div class="rounded-md shadow-sm -space-y-px">
                 <div>
-                    <label for="username" class="sr-only">Username</label>
-                    <input id="username" name="username" type="text" required 
-                           class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm" 
-                           placeholder="Username">
+                    <label for="{{ form.email.id_for_label }}" class="sr-only">Email</label>
+                    {{ form.email }}
+                    {% if form.email.errors %}
+                        <div class="text-red-600 text-sm mt-1">{{ form.email.errors }}</div>
+                    {% endif %}
                 </div>
                 <div>
-                    <label for="password" class="sr-only">Password</label>
-                    <input id="password" name="password" type="password" required 
-                           class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm" 
-                           placeholder="Password">
+                    <label for="{{ form.password.id_for_label }}" class="sr-only">Password</label>
+                    {{ form.password }}
+                    {% if form.password.errors %}
+                        <div class="text-red-600 text-sm mt-1">{{ form.password.errors }}</div>
+                    {% endif %}
                 </div>
             </div>
+            
+            {% if form.non_field_errors %}
+                <div class="text-red-600 text-sm">{{ form.non_field_errors }}</div>
+            {% endif %}
 
             <div>
                 <button type="submit" 

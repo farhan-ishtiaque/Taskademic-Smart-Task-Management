@@ -25,8 +25,12 @@
                         {% if todays_tasks %}
                             <div class="space-y-3">
                                 {% for task in todays_tasks %}
-                                    <div class="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50">
-                                        <input type="checkbox" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                    <div class="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 task-item" data-task-id="{{ task.id }}">
+                                        <input type="checkbox" 
+                                               class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                               id="daily-task-{{ task.id }}"
+                                               {% if task.status == 'done' %}checked{% endif %}
+                                               onchange="updateTaskStatus({{ task.id }}, this.checked)">
                                         <div class="ml-3 flex-1">
                                             <div class="text-sm font-medium text-gray-900">{{ task.title }}</div>
                                             <div class="text-sm text-gray-500">{{ task.description|truncatechars:60 }}</div>
@@ -130,4 +134,104 @@
         </main>
     </div>
 </div>
+
+{% csrf_token %}
+
+<script>
+function updateTaskStatus(taskId, completed) {
+    // Update task status via AJAX
+    fetch(`/tasks/${taskId}/toggle/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || '',
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            completed: completed
+        })
+    }).then(response => response.json())
+      .then(data => {
+          if (data.success) {
+              if (data.remove_task && completed) {
+                  // Remove task from UI with animation
+                  const taskElement = document.querySelector(`[data-task-id="${taskId}"]`);
+                  if (taskElement) {
+                      taskElement.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                      taskElement.style.opacity = '0';
+                      taskElement.style.transform = 'translateX(100%)';
+                      setTimeout(() => {
+                          taskElement.remove();
+                          
+                          // Check if no tasks remain
+                          const remainingTasks = document.querySelectorAll('.task-item');
+                          if (remainingTasks.length === 0) {
+                              const tasksContainer = document.querySelector('.space-y-3');
+                              if (tasksContainer) {
+                                  tasksContainer.innerHTML = `
+                                      <div class="text-center py-8">
+                                          <div class="w-16 h-16 mx-auto mb-4 bg-green-100 rounded-full flex items-center justify-center">
+                                              <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                              </svg>
+                                          </div>
+                                          <p class="text-gray-500">All tasks completed! Great job!</p>
+                                      </div>
+                                  `;
+                              }
+                          }
+                      }, 300);
+                  }
+                  
+                  // Show success message
+                  if (data.message) {
+                      showNotification(data.message, 'success');
+                  }
+              }
+          } else {
+              console.error('Error updating task:', data.error);
+              showNotification('Failed to update task', 'error');
+          }
+      })
+      .catch(error => {
+          console.error('Error:', error);
+          showNotification('Failed to update task', 'error');
+      });
+}
+
+function showNotification(message, type = 'info') {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg z-50 ${
+        type === 'success' ? 'bg-green-500 text-white' : 
+        type === 'error' ? 'bg-red-500 text-white' : 
+        'bg-blue-500 text-white'
+    }`;
+    notification.textContent = message;
+    
+    document.body.appendChild(notification);
+    
+    // Remove after 3 seconds
+    setTimeout(() => {
+        notification.style.transition = 'opacity 0.3s ease';
+        notification.style.opacity = '0';
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
+}
+
+// Make task items clickable (except for checkbox)
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.task-item').forEach(item => {
+        const checkbox = item.querySelector('input[type="checkbox"]');
+        if (checkbox) {
+            item.addEventListener('click', function(e) {
+                if (e.target.type !== 'checkbox') {
+                    checkbox.checked = !checkbox.checked;
+                    const event = new Event('change');
+                    checkbox.dispatchEvent(event);
+                }
+            });
+        }
+    });
+});
+</script>
 {% endblock %}

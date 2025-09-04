@@ -10,17 +10,21 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from .models import UserProfile
+from .forms import EmailUserCreationForm, EmailAuthenticationForm
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
     total_points = serializers.IntegerField(source='userprofile.total_points', read_only=True)
     level = serializers.IntegerField(source='userprofile.level', read_only=True)
     preferred_technique = serializers.CharField(source='userprofile.preferred_technique', read_only=True)
+    study_hours_per_day = serializers.IntegerField(source='userprofile.study_hours_per_day', read_only=True)
+    timezone = serializers.CharField(source='userprofile.timezone', read_only=True)
+    streak_count = serializers.IntegerField(source='userprofile.streak_count', read_only=True)
     
     class Meta:
         model = User
-        fields = ['id', 'username', 'first_name', 'last_name', 'email', 'date_joined', 'total_points', 'level', 'preferred_technique']
-        read_only_fields = ['id', 'username', 'date_joined']
+        fields = ['id', 'email', 'first_name', 'last_name', 'date_joined', 'total_points', 'level', 'preferred_technique', 'study_hours_per_day', 'timezone', 'streak_count']
+        read_only_fields = ['id', 'email', 'date_joined']
 
 
 @api_view(['POST'])
@@ -28,36 +32,36 @@ class UserProfileSerializer(serializers.ModelSerializer):
 def register_user(request):
     """API endpoint for user registration"""
     try:
-        username = request.data.get('username')
         email = request.data.get('email')
         password = request.data.get('password')
         first_name = request.data.get('first_name', '')
         last_name = request.data.get('last_name', '')
         preferred_technique = request.data.get('preferred_technique', 'pomodoro')
+        study_hours_per_day = request.data.get('study_hours_per_day', 4)
+        timezone_pref = request.data.get('timezone', 'UTC')
         
-        if User.objects.filter(username=username).exists():
-            return Response({'error': 'Username already exists'}, status=status.HTTP_400_BAD_REQUEST)
-            
         if User.objects.filter(email=email).exists():
             return Response({'error': 'Email already exists'}, status=status.HTTP_400_BAD_REQUEST)
             
         user = User.objects.create_user(
-            username=username, 
+            username=email,  # Use email as username
             email=email, 
             password=password,
             first_name=first_name,
             last_name=last_name
         )
         
-        # Update user profile with preferred technique
+        # Update user profile with preferred technique and other fields
         profile = user.userprofile
         profile.preferred_technique = preferred_technique
+        profile.study_hours_per_day = study_hours_per_day
+        profile.timezone = timezone_pref
         profile.save()
         
         return Response({
             'message': 'User created successfully',
             'user_id': user.id,
-            'username': user.username
+            'email': user.email
         }, status=status.HTTP_201_CREATED)
     except Exception as e:
         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
@@ -67,18 +71,24 @@ def register_user(request):
 @permission_classes([AllowAny])
 def login_user(request):
     """API endpoint for user login"""
-    username = request.data.get('username')
+    email = request.data.get('email')
     password = request.data.get('password')
     
-    user = authenticate(username=username, password=password)
-    if user:
-        login(request, user)
-        serializer = UserProfileSerializer(user)
-        return Response({
-            'message': 'Login successful',
-            'user': serializer.data
-        }, status=status.HTTP_200_OK)
-    return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+    try:
+        # Find user by email and authenticate with username (email)
+        user_obj = User.objects.get(email=email)
+        user = authenticate(username=user_obj.username, password=password)
+        if user:
+            login(request, user)
+            serializer = UserProfileSerializer(user)
+            return Response({
+                'message': 'Login successful',
+                'user': serializer.data
+            }, status=status.HTTP_200_OK)
+    except User.DoesNotExist:
+        pass
+    
+    return Response({'error': 'Invalid email or password'}, status=status.HTTP_401_UNAUTHORIZED)
 
 
 @api_view(['POST'])
@@ -122,30 +132,31 @@ def user_stats(request):
 def register_view(request):
     """User registration view"""
     if request.method == 'POST':
-        form = UserCreationForm(request.POST)
+        form = EmailUserCreationForm(request.POST)
         if form.is_valid():
             user = form.save()
-            username = form.cleaned_data.get('username')
-            messages.success(request, f'Account created for {username}!')
+            email = form.cleaned_data.get('email')
+            messages.success(request, f'Account created for {email}!')
             login(request, user)
             return redirect('dashboard:home')
     else:
-        form = UserCreationForm()
+        form = EmailUserCreationForm()
     return render(request, 'accounts/register.html', {'form': form})
 
 
 def login_view(request):
     """User login view"""
     if request.method == 'POST':
-        username = request.POST['username']
-        password = request.POST['password']
-        user = authenticate(request, username=username, password=password)
-        if user is not None:
+        form = EmailAuthenticationForm(request, data=request.POST)
+        if form.is_valid():
+            user = form.get_user()
             login(request, user)
             return redirect('dashboard:home')
         else:
-            messages.error(request, 'Invalid username or password.')
-    return render(request, 'accounts/login.html')
+            messages.error(request, 'Invalid email or password.')
+    else:
+        form = EmailAuthenticationForm()
+    return render(request, 'accounts/login.html', {'form': form})
 
 
 def logout_view(request):
