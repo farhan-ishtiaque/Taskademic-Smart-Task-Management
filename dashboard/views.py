@@ -427,17 +427,7 @@ def edit_time_block(request, block_id):
     return redirect('dashboard:manage_time_blocks')
 
 
-@login_required 
-def delete_time_block(request, block_id):
-    """Delete a time block"""
-    try:
-        block = get_object_or_404(TimeBlock, id=block_id, user=request.user)
-        block.delete()
-        messages.success(request, 'Time block deleted successfully!')
-    except Exception as e:
-        messages.error(request, f'Error deleting time block: {str(e)}')
-    
-    return redirect('dashboard:manage_time_blocks')
+
 
 
 @login_required
@@ -472,7 +462,7 @@ def generate_schedule(request):
                 if hasattr(daily_schedule, 'ai_response') and 'Fallback scheduling' in daily_schedule.ai_response:
                     success_message = f'AI scheduling unavailable (rate limit), used intelligent fallback. Generated optimized schedule for {len(scheduled_tasks)} tasks.'
                 else:
-                    success_message = f'Successfully generated AI-powered schedule for {target_date.strftime("%B %d, %Y")}! Scheduled {len(scheduled_tasks)} tasks with Pomodoro breaks.'
+                    success_message = f'Successfully generated AI-powered schedule for {target_date.strftime("%B %d, %Y")}! Scheduled {len(scheduled_tasks)} tasks with focus timer support.'
                 
                 # Return JSON response for AJAX requests
                 if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
@@ -549,7 +539,6 @@ def view_schedule(request, year, month, day):
                 'end_time': scheduled_task.end_time,
                 'duration_minutes': scheduled_task.estimated_duration_minutes,
                 'task': scheduled_task.task,
-                'pomodoro_schedule': f"{scheduled_task.pomodoro_sessions} sessions, {scheduled_task.break_minutes}min breaks",
                 'title': scheduled_task.task.title if scheduled_task.task else "Scheduled Item",
                 'description': scheduled_task.task.description if scheduled_task.task else "",
             }
@@ -618,6 +607,15 @@ def view_schedule(request, year, month, day):
         except:
             ai_analysis = {}
 
+        # Determine the actual schedule type based on the tasks
+        actual_schedule_type = 'custom'  # Default to custom
+        if scheduled_tasks.exists():
+            # Check what type of tasks we actually have
+            schedule_types = scheduled_tasks.values_list('schedule_type', flat=True).distinct()
+            if 'ai' in schedule_types:
+                actual_schedule_type = 'ai'
+            elif 'custom' in schedule_types:
+                actual_schedule_type = 'custom'
         
         context = {
             'schedule': schedule,
@@ -625,7 +623,7 @@ def view_schedule(request, year, month, day):
             'time_blocks': time_blocks,
             'target_date': target_date,
             'ai_analysis': ai_analysis,
-
+            'actual_schedule_type': actual_schedule_type,  # Pass the real schedule type
             'available_tasks': available_tasks_list,
             'has_time_blocks': time_blocks.exists(),
             'has_tasks': len(available_tasks_list) > 0,
@@ -742,19 +740,37 @@ def schedule_history(request):
 @login_required
 @require_http_methods(["POST"])
 def create_custom_schedule(request):
-    """Create a custom schedule without AI"""
+    """Create a custom schedule with user-defined timing"""
     try:
         data = json.loads(request.body)
         target_date_str = data.get('date')
         schedule_title = data.get('title', 'Custom Schedule')
-        task_ids = data.get('tasks', [])
+        tasks_data = data.get('tasks', [])
         schedule_type = data.get('type', 'simple')
         
         # Parse the target date
         target_date = datetime.strptime(target_date_str, '%Y-%m-%d').date()
         
-        if not task_ids:
+        if not tasks_data:
             return JsonResponse({'success': False, 'error': 'No tasks selected'})
+        
+        # Handle both old format (list of IDs) and new format (list of objects)
+        if tasks_data and isinstance(tasks_data[0], str):
+            # Old format: convert to new format with default timing
+            task_ids = tasks_data
+            tasks_timing = {}
+            for i, task_id in enumerate(task_ids):
+                start_hour = 9 + i  # Start from 9 AM, increment by hour
+                tasks_timing[task_id] = {
+                    'id': task_id,
+                    'start_time': f'{start_hour:02d}:00',
+                    'duration': 60,
+                    'notes': ''
+                }
+        else:
+            # New format: extract task IDs and create timing lookup
+            task_ids = [str(task_data['id']) for task_data in tasks_data]
+            tasks_timing = {str(task_data['id']): task_data for task_data in tasks_data}
         
         # Get selected tasks
         tasks = Task.objects.filter(
@@ -782,12 +798,10 @@ def create_custom_schedule(request):
                 'ai_reasoning': f'Custom schedule: {schedule_title}',
                 'ai_prompt_used': f'Custom schedule created: {schedule_title}',
                 'ai_response': '{"type": "custom", "method": "manual"}'
-
             }
         )
         
         # Clear existing scheduled tasks for this date
-
         ScheduledTask.objects.filter(
             user=request.user,
             scheduled_date=target_date
@@ -801,11 +815,10 @@ def create_custom_schedule(request):
             start_time=timezone.now().time().replace(hour=9, minute=0, second=0, microsecond=0),
             end_time=timezone.now().time().replace(hour=17, minute=0, second=0, microsecond=0),
             defaults={
-                'is_available': True,
-                'description': 'Default time block for custom schedules'
+                'is_available': True
             }
         )
-        
+
         # Create scheduled tasks with simple timing
         current_time = timezone.now().replace(hour=9, minute=0, second=0, microsecond=0).time()
         
@@ -822,66 +835,64 @@ def create_custom_schedule(request):
             }
         )
         
+
         total_minutes = 0
         moscow_counts = {'must': 0, 'should': 0, 'could': 0, 'wont': 0}
         
-        for i, task in enumerate(tasks):
-            # Estimate duration based on task complexity
-            estimated_minutes = 60  # Default 1 hour
-            if task.description and len(task.description) > 100:
-                estimated_minutes = 90  # Longer for complex tasks
-
-            elif hasattr(task, 'priority') and task.priority == 'high':
-                estimated_minutes = 75  # More time for high priority
+        # Create scheduled tasks with user-defined timing
+        for task in tasks:
+            task_timing = tasks_timing.get(str(task.id))
+            if not task_timing:
+                continue
+                
+            # Parse user-defined start time and duration
+            start_time_str = task_timing['start_time']  # Format: "HH:MM"
+            duration_minutes = int(task_timing['duration'])
+            notes = task_timing.get('notes', '')
             
-            # Calculate end time
-            start_hour = current_time.hour
-            start_minute = current_time.minute
-            end_minutes_total = start_hour * 60 + start_minute + estimated_minutes
+            # Convert start time string to time object
+            start_hour, start_minute = map(int, start_time_str.split(':'))
+            start_time = timezone.now().time().replace(hour=start_hour, minute=start_minute, second=0, microsecond=0)
+            
+            # Calculate end time based on duration
+            end_minutes_total = start_hour * 60 + start_minute + duration_minutes
             end_hour = (end_minutes_total // 60) % 24
             end_minute = end_minutes_total % 60
             end_time = timezone.now().time().replace(hour=end_hour, minute=end_minute, second=0, microsecond=0)
             
-            # Create scheduled task
+            # Create scheduled task with user-defined timing (no automatic breaks)
             scheduled_task = ScheduledTask.objects.create(
                 user=request.user,
                 task=task,
                 time_block=default_time_block,
                 scheduled_date=target_date,
-                start_time=current_time,
+                start_time=start_time,
                 end_time=end_time,
-                estimated_duration_minutes=estimated_minutes,
-                pomodoro_sessions=max(1, estimated_minutes // 25),  # Roughly 25min per session
-                break_minutes=5,  # Standard 5min break
-                ai_reasoning=f'Custom schedule item #{i+1}: {schedule_title}',
-                priority_score=50.0  # Default priority score
+                estimated_duration_minutes=duration_minutes,
+                pomodoro_sessions=max(1, duration_minutes // 25),  # For focus timer reference
+                break_minutes=0,  # No automatic breaks - user decides
+                ai_reasoning=f'Custom schedule: {schedule_title}' + (f' - {notes}' if notes else ''),
+                priority_score=50.0,  # Default priority score
+                schedule_type='custom'  # Mark this as custom schedule
             )
             
-            # Update counts (simplified priority counting)
-            total_minutes += estimated_minutes
+            # Update counts
+            total_minutes += duration_minutes
             moscow_counts['should'] += 1  # Default to 'should' for custom schedules
-            
-            # Move to next time slot (with 15min buffer)
-            next_minutes_total = start_hour * 60 + start_minute + estimated_minutes + 15
-            next_hour = (next_minutes_total // 60) % 24
-            next_minute = next_minutes_total % 60
-            current_time = timezone.now().time().replace(hour=next_hour, minute=next_minute, second=0, microsecond=0)
-
         
-        # Update schedule totals
+        # Update schedule totals (no automatic break time)
         schedule.tasks_count = len(task_ids)
         schedule.total_scheduled_minutes = total_minutes
-        schedule.total_break_minutes = len(task_ids) * 5  # 5min break per task
+        schedule.total_break_minutes = 0  # No automatic breaks for custom schedules
         schedule.moscow_must_count = moscow_counts['must']
         schedule.moscow_should_count = moscow_counts['should']
         schedule.moscow_could_count = moscow_counts['could']
         schedule.moscow_wont_count = moscow_counts['wont']
-        schedule.total_available_minutes = total_minutes + schedule.total_break_minutes
-
+        schedule.total_available_minutes = total_minutes  # Just work time, no breaks
         schedule.save()
         
         # Generate schedule URL
-        schedule_url = f"/dashboard/schedule/{target_date.year}/{target_date.month}/{target_date.day}/"
+        schedule_url = f"/dashboard/schedule/view/{target_date.year}/{target_date.month}/{target_date.day}/"
         
         return JsonResponse({
             'success': True,
@@ -892,9 +903,11 @@ def create_custom_schedule(request):
         })
         
     except Exception as e:
+        import traceback
         return JsonResponse({
             'success': False,
-            'error': f'Error creating custom schedule: {str(e)}'
+            'error': f'Error creating custom schedule: {str(e)}',
+            'debug': traceback.format_exc()
         })
 
 
