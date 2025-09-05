@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 
+
 {% block title %}Weekly Time Blocks - TaskAdemic{% endblock %}
 
 {% block extra_css %}
@@ -203,6 +204,7 @@
     .schedule-description {
         color: #6c757d;
         font-size: 14px;
+
     }
 </style>
 {% endblock %}
@@ -218,10 +220,12 @@
                 <h1 class="page-title">Weekly Time Blocks</h1>
                 <div class="breadcrumb-nav">
                     <a href="{% url 'dashboard:daily_routine' %}">← Back to Routine</a>
+
                 </div>
             </div>
         </div>
     </div>
+
 
     <!-- Main Content - Full Width -->
     <div class="main-panel" style="max-width: 100%; margin-bottom: 30px;">
@@ -271,6 +275,7 @@
                 </a>
             </div>
         {% endif %}
+
     </div>
 </div>
 {% endblock %}

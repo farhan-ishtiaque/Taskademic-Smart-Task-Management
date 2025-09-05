@@ -283,7 +283,7 @@ def manage_time_blocks(request):
             'date': day_date,
             'time_blocks': day_blocks
         })
-    
+
     # Prepare time_blocks_by_day for template
     time_blocks_by_day = {}
     day_hours = {}
@@ -313,6 +313,7 @@ def manage_time_blocks(request):
         'time_blocks_by_day': time_blocks_by_day,
         'time_blocks': time_blocks,  # Add this for template condition
         'day_hours': day_hours,  # Add calculated hours
+
     }
     
     return render(request, 'dashboard/time_blocks.html', context)
@@ -513,6 +514,7 @@ def view_schedule(request, year, month, day):
     try:
         target_date = datetime(year, month, day).date()
         
+
         # Try to get the schedule, but don't fail if it doesn't exist
         try:
             schedule = DailySchedule.objects.get(user=request.user, date=target_date)
@@ -530,6 +532,7 @@ def view_schedule(request, year, month, day):
                 moscow_could_count=0,
                 ai_response='{}',
             )
+
         
         # Get scheduled tasks
         scheduled_tasks = ScheduledTask.objects.filter(
@@ -537,6 +540,7 @@ def view_schedule(request, year, month, day):
             scheduled_date=target_date
         ).order_by('start_time')
         
+
         # Build schedule items from scheduled tasks
         schedule_items = []
         for scheduled_task in scheduled_tasks:
@@ -554,6 +558,7 @@ def view_schedule(request, year, month, day):
         # Add schedule_items to schedule object
         schedule.schedule_items = schedule_items
         
+
         # Get time blocks for this day
         day_number = target_date.weekday()  # Monday=0, Sunday=6
         time_blocks = TimeBlock.objects.filter(
@@ -562,6 +567,7 @@ def view_schedule(request, year, month, day):
             is_available=True
         ).order_by('start_time')
         
+
         # Get incomplete tasks to show what could be scheduled
         available_tasks = Task.objects.filter(
             user=request.user,
@@ -611,6 +617,7 @@ def view_schedule(request, year, month, day):
             ai_analysis = json.loads(schedule.ai_response) if hasattr(schedule, 'ai_response') else {}
         except:
             ai_analysis = {}
+
         
         context = {
             'schedule': schedule,
@@ -618,9 +625,11 @@ def view_schedule(request, year, month, day):
             'time_blocks': time_blocks,
             'target_date': target_date,
             'ai_analysis': ai_analysis,
+
             'available_tasks': available_tasks_list,
             'has_time_blocks': time_blocks.exists(),
             'has_tasks': len(available_tasks_list) > 0,
+
         }
         
         return render(request, 'dashboard/view_schedule.html', context)
@@ -773,10 +782,12 @@ def create_custom_schedule(request):
                 'ai_reasoning': f'Custom schedule: {schedule_title}',
                 'ai_prompt_used': f'Custom schedule created: {schedule_title}',
                 'ai_response': '{"type": "custom", "method": "manual"}'
+
             }
         )
         
         # Clear existing scheduled tasks for this date
+
         ScheduledTask.objects.filter(
             user=request.user,
             scheduled_date=target_date
@@ -819,6 +830,7 @@ def create_custom_schedule(request):
             estimated_minutes = 60  # Default 1 hour
             if task.description and len(task.description) > 100:
                 estimated_minutes = 90  # Longer for complex tasks
+
             elif hasattr(task, 'priority') and task.priority == 'high':
                 estimated_minutes = 75  # More time for high priority
             
@@ -854,6 +866,7 @@ def create_custom_schedule(request):
             next_hour = (next_minutes_total // 60) % 24
             next_minute = next_minutes_total % 60
             current_time = timezone.now().time().replace(hour=next_hour, minute=next_minute, second=0, microsecond=0)
+
         
         # Update schedule totals
         schedule.tasks_count = len(task_ids)
@@ -864,6 +877,7 @@ def create_custom_schedule(request):
         schedule.moscow_could_count = moscow_counts['could']
         schedule.moscow_wont_count = moscow_counts['wont']
         schedule.total_available_minutes = total_minutes + schedule.total_break_minutes
+
         schedule.save()
         
         # Generate schedule URL

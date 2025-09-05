@@ -54,6 +54,7 @@ class DailySchedule(models.Model):
     tasks_count = models.PositiveIntegerField(default=0)
     moscow_must_count = models.PositiveIntegerField(default=0)
     moscow_should_count = models.PositiveIntegerField(default=0)
+
     moscow_could_count = models.PositiveIntegerField(default=0)
     moscow_wont_count = models.PositiveIntegerField(default=0)
     
@@ -66,6 +67,7 @@ class DailySchedule(models.Model):
         ('custom', 'Custom Schedule'),
         ('manual', 'Manual Schedule')
     ], default='custom')
+
     generation_timestamp = models.DateTimeField(auto_now_add=True)
     
     # Status

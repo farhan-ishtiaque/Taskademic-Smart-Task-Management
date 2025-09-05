@@ -5,6 +5,7 @@
 
 {% block extra_css %}
 <style>
+
     .schedule-container {
         max-width: 1400px;
         margin: 0 auto;
@@ -388,21 +389,25 @@
     
     .schedule-content::-webkit-scrollbar-thumb:hover {
         background: #94a3b8;
+
     }
 </style>
 {% endblock %}
 
 {% block content %}
+
 <div class="schedule-container">
     <!-- Page Header -->
     <div class="page-header">
         <div>
             <h1 class="page-title">Schedule for {{ target_date|date:"F d, Y" }}</h1>
             <p class="page-subtitle">Optimized daily task schedule with modern design</p>
+
         </div>
     </div>
 
     <!-- Schedule Summary -->
+
     <div class="summary-card">
         <div class="summary-header">
             <h3 class="summary-title">
@@ -434,9 +439,11 @@
             <div class="summary-item">
                 <div class="summary-value">{{ schedule.moscow_should_count }}</div>
                 <div class="summary-label">Should Do</div>
+
             </div>
         </div>
     </div>
+
 
     <!-- Schedule Table -->
     <div class="schedule-table">
@@ -554,5 +561,6 @@ if (!document.querySelector('[name=csrfmiddlewaretoken]')) {
     csrfToken.value = '{{ csrf_token }}';
     document.body.appendChild(csrfToken);
 }
+
 </script>
 {% endblock %}

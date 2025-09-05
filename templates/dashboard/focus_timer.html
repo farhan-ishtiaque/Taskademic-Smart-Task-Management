@@ -582,6 +582,7 @@
                 <!-- All Tasks -->
                 <div class="task-category all-tasks">
                     <div class="category-header">
+
                         <div class="category-title">
                             {% if has_schedule %}
                                 � Today's Schedule
@@ -731,6 +732,7 @@
                             {% if not must_do_tasks and not should_do_tasks and not could_do_tasks %}
                                 <div class="empty-state">No tasks available. Add some tasks to start focusing!</div>
                             {% endif %}
+
                         {% endif %}
                     </div>
                 </div>
@@ -744,6 +746,7 @@
                 <h3 class="section-title" style="font-size: 1.2rem; margin-bottom: 1.5rem;">⏰ Timer Setup</h3>
                 
                 <div class="form-group">
+
                     <label class="form-label">Technique</label>
                     <select class="form-select" id="technique-selector">
                         <option value="pomodoro">🍅 Pomodoro (25min/5min)</option>
