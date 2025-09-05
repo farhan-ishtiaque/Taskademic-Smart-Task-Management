@@ -11,7 +11,8 @@
         margin: 0 auto;
         padding: 0 24px;
         background: #f8fafc;
-        min-height: 100vh;
+       
+    .btn-action {ht: 100vh;
     }
     
     .page-header {
@@ -219,12 +220,6 @@
         box-shadow: 0 2px 4px rgba(2, 132, 199, 0.1);
     }
     
-    .badge-sessions {
-        background: linear-gradient(135deg, #f3f4f6, #d1d5db);
-        color: #4b5563;
-        border: 1px solid #9ca3af;
-    }
-    
     .badge-due {
         background: linear-gradient(135deg, #fefce8, #fde047);
         color: #a16207;
@@ -254,12 +249,14 @@
     
     .action-cell {
         text-align: center;
+        min-width: 120px;
+        padding: 8px;
     }
     
     .btn-action {
-        padding: 8px 16px;
-        font-size: 12px;
-        border-radius: 8px;
+        padding: 6px 10px;
+        font-size: 11px;
+        border-radius: 6px;
         border: 1px solid #e2e8f0;
         background: white;
         color: #475569;
@@ -267,6 +264,7 @@
         transition: all 0.2s ease;
         font-weight: 600;
         box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        white-space: nowrap;
     }
     
     .btn-action:hover {
@@ -287,6 +285,36 @@
         border-color: #059669;
         color: white;
         transform: translateY(-1px);
+    }
+    
+    .btn-focus {
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+        border-color: #f59e0b;
+        color: white;
+        font-size: 11px;
+        padding: 6px 10px;
+        min-width: 65px;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+    }
+    
+    .btn-focus:hover {
+        background: linear-gradient(135deg, #d97706, #b45309);
+        border-color: #d97706;
+        color: white;
+        transform: translateY(-1px);
+    }
+    
+    .task-actions {
+        white-space: nowrap;
+        display: flex;
+        gap: 6px;
+        align-items: center;
+        justify-content: center;
+        flex-wrap: nowrap;
     }
     
     .completed-row {
@@ -425,10 +453,6 @@
                 <div class="summary-label">Work Time</div>
             </div>
             <div class="summary-item">
-                <div class="summary-value">{{ schedule.total_break_minutes }}m</div>
-                <div class="summary-label">Break Time</div>
-            </div>
-            <div class="summary-item">
                 <div class="summary-value">{{ schedule.total_available_minutes }}m</div>
                 <div class="summary-label">Available</div>
             </div>
@@ -475,11 +499,6 @@
                                     <span class="badge-desktop badge-priority-{{ item.task.moscow_category|lower }}">
                                         {{ item.task.moscow_category|capfirst }}
                                     </span>
-                                    {% if item.task.pomodoro_sessions %}
-                                        <span class="badge-desktop badge-sessions">
-                                            {{ item.task.pomodoro_sessions }} sessions
-                                        </span>
-                                    {% endif %}
                                     {% if item.task.due_date %}
                                         <span class="badge-desktop badge-due">
                                             Due {{ item.task.due_date|date:"M d" }}
@@ -489,11 +508,6 @@
                                         <span class="completed-badge">✓ Completed</span>
                                     {% endif %}
                                 </div>
-                                {% if item.pomodoro_schedule %}
-                                    <div class="pomodoro-schedule">
-                                        🍅 {{ item.pomodoro_schedule }}
-                                    </div>
-                                {% endif %}
                             </div>
                         {% else %}
                             <div class="task-content">
@@ -510,9 +524,16 @@
                     </div>
                     <div class="action-cell">
                         {% if item.task and not item.task.is_completed %}
-                            <button onclick="markComplete({{ item.task.id }})" class="btn-action btn-complete">
-                                ✓ Done
-                            </button>
+                            <div class="task-actions" style="display: flex; gap: 6px; align-items: center; justify-content: center;">
+                                <button onclick="markComplete({{ item.task.id }})" class="btn-action btn-complete">
+                                    ✓ Done
+                                </button>
+                                <a href="{% url 'dashboard:focus_timer' %}?task_id={{ item.task.id }}&duration={{ item.duration_minutes }}&source={{ actual_schedule_type }}" 
+                                   class="btn-action btn-focus" 
+                                   title="Open Focus Timer">
+                                    <i class="fas fa-clock"></i> Timer
+                                </a>
+                            </div>
                         {% elif item.task and item.task.is_completed %}
                             <span class="completed-badge">Completed</span>
                         {% else %}

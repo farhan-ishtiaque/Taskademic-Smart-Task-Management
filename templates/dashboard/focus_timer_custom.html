@@ -1,0 +1,317 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Custom Focus Timer - Taskademic{% endblock %}
+
+{% block extra_css %}
+<style>
+    .focus-timer-content {
+        min-height: 100vh;
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        padding: 2rem 0;
+    }
+    
+    .timer-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: 1fr 400px;
+        gap: 2rem;
+        padding: 0 1rem;
+    }
+    
+    .tasks-section {
+        background: white;
+        border-radius: 20px;
+        padding: 2rem;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+    }
+    
+    .timer-section {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+    
+    .timer-setup {
+        background: white;
+        border-radius: 16px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        border: 1px solid #e5e7eb;
+    }
+    
+    .timer-display {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        border-radius: 16px;
+        padding: 2rem;
+        text-align: center;
+        color: white;
+        box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3);
+    }
+    
+    .task-item {
+        background: #f0fdf4;
+        border: 1px solid #bbf7d0;
+        border-radius: 12px;
+        padding: 1rem;
+        margin-bottom: 0.75rem;
+        transition: all 0.2s ease;
+    }
+    
+    .task-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    }
+    
+    .task-title {
+        font-weight: 600;
+        color: #1e293b;
+        margin-bottom: 0.5rem;
+    }
+    
+    .custom-schedule-header {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        padding: 1rem;
+        border-radius: 12px;
+        margin-bottom: 1.5rem;
+        text-align: center;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 focus-timer-content">
+    <div class="timer-container">
+        <div class="tasks-section">
+            <div class="custom-schedule-header">
+                <h1 class="text-2xl font-bold">📝 Custom Schedule Focus Timer</h1>
+                <p>Focus on your personally scheduled tasks</p>
+            </div>
+
+            <div class="section-header">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">Today's Custom Tasks</h2>
+            </div>
+
+            <div class="task-list">
+                {% if scheduled_tasks %}
+                    {% for scheduled_task in scheduled_tasks %}
+                        {% if scheduled_task.task %}
+                            <div class="task-item" data-task-id="{{ scheduled_task.task.id }}">
+                                <div class="task-item-inner">
+                                    <div class="checkbox-container">
+                                        <input type="checkbox" 
+                                               id="task-{{ scheduled_task.task.id }}" 
+                                               {% if scheduled_task.task.status == 'completed' or scheduled_task.is_completed %}checked{% endif %}
+                                               onchange="updateTaskStatus({{ scheduled_task.task.id }}, this.checked)">
+                                    </div>
+                                    <div class="task-content">
+                                        <div class="task-title">
+                                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                                <span>{{ scheduled_task.task.title }}</span>
+                                                <span class="badge bg-success" style="font-size: 0.7rem;">
+                                                    {{ scheduled_task.start_time|time:"H:i" }} - {{ scheduled_task.end_time|time:"H:i" }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div class="task-description">
+                                            <div>{{ scheduled_task.task.description|truncatewords:15 }}</div>
+                                            <div style="margin-top: 0.25rem; color: #6b7280; font-size: 0.7rem;">
+                                                ⏱️ {{ scheduled_task.task.title }}
+                                                {% if scheduled_task.task.due_date %}
+                                                    • Due: {{ scheduled_task.task.due_date|date:"M d" }}
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state">
+                        <div style="margin-bottom: 1rem;">📝 No custom schedule for today</div>
+                        <p style="color: #6b7280;">Create a custom schedule to see your tasks here.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="timer-section">
+            <div class="timer-setup">
+                <h3 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 1rem; color: #374151;">⏰ Timer Setup</h3>
+                
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #374151;">Technique</label>
+                    <select id="technique" style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 8px;">
+                        <option value="pomodoro">🍅 Pomodoro (25min/5min)</option>
+                        <option value="custom">⚙️ Custom Duration</option>
+                    </select>
+                </div>
+                
+                <div id="custom-duration" style="display: none; margin-bottom: 1rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #374151;">Duration (minutes)</label>
+                    <input type="number" id="duration" value="25" min="1" max="120" style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 8px;">
+                </div>
+            </div>
+
+            <div class="timer-display">
+                <div class="timer-clock" style="font-size: 3rem; font-weight: bold; margin-bottom: 1rem;" id="timer-display">25:00</div>
+                <div style="margin-bottom: 2rem; opacity: 0.9;" id="timer-status">Ready to focus</div>
+                
+                <div style="display: flex; gap: 1rem; justify-content: center;">
+                    <button id="start-btn" onclick="startTimer()" style="background: white; color: #10b981; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 600; cursor: pointer;">
+                        ▶ Start Focus
+                    </button>
+                    <button id="reset-btn" onclick="resetTimer()" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 600; cursor: pointer;">
+                        🔄 Reset
+                    </button>
+                </div>
+
+                <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 1rem;">
+                    <div style="text-align: center;">
+                        <div style="font-size: 1.5rem; font-weight: bold;" id="session-count">0</div>
+                        <div style="font-size: 0.8rem; opacity: 0.8;">Sessions</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="font-size: 1.5rem; font-weight: bold;" id="break-time">0h 0m</div>
+                        <div style="font-size: 0.8rem; opacity: 0.8;">Break Time</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let timer = null;
+let timeLeft = 25 * 60; // 25 minutes in seconds
+let isRunning = false;
+let isBreak = false;
+let sessionCount = 0;
+let totalBreakTime = 0;
+
+// Timer functionality
+function updateDisplay() {
+    const minutes = Math.floor(timeLeft / 60);
+    const seconds = timeLeft % 60;
+    document.getElementById('timer-display').textContent = 
+        `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+}
+
+function startTimer() {
+    if (!isRunning) {
+        isRunning = true;
+        document.getElementById('start-btn').textContent = '⏸ Pause';
+        document.getElementById('timer-status').textContent = 
+            isBreak ? 'Break time! 🎯' : 'Focus Session 🎯';
+        
+        timer = setInterval(() => {
+            timeLeft--;
+            updateDisplay();
+            
+            if (timeLeft <= 0) {
+                completeSession();
+            }
+        }, 1000);
+    } else {
+        pauseTimer();
+    }
+}
+
+function pauseTimer() {
+    isRunning = false;
+    clearInterval(timer);
+    document.getElementById('start-btn').textContent = '▶ Resume';
+    document.getElementById('timer-status').textContent = 'Paused';
+}
+
+function resetTimer() {
+    clearInterval(timer);
+    isRunning = false;
+    isBreak = false;
+    timeLeft = 25 * 60;
+    document.getElementById('start-btn').textContent = '▶ Start Focus';
+    document.getElementById('timer-status').textContent = 'Ready to focus';
+    updateDisplay();
+}
+
+function completeSession() {
+    clearInterval(timer);
+    isRunning = false;
+    
+    if (!isBreak) {
+        // Focus session completed
+        sessionCount++;
+        document.getElementById('session-count').textContent = sessionCount;
+        
+        // Start break
+        isBreak = true;
+        timeLeft = sessionCount % 4 === 0 ? 30 * 60 : 5 * 60; // Long break every 4 sessions
+        document.getElementById('timer-status').textContent = 'Session Complete! Take a break 🎉';
+        document.getElementById('start-btn').textContent = '▶ Start Break';
+    } else {
+        // Break completed
+        const breakDuration = sessionCount % 4 === 0 ? 30 : 5;
+        totalBreakTime += breakDuration;
+        updateBreakTimeDisplay();
+        
+        isBreak = false;
+        timeLeft = 25 * 60;
+        document.getElementById('timer-status').textContent = 'Break Complete! Ready for next session 💪';
+        document.getElementById('start-btn').textContent = '▶ Start Focus';
+    }
+    
+    updateDisplay();
+}
+
+function updateBreakTimeDisplay() {
+    const hours = Math.floor(totalBreakTime / 60);
+    const minutes = totalBreakTime % 60;
+    document.getElementById('break-time').textContent = `${hours}h ${minutes}m`;
+}
+
+// Technique selection
+document.getElementById('technique').addEventListener('change', function() {
+    const customDiv = document.getElementById('custom-duration');
+    if (this.value === 'custom') {
+        customDiv.style.display = 'block';
+    } else {
+        customDiv.style.display = 'none';
+        resetTimer();
+    }
+});
+
+document.getElementById('duration').addEventListener('change', function() {
+    if (document.getElementById('technique').value === 'custom') {
+        timeLeft = parseInt(this.value) * 60;
+        updateDisplay();
+    }
+});
+
+// Task status update
+function updateTaskStatus(taskId, isCompleted) {
+    fetch(`/tasks/update-status/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: JSON.stringify({
+            task_id: taskId,
+            status: isCompleted ? 'completed' : 'todo'
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            console.log('Task status updated');
+        }
+    });
+}
+
+// Initialize
+updateDisplay();
+</script>
+{% endblock %}

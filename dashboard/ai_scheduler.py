@@ -344,7 +344,8 @@ Schedule the tasks now:"""
                         pomodoro_sessions=schedule_item.get('pomodoro_sessions', 1),
                         break_minutes=schedule_item.get('break_minutes', 5),
                         ai_reasoning=schedule_item['reasoning'],
-                        priority_score=schedule_item['priority_score']
+                        priority_score=schedule_item['priority_score'],
+                        schedule_type='ai'  # Mark this as AI generated
                     )
                     scheduled_tasks.append(scheduled_task)
             
@@ -400,7 +401,8 @@ Schedule the tasks now:"""
                         pomodoro_sessions=schedule_item.get('pomodoro_sessions', 1),
                         break_minutes=schedule_item.get('break_minutes', 5),
                         ai_reasoning=schedule_item['reasoning'],
-                        priority_score=schedule_item['priority_score']
+                        priority_score=schedule_item['priority_score'],
+                        schedule_type='ai'  # Mark this as AI generated
                     )
                     scheduled_tasks.append(scheduled_task)
             

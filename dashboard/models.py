@@ -8,9 +8,22 @@ from datetime import datetime, timedelta
 class ScheduledTask(models.Model):
     """Model to store AI-generated task schedules"""
     
+    SCHEDULE_TYPE_CHOICES = [
+        ('ai', 'AI Generated'),
+        ('custom', 'Custom Schedule'),
+    ]
+    
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='scheduled_tasks')
     task = models.ForeignKey('tasks.Task', on_delete=models.CASCADE, related_name='schedules')
     time_block = models.ForeignKey('tasks.TimeBlock', on_delete=models.CASCADE, related_name='scheduled_tasks')
+    
+    # Schedule type tracking
+    schedule_type = models.CharField(
+        max_length=10, 
+        choices=SCHEDULE_TYPE_CHOICES, 
+        default='ai',
+        help_text="Type of schedule that created this task"
+    )
     
     # AI-determined attributes
     estimated_duration_minutes = models.PositiveIntegerField(help_text="AI estimated duration")

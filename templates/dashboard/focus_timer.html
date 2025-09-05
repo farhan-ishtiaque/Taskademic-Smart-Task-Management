@@ -564,7 +564,26 @@
         <!-- Page Header -->
         <div class="mb-8">
             <h1 class="text-3xl font-bold text-gray-900">🎯 Focus Timer</h1>
-            <p class="mt-2 text-gray-600">Boost your productivity with techniques</p>
+            <p class="mt-2 text-gray-600">Boost your productivity with focused work sessions</p>
+            
+            <!-- Context Info Banner -->
+            {% if source %}
+                <div class="mt-4 p-3 rounded-lg border-l-4 {% if source == 'custom' %}border-blue-500 bg-blue-50{% elif source == 'ai' %}border-green-500 bg-green-50{% else %}border-gray-500 bg-gray-50{% endif %}">
+                    <div class="flex items-center">
+                        <div class="ml-3">
+                            <p class="text-sm {% if source == 'custom' %}text-blue-800{% elif source == 'ai' %}text-green-800{% else %}text-gray-800{% endif %}">
+                                {% if source == 'custom' %}
+                                    📅 <strong>Custom Schedule</strong>
+                                {% elif source == 'ai' %}
+                                    🤖 <strong>AI Generated Schedule</strong>
+                                {% elif source == 'direct' %}
+                                    📋 <strong>All Tasks</strong>
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
         </div>
 
         <!-- Content -->
@@ -585,9 +604,17 @@
 
                         <div class="category-title">
                             {% if has_schedule %}
-                                � Today's Schedule
+                                {% if source == 'custom' %}
+                                    📅 Custom Schedule
+                                {% elif source == 'ai' %}
+                                    🤖 AI Generated Schedule
+                                {% else %}
+                                    📅 Today's Schedule
+                                {% endif %}
+                            {% elif source == 'direct' %}
+                                📋 All Tasks
                             {% else %}
-                                �📋 All Tasks
+                                📋 All Tasks
                             {% endif %}
                         </div>
                         <div class="category-count">
@@ -616,7 +643,9 @@
                                             <div class="task-content">
                                                 <div class="task-title">
                                                     <div style="display: flex; justify-content: space-between; align-items: center;">
-                                                        <span>{{ scheduled_task.task.title }}</span>
+                                                        <span>
+                                                            {{ scheduled_task.task.title }}
+                                                        </span>
                                                         <div style="display: flex; gap: 0.5rem; align-items: center;">
                                                             {% if scheduled_task.task.moscow_category == 'must' %}
                                                                 <span class="badge bg-danger" style="font-size: 0.7rem;">MUST</span>
@@ -636,11 +665,20 @@
                                                 <div class="task-description">
                                                     <div>{{ scheduled_task.task.description|truncatewords:15 }}</div>
                                                     <div style="margin-top: 0.25rem; color: #6b7280; font-size: 0.7rem;">
-                                                        🍅 {{ scheduled_task.pomodoro_sessions }} session{% if scheduled_task.pomodoro_sessions != 1 %}s{% endif %}, 
-                                                        {{ scheduled_task.break_minutes }}min breaks • 
-                                                        {{ scheduled_task.estimated_duration_minutes }}min total
-                                                        {% if scheduled_task.task.due_date %}
-                                                            • Due: {{ scheduled_task.task.due_date|date:"M d" }}
+                                                        {% if scheduled_task.schedule_type == 'custom' %}
+                                                            <!-- Custom Schedule: Simple format -->
+                                                            ⏱️ {{ scheduled_task.task.title }}
+                                                            {% if scheduled_task.task.due_date %}
+                                                                • Due: {{ scheduled_task.task.due_date|date:"M d" }}
+                                                            {% endif %}
+                                                        {% else %}
+                                                            <!-- AI Schedule: Detailed format -->
+                                                            🍅 {{ scheduled_task.pomodoro_sessions }} session{% if scheduled_task.pomodoro_sessions != 1 %}s{% endif %}, 
+                                                            {{ scheduled_task.break_minutes }}min breaks • 
+                                                            {{ scheduled_task.estimated_duration_minutes }}min total
+                                                            {% if scheduled_task.task.due_date %}
+                                                                • Due: {{ scheduled_task.task.due_date|date:"M d" }}
+                                                            {% endif %}
                                                         {% endif %}
                                                     </div>
                                                 </div>
@@ -679,7 +717,6 @@
                                         <div class="task-content">
                                             <div class="task-title">
                                                 {{ task.title }}
-                                                <span class="badge bg-danger ms-2">High Priority</span>
                                             </div>
                                             <div class="task-description">{{ task.description|truncatewords:20 }}</div>
                                         </div>
@@ -700,7 +737,6 @@
                                         <div class="task-content">
                                             <div class="task-title">
                                                 {{ task.title }}
-                                                <span class="badge bg-warning ms-2">Medium Priority</span>
                                             </div>
                                             <div class="task-description">{{ task.description|truncatewords:15 }}</div>
                                         </div>
@@ -721,7 +757,6 @@
                                         <div class="task-content">
                                             <div class="task-title">
                                                 {{ task.title }}
-                                                <span class="badge bg-info ms-2">Low Priority</span>
                                             </div>
                                             <div class="task-description">{{ task.description|truncatewords:10 }}</div>
                                         </div>
