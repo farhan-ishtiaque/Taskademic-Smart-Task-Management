@@ -593,7 +593,8 @@ function kanbanBoard() {
             try {
                 return new Date(dateString).toLocaleDateString('en-US', {
                     month: 'short',
-                    day: 'numeric'
+                    day: 'numeric',
+                    timeZone: 'Asia/Dhaka'
                 });
             } catch (error) {
                 return '';

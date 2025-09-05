@@ -595,7 +595,7 @@ document.addEventListener('DOMContentLoaded', function() {
             ${assigneeBadge}
             <div class="task-meta">
                 <span class="priority-badge priority-${task.priority}">${task.priority.replace('_', ' ')}</span>
-                ${task.due_date ? `<div class="task-date"><i class="fas fa-calendar-alt"></i> ${new Date(task.due_date).toLocaleDateString()}</div>` : ''}
+                ${task.due_date ? `<div class="task-date"><i class="fas fa-calendar-alt"></i> ${new Date(task.due_date).toLocaleDateString('en-US', { timeZone: 'Asia/Dhaka' })}</div>` : ''}
             </div>
         `;
 

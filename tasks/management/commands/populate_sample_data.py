@@ -30,11 +30,12 @@ class Command(BaseCommand):
             if created:
                 self.stdout.write(f'Created category: {category.name}')
         
-        # Get or create demo user
+        # Get or create demo user (email-based)
+        demo_email = 'demo@taskademic.com'
         demo_user, created = User.objects.get_or_create(
-            username='demo',
+            email=demo_email,
             defaults={
-                'email': 'demo@taskademic.com',
+                'username': demo_email,  # Use email as username
                 'first_name': 'Demo',
                 'last_name': 'User'
             }
@@ -42,7 +43,7 @@ class Command(BaseCommand):
         if created:
             demo_user.set_password('demo123')
             demo_user.save()
-            self.stdout.write('Created demo user')
+            self.stdout.write('Created demo user with email-based authentication')
         
         # Create sample tasks
         sample_tasks = [

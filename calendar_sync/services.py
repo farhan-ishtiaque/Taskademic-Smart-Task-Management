@@ -393,19 +393,28 @@ class GoogleCalendarService:
         
         # Set time based on due date
         if task.due_date:
+            # Use server timezone (Bangladesh Standard Time for Dhaka)
+            # This matches the server's location and Google Cloud deployment timezone
+            server_timezone = 'Asia/Dhaka'  # Bangladesh Standard Time (UTC+6)
+            
             if hasattr(task.due_date, 'hour') and task.due_date.hour != 0:
                 # If it's a datetime, create a timed event
                 start_time = task.due_date
                 end_time = start_time + timedelta(hours=1)  # Default 1 hour duration
                 
+                # If the datetime is naive (no timezone info), treat it as server local time
+                if timezone.is_naive(start_time):
+                    # Convert to server timezone for Google Calendar
+                    logger.info(f"Task due date is naive: {start_time}, using server timezone: {server_timezone}")
+                
                 event_data.update({
                     'start': {
                         'dateTime': start_time.isoformat(),
-                        'timeZone': 'UTC',
+                        'timeZone': server_timezone,
                     },
                     'end': {
                         'dateTime': end_time.isoformat(),
-                        'timeZone': 'UTC',
+                        'timeZone': server_timezone,
                     },
                 })
             else:

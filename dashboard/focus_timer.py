@@ -199,37 +199,134 @@ def focus_timer(request):
             }
             
     else:
-        # Direct access (tab click) - Show all tasks from MoSCoW matrix
-        user_tasks = Task.objects.filter(
-            user=request.user,
-            status__in=['todo', 'in_progress']
-        ).order_by('due_date')
+        # Direct access (tab click) - Check if there's a schedule for today first
+        # If there's a schedule, show those tasks. If not, show all tasks from MoSCoW matrix
         
-        print(f"DEBUG: Direct access - showing all MoSCoW tasks. Found {user_tasks.count()} tasks for user {request.user.username}")
+        if daily_schedule:
+            # There's a schedule for today - show scheduled tasks by priority
+            try:
+                all_scheduled_tasks = ScheduledTask.objects.filter(
+                    user=request.user,
+                    scheduled_date=today,
+                    task__status__in=['todo', 'in_progress', 'review']
+                ).order_by('start_time')
+                
+                # Determine the primary schedule type for display
+                detected_source = 'ai'  # default
+                if all_scheduled_tasks.exists():
+                    schedule_types = set(all_scheduled_tasks.values_list('schedule_type', flat=True))
+                    if 'ai' in schedule_types:
+                        detected_source = 'ai'
+                        scheduled_tasks = all_scheduled_tasks.filter(schedule_type='ai')
+                    elif 'custom' in schedule_types:
+                        detected_source = 'custom'
+                        scheduled_tasks = all_scheduled_tasks.filter(schedule_type='custom')
+                    else:
+                        detected_source = 'mixed'
+                        scheduled_tasks = all_scheduled_tasks
+                else:
+                    scheduled_tasks = ScheduledTask.objects.none()
+                
+                print(f"DEBUG: Direct access with schedule - detected source: {detected_source}, showing {scheduled_tasks.count()} scheduled tasks")
+                
+                # Apply MoSCoW analysis to scheduled tasks
+                if scheduled_tasks.exists():
+                    result = MoSCoWCacheService.get_moscow_analysis(request.user)
+                    
+                    # Create task details mapping
+                    task_details = {}
+                    for log_entry in result['decision_log']:
+                        task_id = int(log_entry['id'])
+                        task_details[task_id] = {
+                            'category': log_entry['final'],
+                            'score': log_entry['score'],
+                            'task_type': log_entry['type'],
+                            'importance': log_entry['importance'],
+                            'urgency': log_entry['urgency'],
+                            'due_in_days': log_entry['due_in_days'],
+                            'reasoning': log_entry['matched_rule']
+                        }
+                    
+                    # Apply MoSCoW analysis to scheduled tasks
+                    scheduled_tasks_list = list(scheduled_tasks)
+                    for scheduled_task in scheduled_tasks_list:
+                        if scheduled_task.task:
+                            details = task_details.get(scheduled_task.task.id, {})
+                            scheduled_task.task.moscow_category = details.get('category', 'should')
+                            scheduled_task.task.moscow_score = details.get('score', 30)
+                            scheduled_task.task.moscow_task_type = details.get('task_type', 'Regular coursework')
+                            scheduled_task.task.moscow_reasoning = details.get('reasoning', 'Default classification')
+                            scheduled_task.task.moscow_due_in_days = details.get('due_in_days')
+                    
+                    # Return context for scheduled tasks
+                    context = {
+                        'must_do_tasks': [st for st in scheduled_tasks_list if st.task and getattr(st.task, 'moscow_category', 'should') == 'must'],
+                        'should_do_tasks': [st for st in scheduled_tasks_list if st.task and getattr(st.task, 'moscow_category', 'should') == 'should'],
+                        'could_do_tasks': [st for st in scheduled_tasks_list if st.task and getattr(st.task, 'moscow_category', 'should') == 'could'],
+                        'wont_do_tasks': [st for st in scheduled_tasks_list if st.task and getattr(st.task, 'moscow_category', 'should') == 'wont'],
+                        'scheduled_tasks': scheduled_tasks_list,
+                        'daily_schedule': daily_schedule,
+                        'has_schedule': True,
+                        'source': detected_source,
+                        'today': today,
+                        'all_tasks_count': len(scheduled_tasks_list),
+                        'selected_task': selected_task,
+                        'selected_duration': selected_duration,
+                    }
+                else:
+                    # Schedule exists but no tasks - show empty state
+                    context = {
+                        'must_do_tasks': [],
+                        'should_do_tasks': [],
+                        'could_do_tasks': [],
+                        'wont_do_tasks': [],
+                        'scheduled_tasks': [],
+                        'daily_schedule': daily_schedule,
+                        'has_schedule': True,
+                        'source': detected_source,
+                        'today': today,
+                        'all_tasks_count': 0,
+                        'selected_task': selected_task,
+                        'selected_duration': selected_duration,
+                    }
+                    
+            except Exception as e:
+                print(f"ERROR: Could not load scheduled tasks: {e}")
+                # Fallback to all tasks
+                daily_schedule = None
         
-        # Convert to list and sort by priority score (calculated in Python)
-        user_tasks = list(user_tasks)
-        user_tasks.sort(key=lambda x: x.get_moscow_details()['score'], reverse=True)
-        
-        # Separate tasks by calculated priority
-        high_priority_tasks = [task for task in user_tasks if task.get_moscow_details()['score'] >= 400]
-        medium_priority_tasks = [task for task in user_tasks if 200 <= task.get_moscow_details()['score'] < 400]
-        low_priority_tasks = [task for task in user_tasks if task.get_moscow_details()['score'] < 200]
-        
-        context = {
-            'must_do_tasks': high_priority_tasks,
-            'should_do_tasks': medium_priority_tasks,
-            'could_do_tasks': low_priority_tasks,
-            'wont_do_tasks': [],
-            'scheduled_tasks': [],
-            'daily_schedule': None,
-            'has_schedule': False,
-            'source': 'direct',
-            'today': today,
-            'all_tasks_count': len(user_tasks),
-            'selected_task': selected_task,
-            'selected_duration': selected_duration,
-        }
+        # No schedule exists - show all tasks from MoSCoW matrix (original behavior)
+        if not daily_schedule:
+            user_tasks = Task.objects.filter(
+                user=request.user,
+                status__in=['todo', 'in_progress']
+            ).order_by('due_date')
+            
+            print(f"DEBUG: Direct access with NO schedule - showing all MoSCoW tasks. Found {user_tasks.count()} tasks for user {request.user.username}")
+            
+            # Convert to list and sort by priority score (calculated in Python)
+            user_tasks = list(user_tasks)
+            user_tasks.sort(key=lambda x: x.get_moscow_details()['score'], reverse=True)
+            
+            # Separate tasks by calculated priority
+            high_priority_tasks = [task for task in user_tasks if task.get_moscow_details()['score'] >= 400]
+            medium_priority_tasks = [task for task in user_tasks if 200 <= task.get_moscow_details()['score'] < 400]
+            low_priority_tasks = [task for task in user_tasks if task.get_moscow_details()['score'] < 200]
+            
+            context = {
+                'must_do_tasks': high_priority_tasks,
+                'should_do_tasks': medium_priority_tasks,
+                'could_do_tasks': low_priority_tasks,
+                'wont_do_tasks': [],
+                'scheduled_tasks': [],
+                'daily_schedule': None,
+                'has_schedule': False,
+                'source': 'direct',
+                'today': today,
+                'all_tasks_count': len(user_tasks),
+                'selected_task': selected_task,
+                'selected_duration': selected_duration,
+            }
 
     return render(request, 'dashboard/focus_timer.html', context)
 
