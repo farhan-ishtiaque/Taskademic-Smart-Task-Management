@@ -24,6 +24,7 @@ urlpatterns = [
     
     # API endpoints
     path('api/', include(router.urls)),
+    path('api/user-tasks/', views.get_user_tasks_api, name='api_user_tasks'),
     path('api/statistics/', views.task_statistics, name='api_statistics'),
     path('api/schedule/suggestions/', views.smart_schedule_suggestion, name='api_schedule_suggestions'),
     path('api/teams/<uuid:team_id>/members/', views.get_team_members, name='api_team_members'),

@@ -135,17 +135,32 @@ def task_toggle(request, task_id):
                     'message': f'Task "{task.title}" completed! +10 points',
                     'remove_task': True  # Signal to remove from UI
                 })
+            else:
+                # Task was already completed
+                return JsonResponse({
+                    'success': True, 
+                    'message': f'Task "{task.title}" was already completed',
+                    'remove_task': False
+                })
         else:
             # Mark as incomplete
-            task.status = 'todo'
-            task.completed_at = None
-            task.save()
-            
-            return JsonResponse({
-                'success': True, 
-                'message': f'Task "{task.title}" marked as incomplete',
-                'remove_task': False
-            })
+            if task.status == 'done':
+                task.status = 'todo'
+                task.completed_at = None
+                task.save()
+                
+                return JsonResponse({
+                    'success': True, 
+                    'message': f'Task "{task.title}" marked as incomplete',
+                    'remove_task': False
+                })
+            else:
+                # Task was already incomplete
+                return JsonResponse({
+                    'success': True, 
+                    'message': f'Task "{task.title}" is already incomplete',
+                    'remove_task': False
+                })
             
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
@@ -839,3 +854,32 @@ def get_team_members(request, team_id):
         
     except Team.DoesNotExist:
         return Response({'error': 'Team not found'}, status=status.HTTP_404_NOT_FOUND)
+
+
+@login_required
+def get_user_tasks_api(request):
+    """API endpoint to get user's available tasks for scheduling"""
+    if request.method == 'GET':
+        tasks = Task.objects.filter(
+            user=request.user,
+            team__isnull=True,  # Personal tasks only
+            status__in=['todo', 'in_progress']  # Active tasks only
+        ).order_by('-priority', 'due_date')[:20]  # Limit to 20 most relevant tasks
+        
+        task_data = []
+        for task in tasks:
+            task_data.append({
+                'id': task.id,
+                'title': task.title,
+                'description': task.description[:100] if task.description else '',
+                'priority': task.get_priority_display(),
+                'due_date': task.due_date.strftime('%Y-%m-%d %H:%M') if task.due_date else None,
+                'status': task.get_status_display()
+            })
+        
+        return JsonResponse({
+            'success': True,
+            'tasks': task_data
+        })
+    
+    return JsonResponse({'success': False, 'error': 'Invalid request method'}, status=405)

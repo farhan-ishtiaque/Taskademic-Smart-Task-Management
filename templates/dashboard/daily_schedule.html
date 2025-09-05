@@ -1,0 +1,276 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Weekly Time Blocks - TaskAdemic{% endblock %}
+
+{% block extra_css %}
+<style>
+    .daily-schedule-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 20px 40px;
+        background: #f8f9fa;
+        min-height: 100vh;
+    }
+
+    .page-header {
+        background: white;
+        border-bottom: 2px solid #e9ecef;
+        padding: 25px 0;
+        margin-bottom: 30px;
+        border-radius: 0;
+    }
+
+    .page-title {
+        font-size: 28px;
+        font-weight: 600;
+        color: #2c3e50;
+        margin: 0;
+    }
+
+    .breadcrumb-nav {
+        display: flex;
+        gap: 15px;
+        margin-top: 8px;
+    }
+
+    .breadcrumb-nav a {
+        color: #667eea;
+        text-decoration: none;
+        font-weight: 500;
+        transition: color 0.2s;
+    }
+
+    .breadcrumb-nav a:hover {
+        color: #5a6fd8;
+        text-decoration: underline;
+    }
+
+    .content-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 30px;
+        margin-bottom: 30px;
+    }
+
+    .main-panel {
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+        padding: 30px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+
+    .sidebar-panel {
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+        padding: 25px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        height: fit-content;
+    }
+
+    .section-title {
+        font-size: 20px;
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #e9ecef;
+    }
+
+    .schedule-status {
+        text-align: center;
+        padding: 40px 20px;
+        background: #f8f9fa;
+        border: 2px dashed #dee2e6;
+        border-radius: 6px;
+        margin: 20px 0;
+    }
+
+    .empty-state-icon {
+        font-size: 48px;
+        color: #6c757d;
+        margin-bottom: 15px;
+    }
+
+    .empty-state-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 8px;
+    }
+
+    .empty-state-text {
+        color: #6c757d;
+        margin-bottom: 20px;
+    }
+
+    .btn-primary-desktop {
+        background: #667eea;
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 4px;
+        font-weight: 500;
+        text-decoration: none;
+        display: inline-block;
+        transition: background-color 0.2s;
+    }
+
+    .btn-primary-desktop:hover {
+        background: #5a6fd8;
+        color: white;
+        text-decoration: none;
+    }
+
+    .btn-secondary-desktop {
+        background: #6c757d;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 4px;
+        font-weight: 500;
+        text-decoration: none;
+        display: inline-block;
+        transition: background-color 0.2s;
+    }
+
+    .btn-secondary-desktop:hover {
+        background: #5a6268;
+        color: white;
+        text-decoration: none;
+    }
+
+    .time-block-item {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        padding: 15px;
+        margin-bottom: 10px;
+        transition: background-color 0.2s;
+    }
+
+    .time-block-item:hover {
+        background: #e9ecef;
+    }
+
+    .schedule-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+    }
+
+    .schedule-table th,
+    .schedule-table td {
+        padding: 12px;
+        text-align: left;
+        border-bottom: 1px solid #dee2e6;
+    }
+
+    .schedule-table th {
+        background: #f8f9fa;
+        font-weight: 600;
+        color: #495057;
+    }
+
+    .schedule-item {
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        padding: 20px;
+        margin-bottom: 15px;
+        transition: box-shadow 0.2s;
+    }
+
+    .schedule-item:hover {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .schedule-time {
+        font-weight: 600;
+        color: #667eea;
+        font-size: 14px;
+        margin-bottom: 5px;
+    }
+
+    .schedule-task {
+        font-weight: 500;
+        color: #2c3e50;
+        margin-bottom: 3px;
+    }
+
+    .schedule-description {
+        color: #6c757d;
+        font-size: 14px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+{% csrf_token %}
+
+<div class="daily-schedule-container">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="page-title">Weekly Time Blocks</h1>
+                <div class="breadcrumb-nav">
+                    <a href="{% url 'dashboard:daily_routine' %}">← Back to Routine</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content - Full Width -->
+    <div class="main-panel" style="max-width: 100%; margin-bottom: 30px;">
+        <h2 class="section-title">Your Available Time Blocks</h2>
+        <p style="color: #6c757d; margin-bottom: 30px; font-size: 16px;">Set up your weekly availability to enable smart task scheduling</p>
+        
+        {% if time_blocks %}
+            <div class="row">
+                {% regroup time_blocks by get_day_of_week_display as blocks_by_day %}
+                {% for day_group in blocks_by_day %}
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="day-section">
+                        <h4 style="color: #2c3e50; font-weight: 600; margin-bottom: 15px; padding: 10px; background: #f8f9fa; border-radius: 4px;">
+                            📅 {{ day_group.grouper }}
+                        </h4>
+                        {% for block in day_group.list %}
+                            <div class="time-block-item">
+                                <div style="font-weight: 600; color: #667eea; margin-bottom: 5px;">
+                                    {{ block.start_time|time:"H:i" }} - {{ block.end_time|time:"H:i" }}
+                                </div>
+                                {% if block.description %}
+                                    <div style="color: #6c757d; font-size: 14px;">{{ block.description }}</div>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <div style="text-align: center; margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 6px;">
+                <p style="color: #495057; margin-bottom: 15px;">Need to modify your time blocks?</p>
+                <a href="{% url 'dashboard:manage_time_blocks' %}" class="btn-primary-desktop">
+                    Manage Time Blocks
+                </a>
+            </div>
+        {% else %}
+            <div class="schedule-status" style="padding: 60px 20px;">
+                <div class="empty-state-icon" style="font-size: 64px;">⏰</div>
+                <div class="empty-state-title" style="font-size: 24px;">No time blocks set up yet</div>
+                <div class="empty-state-text" style="font-size: 16px; margin-bottom: 30px;">
+                    Set up your weekly availability to start scheduling tasks efficiently.<br>
+                    Define when you're available throughout the week for optimal task planning.
+                </div>
+                <a href="{% url 'dashboard:manage_time_blocks' %}" class="btn-primary-desktop" style="font-size: 16px; padding: 15px 30px;">
+                    Set Up Time Blocks
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

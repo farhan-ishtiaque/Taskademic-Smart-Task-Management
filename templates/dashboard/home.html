@@ -125,13 +125,19 @@
                         {% for task in recent_tasks %}
                         <li class="flex items-center space-x-3">
                             <div class="flex-shrink-0">
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
-                                    {% if task.priority == 'urgent' %}bg-red-100 text-red-800
-                                    {% elif task.priority == 'high' %}bg-orange-100 text-orange-800
-                                    {% elif task.priority == 'medium' %}bg-yellow-100 text-yellow-800
-                                    {% else %}bg-green-100 text-green-800{% endif %}">
-                                    {{ task.get_priority_display }}
-                                </span>
+                                {% if task.is_completed %}
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                        Done
+                                    </span>
+                                {% else %}
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
+                                        {% if task.priority == 'urgent' %}bg-red-100 text-red-800
+                                        {% elif task.priority == 'high' %}bg-orange-100 text-orange-800
+                                        {% elif task.priority == 'medium' %}bg-yellow-100 text-yellow-800
+                                        {% else %}bg-green-100 text-green-800{% endif %}">
+                                        {{ task.get_priority_display }}
+                                    </span>
+                                {% endif %}
                             </div>
                             <div class="flex-1 min-w-0">
                                 <p class="text-sm font-medium text-gray-900 truncate">{{ task.title }}</p>

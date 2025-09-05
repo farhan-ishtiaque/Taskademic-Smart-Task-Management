@@ -1,0 +1,519 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Schedule for {{ target_date|date:"F d, Y" }} - TaskAdemic{% endblock %}
+
+{% block extra_css %}
+<style>
+    .schedule-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 0 20px;
+    }
+    
+    .page-header {
+        background: white;
+        b            <div class="page-header">
+                <h1 class="page-title">Schedule for {{ target_date|date:"F d, Y" }}</h1>
+                <p class="page-subtitle">Optimized daily task schedule with Pomodoro technique</p>
+            </div>
+        </div>
+    </div>1px solid #e5e7eb;
+        padding: 20px 0;
+        margin-bottom: 24px;
+    }
+    
+    .page-title {
+        font-size: 24px;
+        font-weight: 600;
+        color: #1f2937;
+        margin: 0;
+    }
+    
+    .page-subtitle {
+        font-size: 14px;
+        color: #6b7280;
+        margin: 0;
+    }
+    
+    .header-actions {
+        display: flex;
+        gap: 12px;
+    }
+    
+    .btn-desktop {
+        padding: 8px 16px;
+        font-size: 14px;
+        font-weight: 500;
+        border-radius: 6px;
+        border: 1px solid #d1d5db;
+        background: white;
+        color: #374151;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.2s;
+    }
+    
+    .btn-desktop:hover {
+        background: #f9fafb;
+        border-color: #9ca3af;
+        color: #374151;
+        text-decoration: none;
+    }
+    
+    .btn-primary-desktop {
+        background: #3b82f6;
+        border-color: #3b82f6;
+        color: white;
+    }
+    
+    .btn-primary-desktop:hover {
+        background: #2563eb;
+        border-color: #2563eb;
+        color: white;
+    }
+    
+    .summary-card {
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        margin-bottom: 24px;
+    }
+    
+    .summary-header {
+        padding: 16px 20px;
+        border-bottom: 1px solid #e5e7eb;
+        background: #f9fafb;
+    }
+    
+    .summary-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: #1f2937;
+        margin: 0;
+    }
+    
+    .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 1px;
+        background: #e5e7eb;
+        border-radius: 0 0 8px 8px;
+        overflow: hidden;
+    }
+    
+    .summary-item {
+        background: white;
+        padding: 16px;
+        text-align: center;
+    }
+    
+    .summary-value {
+        font-size: 18px;
+        font-weight: 600;
+        color: #1f2937;
+        margin-bottom: 4px;
+    }
+    
+    .summary-label {
+        font-size: 12px;
+        color: #6b7280;
+        text-transform: uppercase;
+        font-weight: 500;
+        letter-spacing: 0.5px;
+    }
+    
+    .schedule-table {
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    
+    .schedule-header {
+        padding: 16px 20px;
+        border-bottom: 1px solid #e5e7eb;
+        background: #f9fafb;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .schedule-content {
+        min-height: 400px;
+    }
+    
+    .task-row {
+        display: grid;
+        grid-template-columns: 80px 120px 1fr 100px 80px;
+        align-items: center;
+        padding: 12px 20px;
+        border-bottom: 1px solid #f3f4f6;
+        transition: background-color 0.15s;
+    }
+    
+    .task-row:hover {
+        background: #f9fafb;
+    }
+    
+    .task-row:last-child {
+        border-bottom: none;
+    }
+    
+    .time-cell {
+        font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+        font-size: 13px;
+        font-weight: 600;
+        color: #4f46e5;
+    }
+    
+    .duration-cell {
+        font-size: 12px;
+        color: #6b7280;
+        text-align: center;
+    }
+    
+    .task-cell {
+        padding-right: 16px;
+    }
+    
+    .task-title {
+        font-size: 14px;
+        font-weight: 500;
+        color: #1f2937;
+        margin: 0 0 4px 0;
+        line-height: 1.3;
+    }
+    
+    .task-description {
+        font-size: 12px;
+        color: #6b7280;
+        margin: 0 0 6px 0;
+        line-height: 1.4;
+    }
+    
+    .task-badges {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+    }
+    
+    .badge-desktop {
+        padding: 2px 6px;
+        font-size: 10px;
+        font-weight: 500;
+        border-radius: 3px;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+    }
+    
+    .badge-priority-must {
+        background: #fef2f2;
+        color: #dc2626;
+        border: 1px solid #fecaca;
+    }
+    
+    .badge-priority-should {
+        background: #fff7ed;
+        color: #ea580c;
+        border: 1px solid #fed7aa;
+    }
+    
+    .badge-priority-could {
+        background: #f0f9ff;
+        color: #0284c7;
+        border: 1px solid #bae6fd;
+    }
+    
+    .badge-sessions {
+        background: #f3f4f6;
+        color: #4b5563;
+        border: 1px solid #d1d5db;
+    }
+    
+    .badge-due {
+        background: #fefce8;
+        color: #a16207;
+        border: 1px solid #fde047;
+    }
+    
+    .priority-indicator {
+        width: 4px;
+        height: 100%;
+        border-radius: 2px;
+        margin-right: 12px;
+    }
+    
+    .priority-must {
+        background: #dc2626;
+    }
+    
+    .priority-should {
+        background: #ea580c;
+    }
+    
+    .priority-could {
+        background: #0284c7;
+    }
+    
+    .action-cell {
+        text-align: center;
+    }
+    
+    .btn-action {
+        padding: 4px 8px;
+        font-size: 12px;
+        border-radius: 4px;
+        border: 1px solid #d1d5db;
+        background: white;
+        color: #374151;
+        cursor: pointer;
+        transition: all 0.15s;
+    }
+    
+    .btn-action:hover {
+        background: #f9fafb;
+        border-color: #9ca3af;
+    }
+    
+    .btn-complete {
+        background: #10b981;
+        border-color: #10b981;
+        color: white;
+    }
+    
+    .btn-complete:hover {
+        background: #059669;
+        border-color: #059669;
+        color: white;
+    }
+    
+    .completed-row {
+        opacity: 0.6;
+        background: #f9fafb !important;
+    }
+    
+    .completed-task .task-title {
+        text-decoration: line-through;
+        color: #9ca3af;
+    }
+    
+    .pomodoro-schedule {
+        margin-top: 6px;
+        padding: 6px 8px;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 4px;
+        font-size: 11px;
+        color: #64748b;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #6b7280;
+    }
+    
+    .empty-icon {
+        font-size: 48px;
+        margin-bottom: 16px;
+        opacity: 0.5;
+    }
+    
+    .empty-title {
+        font-size: 18px;
+        font-weight: 500;
+        margin-bottom: 8px;
+        color: #374151;
+    }
+    
+    .empty-text {
+        font-size: 14px;
+        margin-bottom: 20px;
+    }
+    
+    .completed-badge {
+        background: #dcfce7;
+        color: #16a34a;
+        border: 1px solid #bbf7d0;
+        padding: 2px 6px;
+        font-size: 10px;
+        border-radius: 3px;
+        font-weight: 500;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="schedule-container">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Schedule for {{ target_date|date:"F d, Y" }}</h1>
+            <p class="page-subtitle">Optimized daily task schedule with Pomodoro technique</p>
+        </div>
+    </div>
+
+    <!-- Schedule Summary -->
+    <div class="summary-card">
+        <div class="summary-header">
+            <h3 class="summary-title">
+                <i class="fas fa-chart-bar" style="margin-right: 8px; color: #6b7280;"></i>
+                Schedule Overview
+            </h3>
+        </div>
+        <div class="summary-grid">
+            <div class="summary-item">
+                <div class="summary-value">{{ schedule.tasks_count }}</div>
+                <div class="summary-label">Tasks</div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-value">{{ schedule.total_scheduled_minutes }}m</div>
+                <div class="summary-label">Work Time</div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-value">{{ schedule.total_break_minutes }}m</div>
+                <div class="summary-label">Break Time</div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-value">{{ schedule.total_available_minutes }}m</div>
+                <div class="summary-label">Available</div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-value">{{ schedule.moscow_must_count }}</div>
+                <div class="summary-label">Must Do</div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-value">{{ schedule.moscow_should_count }}</div>
+                <div class="summary-label">Should Do</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Schedule Table -->
+    <div class="schedule-table">
+        <div class="schedule-header">
+            <h3 class="summary-title">
+                <i class="fas fa-clock" style="margin-right: 8px; color: #6b7280;"></i>
+                Daily Timetable
+            </h3>
+            <small style="color: #6b7280;">Generated: {{ schedule.generation_timestamp|date:"M d, Y g:i A" }}</small>
+        </div>
+        <div class="schedule-content">
+            {% if scheduled_tasks %}
+                {% for task in scheduled_tasks %}
+                <div class="task-row {% if task.is_completed %}completed-row{% endif %}">
+                    <div class="time-cell">{{ task.start_time|time:"H:i" }}</div>
+                    <div class="duration-cell">{{ task.estimated_duration_minutes }}min</div>
+                    <div class="task-cell">
+                        <div style="display: flex; align-items: flex-start;">
+                            <div class="priority-indicator priority-{{ task.task.priority }}"></div>
+                            <div style="flex: 1;">
+                                <h6 class="task-title {% if task.is_completed %}completed-task{% endif %}">{{ task.task.title }}</h6>
+                                {% if task.task.description %}
+                                <p class="task-description">{{ task.task.description|truncatechars:100 }}</p>
+                                {% endif %}
+                                <div class="task-badges">
+                                    <span class="badge-desktop badge-priority-{{ task.task.priority }}">{{ task.task.priority }}</span>
+                                    <span class="badge-desktop badge-sessions">{{ task.pomodoro_sessions }} sessions</span>
+                                    {% if task.task.due_date %}
+                                    <span class="badge-desktop badge-due">Due: {{ task.task.due_date|date:"M d" }}</span>
+                                    {% endif %}
+                                </div>
+                                {% if task.pomodoro_sessions > 1 %}
+                                <div class="pomodoro-schedule">
+                                    <i class="fas fa-stopwatch" style="margin-right: 4px;"></i>
+                                    {% if task.pomodoro_sessions == 2 %}
+                                        2 × 25min sessions with {{ task.break_minutes }}min break
+                                    {% elif task.pomodoro_sessions == 3 %}
+                                        3 × 25min sessions with {{ task.break_minutes }}min breaks
+                                    {% else %}
+                                        {{ task.pomodoro_sessions }} × 25min sessions with {{ task.break_minutes }}min breaks
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div style="text-align: center; font-size: 12px; color: #6b7280;">
+                        {{ task.start_time|time:"H:i" }} - {{ task.end_time|time:"H:i" }}
+                    </div>
+                    <div class="action-cell">
+                        {% if not task.is_completed %}
+                        <button class="btn-action btn-complete mark-completed" 
+                                data-task-id="{{ task.id }}" 
+                                title="Mark as completed">
+                            <i class="fas fa-check"></i>
+                        </button>
+                        {% else %}
+                        <span class="completed-badge">
+                            <i class="fas fa-check"></i> Done
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <div class="empty-icon">📅</div>
+                    <h5 class="empty-title">No Schedule Generated</h5>
+                    <p class="empty-text">Generate a schedule to see your optimized daily timetable with Pomodoro sessions.</p>
+                    <a href="{% url 'dashboard:daily_schedule_home' %}" class="btn-primary-desktop">
+                        <i class="fas fa-magic"></i> Generate Schedule
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle mark completed buttons
+    document.querySelectorAll('.mark-completed').forEach(button => {
+        button.addEventListener('click', function() {
+            const taskId = this.dataset.taskId;
+            const button = this;
+            
+            if (confirm('Mark this task as completed?')) {
+                fetch(`/dashboard/ajax/mark-completed/${taskId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || '',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        complete_original_task: 'true'
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Update UI
+                        const taskRow = button.closest('.task-row');
+                        taskRow.classList.add('completed-row');
+                        
+                        const taskTitle = taskRow.querySelector('.task-title');
+                        if (taskTitle) {
+                            taskTitle.classList.add('completed-task');
+                        }
+                        
+                        button.outerHTML = '<span class="completed-badge"><i class="fas fa-check"></i> Done</span>';
+                    } else {
+                        alert('Error: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error marking task as completed');
+                });
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

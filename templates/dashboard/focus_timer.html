@@ -48,6 +48,178 @@
         transition: all 0.3s ease;
     }
     
+    /* Modern Confirmation Modal */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(8px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .modal-overlay.show {
+        opacity: 1;
+        visibility: visible;
+    }
+    
+    .modal-content {
+        background: white;
+        border-radius: 20px;
+        padding: 2.5rem;
+        max-width: 480px;
+        width: 90%;
+        max-height: 90vh;
+        overflow-y: auto;
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+        transform: scale(0.9) translateY(20px);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .modal-overlay.show .modal-content {
+        transform: scale(1) translateY(0);
+    }
+    
+    .modal-header {
+        text-align: center;
+        margin-bottom: 1.5rem;
+    }
+    
+    .modal-icon {
+        width: 64px;
+        height: 64px;
+        margin: 0 auto 1rem;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+    }
+    
+    .modal-icon.complete {
+        background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+        box-shadow: 0 8px 20px rgba(34, 197, 94, 0.3);
+    }
+    
+    .modal-icon.incomplete {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        box-shadow: 0 8px 20px rgba(245, 158, 11, 0.3);
+    }
+    
+    .modal-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #1f2937;
+        margin-bottom: 0.5rem;
+        line-height: 1.3;
+    }
+    
+    .modal-message {
+        font-size: 1rem;
+        color: #6b7280;
+        line-height: 1.6;
+        margin-bottom: 0.5rem;
+    }
+    
+    .modal-task-name {
+        font-weight: 600;
+        color: #4f46e5;
+        background: #f0f0ff;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        margin: 1rem 0;
+        word-break: break-word;
+    }
+    
+    .modal-subtitle {
+        font-size: 0.875rem;
+        color: #9ca3af;
+        font-style: italic;
+    }
+    
+    .modal-actions {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2rem;
+        justify-content: center;
+    }
+    
+    .modal-btn {
+        padding: 0.875rem 2rem;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 0.95rem;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        min-width: 100px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+    
+    .modal-btn:focus {
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+    
+    .modal-btn-primary {
+        background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+        color: white;
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    }
+    
+    .modal-btn-primary:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+    }
+    
+    .modal-btn-secondary {
+        background: #f8fafc;
+        color: #64748b;
+        border: 2px solid #e2e8f0;
+    }
+    
+    .modal-btn-secondary:hover {
+        background: #f1f5f9;
+        border-color: #cbd5e1;
+        transform: translateY(-1px);
+    }
+    
+    .modal-btn:active {
+        transform: translateY(0);
+    }
+    
+    /* Animation for modal appearance */
+    @keyframes modalSlideIn {
+        from {
+            opacity: 0;
+            transform: scale(0.9) translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+        }
+    }
+    
+    .modal-overlay.show .modal-content {
+        animation: modalSlideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
     .task-category:hover {
         border-color: #667eea;
         box-shadow: 0 4px 15px rgba(102, 126, 234, 0.1);
@@ -392,7 +564,7 @@
         <!-- Page Header -->
         <div class="mb-8">
             <h1 class="text-3xl font-bold text-gray-900">🎯 Focus Timer</h1>
-            <p class="mt-2 text-gray-600">Boost your productivity with the 1-3-5 method and Pomodoro technique</p>
+            <p class="mt-2 text-gray-600">Boost your productivity with techniques</p>
         </div>
 
         <!-- Content -->
@@ -404,90 +576,162 @@
             <div class="card">
                 <h2 class="section-title">
                     <i class="fas fa-tasks"></i>
-                    Today's Tasks (1-3-5 Method)
+                    Today's Tasks
                 </h2>
                 
-                <!-- 1 Big Thing -->
-                <div class="task-category big-things">
+                <!-- All Tasks -->
+                <div class="task-category all-tasks">
                     <div class="category-header">
-                        <div class="category-title">🎯 1 Big Thing</div>
-                        <div class="category-count">{{ must_do_tasks|length }}/1</div>
+                        <div class="category-title">
+                            {% if has_schedule %}
+                                � Today's Schedule
+                            {% else %}
+                                �📋 All Tasks
+                            {% endif %}
+                        </div>
+                        <div class="category-count">
+                            {% if has_schedule %}
+                                {{ scheduled_tasks|length }}
+                            {% else %}
+                                {% with total_tasks=must_do_tasks|length|add:should_do_tasks|length|add:could_do_tasks|length %}
+                                    {{ total_tasks }}
+                                {% endwith %}
+                            {% endif %}
+                        </div>
                     </div>
                     <div class="task-list">
-                        {% for task in must_do_tasks %}
-                            <div class="task-item {% if task.status == 'completed' %}completed{% endif %}" data-task-id="{{ task.id }}">
-                                <div class="task-item-inner">
-                                    <div class="checkbox-container">
-                                        <input type="checkbox" 
-                                               id="task-{{ task.id }}" 
-                                               {% if task.status == 'completed' %}checked{% endif %}
-                                               onchange="updateTaskStatus({{ task.id }}, this.checked)">
+                        {% if has_schedule %}
+                            <!-- Show Scheduled Tasks with Time Slots -->
+                            {% for scheduled_task in scheduled_tasks %}
+                                {% if scheduled_task.task %}
+                                    <div class="task-item {% if scheduled_task.task.status == 'completed' or scheduled_task.is_completed %}completed{% endif %}" data-task-id="{{ scheduled_task.task.id }}">
+                                        <div class="task-item-inner">
+                                            <div class="checkbox-container">
+                                                <input type="checkbox" 
+                                                       id="task-{{ scheduled_task.task.id }}" 
+                                                       {% if scheduled_task.task.status == 'completed' or scheduled_task.is_completed %}checked{% endif %}
+                                                       onchange="updateTaskStatus({{ scheduled_task.task.id }}, this.checked)">
+                                            </div>
+                                            <div class="task-content">
+                                                <div class="task-title">
+                                                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                                                        <span>{{ scheduled_task.task.title }}</span>
+                                                        <div style="display: flex; gap: 0.5rem; align-items: center;">
+                                                            {% if scheduled_task.task.moscow_category == 'must' %}
+                                                                <span class="badge bg-danger" style="font-size: 0.7rem;">MUST</span>
+                                                            {% elif scheduled_task.task.moscow_category == 'should' %}
+                                                                <span class="badge bg-warning" style="font-size: 0.7rem;">SHOULD</span>
+                                                            {% elif scheduled_task.task.moscow_category == 'could' %}
+                                                                <span class="badge bg-info" style="font-size: 0.7rem;">COULD</span>
+                                                            {% elif scheduled_task.task.moscow_category == 'wont' %}
+                                                                <span class="badge bg-secondary" style="font-size: 0.7rem;">WON'T</span>
+                                                            {% endif %}
+                                                            <span class="badge bg-primary" style="font-size: 0.7rem;">
+                                                                {{ scheduled_task.start_time|time:"H:i" }} - {{ scheduled_task.end_time|time:"H:i" }}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="task-description">
+                                                    <div>{{ scheduled_task.task.description|truncatewords:15 }}</div>
+                                                    <div style="margin-top: 0.25rem; color: #6b7280; font-size: 0.7rem;">
+                                                        🍅 {{ scheduled_task.pomodoro_sessions }} session{% if scheduled_task.pomodoro_sessions != 1 %}s{% endif %}, 
+                                                        {{ scheduled_task.break_minutes }}min breaks • 
+                                                        {{ scheduled_task.estimated_duration_minutes }}min total
+                                                        {% if scheduled_task.task.due_date %}
+                                                            • Due: {{ scheduled_task.task.due_date|date:"M d" }}
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div class="task-content">
-                                        <div class="task-title">{{ task.title }}</div>
-                                        <div class="task-description">{{ task.description|truncatewords:20 }}</div>
-                                    </div>
-                                </div>
-                            </div>
-                        {% empty %}
-                            <div class="empty-state">No big task assigned yet. Focus on one major accomplishment!</div>
-                        {% endfor %}
-                    </div>
-                </div>
-                
-                <!-- 3 Medium Things -->
-                <div class="task-category medium-things">
-                    <div class="category-header">
-                        <div class="category-title">📋 3 Medium Things</div>
-                        <div class="category-count">{{ should_do_tasks|length }}/3</div>
-                    </div>
-                    <div class="task-list">
-                        {% for task in should_do_tasks %}
-                            <div class="task-item {% if task.status == 'completed' %}completed{% endif %}" data-task-id="{{ task.id }}">
-                                <div class="task-item-inner">
-                                    <div class="checkbox-container">
-                                        <input type="checkbox" 
-                                               id="task-{{ task.id }}" 
-                                               {% if task.status == 'completed' %}checked{% endif %}
-                                               onchange="updateTaskStatus({{ task.id }}, this.checked)">
-                                    </div>
-                                    <div class="task-content">
-                                        <div class="task-title">{{ task.title }}</div>
-                                        <div class="task-description">{{ task.description|truncatewords:15 }}</div>
-                                    </div>
-                                </div>
-                            </div>
-                        {% empty %}
-                            <div class="empty-state">No medium tasks assigned. Add some important to-dos!</div>
-                        {% endfor %}
-                    </div>
-                </div>
-                
-                <!-- 5 Small Things -->
-                <div class="task-category small-things">
-                    <div class="category-header">
-                        <div class="category-title">⚡ 5 Small Things</div>
-                        <div class="category-count">{{ could_do_tasks|length }}/5</div>
-                    </div>
-                    <div class="task-list">
-                        {% for task in could_do_tasks %}
-                            <div class="task-item {% if task.status == 'completed' %}completed{% endif %}" data-task-id="{{ task.id }}">
-                                <div class="task-item-inner">
-                                    <div class="checkbox-container">
-                                        <input type="checkbox" 
-                                               id="task-{{ task.id }}" 
-                                               {% if task.status == 'completed' %}checked{% endif %}
-                                               onchange="updateTaskStatus({{ task.id }}, this.checked)">
-                                    </div>
-                                    <div class="task-content">
-                                        <div class="task-title">{{ task.title }}</div>
-                                        <div class="task-description">{{ task.description|truncatewords:10 }}</div>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if not scheduled_tasks %}
+                                <div class="empty-state">
+                                    <div style="margin-bottom: 1rem;">📅 No schedule for today</div>
+                                    <div style="font-size: 0.875rem; color: #6b7280;">
+                                        <a href="{% url 'dashboard:daily_schedule_home' %}" style="color: #3b82f6; text-decoration: none;">
+                                            Generate an AI schedule
+                                        </a> or 
+                                        <a href="{% url 'dashboard:daily_schedule_home' %}" style="color: #3b82f6; text-decoration: none;">
+                                            create a custom schedule
+                                        </a> to see your planned tasks here.
                                     </div>
                                 </div>
-                            </div>
-                        {% empty %}
-                            <div class="empty-state">No small tasks yet. Add some quick wins!</div>
-                        {% endfor %}
+                            {% endif %}
+                        {% else %}
+                            <!-- Show Regular Tasks by Priority (Fallback) -->
+                            <!-- Show Regular Tasks by Priority (Fallback) -->
+                            <!-- Must Do Tasks (High Priority) -->
+                            {% for task in must_do_tasks %}
+                                <div class="task-item {% if task.status == 'completed' %}completed{% endif %}" data-task-id="{{ task.id }}">
+                                    <div class="task-item-inner">
+                                        <div class="checkbox-container">
+                                            <input type="checkbox" 
+                                                   id="task-{{ task.id }}" 
+                                                   {% if task.status == 'completed' %}checked{% endif %}
+                                                   onchange="updateTaskStatus({{ task.id }}, this.checked)">
+                                        </div>
+                                        <div class="task-content">
+                                            <div class="task-title">
+                                                {{ task.title }}
+                                                <span class="badge bg-danger ms-2">High Priority</span>
+                                            </div>
+                                            <div class="task-description">{{ task.description|truncatewords:20 }}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                            
+                            <!-- Should Do Tasks (Medium Priority) -->
+                            {% for task in should_do_tasks %}
+                                <div class="task-item {% if task.status == 'completed' %}completed{% endif %}" data-task-id="{{ task.id }}">
+                                    <div class="task-item-inner">
+                                        <div class="checkbox-container">
+                                            <input type="checkbox" 
+                                                   id="task-{{ task.id }}" 
+                                                   {% if task.status == 'completed' %}checked{% endif %}
+                                                   onchange="updateTaskStatus({{ task.id }}, this.checked)">
+                                        </div>
+                                        <div class="task-content">
+                                            <div class="task-title">
+                                                {{ task.title }}
+                                                <span class="badge bg-warning ms-2">Medium Priority</span>
+                                            </div>
+                                            <div class="task-description">{{ task.description|truncatewords:15 }}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                            
+                            <!-- Could Do Tasks (Low Priority) -->
+                            {% for task in could_do_tasks %}
+                                <div class="task-item {% if task.status == 'completed' %}completed{% endif %}" data-task-id="{{ task.id }}">
+                                    <div class="task-item-inner">
+                                        <div class="checkbox-container">
+                                            <input type="checkbox" 
+                                                   id="task-{{ task.id }}" 
+                                                   {% if task.status == 'completed' %}checked{% endif %}
+                                                   onchange="updateTaskStatus({{ task.id }}, this.checked)">
+                                        </div>
+                                        <div class="task-content">
+                                            <div class="task-title">
+                                                {{ task.title }}
+                                                <span class="badge bg-info ms-2">Low Priority</span>
+                                            </div>
+                                            <div class="task-description">{{ task.description|truncatewords:10 }}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                            
+                            {% if not must_do_tasks and not should_do_tasks and not could_do_tasks %}
+                                <div class="empty-state">No tasks available. Add some tasks to start focusing!</div>
+                            {% endif %}
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -498,22 +742,6 @@
             <!-- Timer Setup -->
             <div class="timer-setup">
                 <h3 class="section-title" style="font-size: 1.2rem; margin-bottom: 1.5rem;">⏰ Timer Setup</h3>
-                
-                <div class="form-group">
-                    <label class="form-label">Select Task</label>
-                    <select class="form-select" id="task-selector">
-                        <option value="">Choose a task to focus on</option>
-                        {% for task in must_do_tasks %}
-                            <option value="{{ task.id }}">🎯 {{ task.title }}</option>
-                        {% endfor %}
-                        {% for task in should_do_tasks %}
-                            <option value="{{ task.id }}">📋 {{ task.title }}</option>
-                        {% endfor %}
-                        {% for task in could_do_tasks %}
-                            <option value="{{ task.id }}">⚡ {{ task.title }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
                 
                 <div class="form-group">
                     <label class="form-label">Technique</label>
@@ -624,7 +852,6 @@
             this.timerPhase = document.getElementById('timer-phase');
             this.startBtn = document.getElementById('start-btn');
             this.resetBtn = document.getElementById('reset-btn');
-            this.taskSelector = document.getElementById('task-selector');
             this.techniqueSelector = document.getElementById('technique-selector');
             this.sessionsCount = document.getElementById('sessions-count');
             this.totalTimeElement = document.getElementById('total-time');
@@ -637,10 +864,6 @@
             this.techniqueSelector.addEventListener('change', () => {
                 this.updateTechnique();
                 this.toggleCustomSettings();
-            });
-            
-            this.taskSelector.addEventListener('change', () => {
-                this.currentTask = this.taskSelector.value;
             });
             
             // Listen for custom time changes
@@ -951,7 +1174,51 @@
         timer.resetTimer();
     }
     
-    function updateTaskStatus(taskId, completed) {
+    async function updateTaskStatus(taskId, completed) {
+        const taskElement = document.querySelector(`[data-task-id="${taskId}"]`);
+        const checkbox = taskElement?.querySelector('input[type="checkbox"]');
+        const taskTitle = taskElement?.querySelector('.task-title')?.textContent?.trim() || 'this task';
+        
+        let confirmResult = false;
+        
+        // If trying to complete a task, show confirmation
+        if (completed) {
+            confirmResult = await showConfirmModal({
+                type: 'complete',
+                icon: '✓',
+                title: 'Mark Task as Complete?',
+                message: 'You\'re about to mark this task as completed:',
+                taskName: taskTitle,
+                subtitle: 'Completed tasks will be removed from your focus list.',
+                confirmText: 'Mark Complete'
+            });
+            
+            if (!confirmResult) {
+                // User cancelled, revert checkbox
+                if (checkbox) checkbox.checked = false;
+                return;
+            }
+        }
+        
+        // If unchecking a completed task, show confirmation
+        if (!completed && taskElement?.classList.contains('completed')) {
+            confirmResult = await showConfirmModal({
+                type: 'incomplete',
+                icon: '↺',
+                title: 'Mark Task as Incomplete?',
+                message: 'You\'re about to mark this task as incomplete:',
+                taskName: taskTitle,
+                subtitle: 'This will move it back to your active task list.',
+                confirmText: 'Mark Incomplete'
+            });
+            
+            if (!confirmResult) {
+                // User cancelled, revert checkbox
+                if (checkbox) checkbox.checked = true;
+                return;
+            }
+        }
+        
         // Update task status via AJAX
         fetch(`/tasks/${taskId}/toggle/`, {
             method: 'POST',
@@ -962,12 +1229,15 @@
             body: JSON.stringify({
                 completed: completed
             })
-        }).then(response => response.json())
-          .then(data => {
+        }).then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        }).then(data => {
               if (data.success) {
                   if (data.remove_task && completed) {
                       // Remove task from UI with animation
-                      const taskElement = document.querySelector(`[data-task-id="${taskId}"]`);
                       if (taskElement) {
                           taskElement.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
                           taskElement.style.opacity = '0';
@@ -983,15 +1253,34 @@
                       if (data.message) {
                           showNotification(data.message, 'success');
                       }
+                  } else if (!completed) {
+                      // Task marked as incomplete, update UI
+                      if (taskElement) {
+                          taskElement.classList.remove('completed');
+                          const title = taskElement.querySelector('.task-title');
+                          if (title) {
+                              title.style.textDecoration = 'none';
+                              title.style.color = '#1f2937';
+                          }
+                      }
+                      if (data.message) {
+                          showNotification(data.message, 'info');
+                      }
                   }
               } else {
                   console.error('Error updating task:', data.error);
-                  showNotification('Failed to update task', 'error');
+                  showNotification(data.error || 'Failed to update task', 'error');
+                  
+                  // Revert checkbox state on error
+                  if (checkbox) checkbox.checked = !completed;
               }
           })
           .catch(error => {
               console.error('Error:', error);
-              showNotification('Failed to update task', 'error');
+              showNotification('Network error: Failed to update task', 'error');
+              
+              // Revert checkbox state on error
+              if (checkbox) checkbox.checked = !completed;
           });
     }
     
@@ -1062,5 +1351,96 @@
             }
         });
     });
+    
+    // Custom Modal Functions
+    function showConfirmModal(options) {
+        return new Promise((resolve) => {
+            const modalOverlay = document.getElementById('confirmModal');
+            const modalIcon = modalOverlay.querySelector('.modal-icon');
+            const modalTitle = modalOverlay.querySelector('.modal-title');
+            const modalMessage = modalOverlay.querySelector('.modal-message');
+            const modalTaskName = modalOverlay.querySelector('.modal-task-name');
+            const modalSubtitle = modalOverlay.querySelector('.modal-subtitle');
+            const confirmBtn = modalOverlay.querySelector('.modal-btn-primary');
+            const cancelBtn = modalOverlay.querySelector('.modal-btn-secondary');
+            
+            // Set modal content
+            modalIcon.innerHTML = options.icon;
+            modalIcon.className = `modal-icon ${options.type}`;
+            modalTitle.textContent = options.title;
+            modalMessage.textContent = options.message;
+            modalTaskName.textContent = options.taskName;
+            modalSubtitle.textContent = options.subtitle;
+            confirmBtn.textContent = options.confirmText;
+            
+            // Show modal
+            modalOverlay.classList.add('show');
+            
+            // Handle button clicks
+            const handleConfirm = () => {
+                modalOverlay.classList.remove('show');
+                cleanup();
+                resolve(true);
+            };
+            
+            const handleCancel = () => {
+                modalOverlay.classList.remove('show');
+                cleanup();
+                resolve(false);
+            };
+            
+            const handleClickOutside = (e) => {
+                if (e.target === modalOverlay) {
+                    modalOverlay.classList.remove('show');
+                    cleanup();
+                    resolve(false);
+                }
+            };
+            
+            const handleEscape = (e) => {
+                if (e.key === 'Escape') {
+                    modalOverlay.classList.remove('show');
+                    cleanup();
+                    resolve(false);
+                }
+            };
+            
+            const cleanup = () => {
+                confirmBtn.removeEventListener('click', handleConfirm);
+                cancelBtn.removeEventListener('click', handleCancel);
+                modalOverlay.removeEventListener('click', handleClickOutside);
+                document.removeEventListener('keydown', handleEscape);
+            };
+            
+            // Add event listeners
+            confirmBtn.addEventListener('click', handleConfirm);
+            cancelBtn.addEventListener('click', handleCancel);
+            modalOverlay.addEventListener('click', handleClickOutside);
+            document.addEventListener('keydown', handleEscape);
+            
+            // Focus the confirm button for accessibility
+            setTimeout(() => confirmBtn.focus(), 100);
+        });
+    }
 </script>
+
+<!-- Confirmation Modal -->
+<div id="confirmModal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <div class="modal-icon">
+                ✓
+            </div>
+            <h3 class="modal-title">Confirm Action</h3>
+            <p class="modal-message">Are you sure you want to continue?</p>
+            <div class="modal-task-name">Task Name</div>
+            <p class="modal-subtitle">Additional information</p>
+        </div>
+        <div class="modal-actions">
+            <button type="button" class="modal-btn modal-btn-secondary">Cancel</button>
+            <button type="button" class="modal-btn modal-btn-primary">Confirm</button>
+        </div>
+    </div>
+</div>
+
 {% endblock %}

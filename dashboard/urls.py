@@ -19,4 +19,16 @@ urlpatterns = [
     
     # MoSCoW matrix endpoints
     path('ajax/refresh-moscow/', refresh_moscow_matrix, name='refresh_moscow_matrix'),
+    
+    # Daily Schedule endpoints
+    path('daily-schedule/', views.daily_schedule_home, name='daily_schedule_home'),
+    path('time-blocks/', views.manage_time_blocks, name='manage_time_blocks'),
+    path('time-blocks/add/', views.add_time_block, name='add_time_block'),
+    path('time-blocks/delete/<int:block_id>/', views.delete_time_block, name='delete_time_block'),
+    path('time-blocks/edit/<int:block_id>/', views.edit_time_block, name='edit_time_block'),
+    path('schedule/generate/', views.generate_schedule, name='generate_schedule'),
+    path('schedule/view/<int:year>/<int:month>/<int:day>/', views.view_schedule, name='view_schedule'),
+    path('schedule/history/', views.schedule_history, name='schedule_history'),
+    path('custom-schedule/', views.create_custom_schedule, name='create_custom_schedule'),
+    path('ajax/mark-completed/<int:task_id>/', views.mark_task_completed, name='mark_task_completed'),
 ]
