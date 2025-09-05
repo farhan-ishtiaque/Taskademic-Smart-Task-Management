@@ -1,7 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
 
-
 {% block title %}Manage Time Blocks - TaskAdemic{% endblock %}
 
 {% block extra_css %}
@@ -280,11 +279,9 @@
 
     .close:hover {
         color: #495057;
-
     }
 </style>
 {% endblock %}
-
 
 {% block content %}
 {% csrf_token %}
@@ -292,9 +289,19 @@
 <div class="time-blocks-container">
     <!-- Page Header -->
     <div class="page-header">
-        <div>
-            <h1 class="page-title">Manage Time Blocks</h1>
-            <p class="page-subtitle">Set up your weekly availability for smart task scheduling</p>
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="page-title">Manage Time Blocks</h1>
+                <p class="page-subtitle">Set up your weekly availability for smart task scheduling</p>
+                <div class="breadcrumb-nav">
+                    <a href="{% url 'dashboard:daily_schedule' %}">← Back to Schedule</a>
+                </div>
+            </div>
+            <div>
+                <button onclick="openAddModal()" class="btn-primary-desktop">
+                    Add Time Block
+                </button>
+            </div>
         </div>
     </div>
 
@@ -317,7 +324,7 @@
                             <div class="time-block-desc">{{ block.description }}</div>
                             {% endif %}
                             <div class="time-block-actions">
-                                <button onclick="editTimeBlock({{ block.id }}, '{{ day|lower }}', '{{ block.start_time|time:"H:i" }}', '{{ block.end_time|time:"H:i" }}')" class="btn-secondary-desktop">
+                                <button onclick="editTimeBlock({{ block.id }})" class="btn-secondary-desktop">
                                     Edit
                                 </button>
                                 <button onclick="deleteTimeBlock({{ block.id }})" class="btn-danger-desktop">
@@ -367,15 +374,7 @@
                 <tr>
                     <td>{{ day }}</td>
                     <td>{{ blocks|length }} block{{ blocks|length|pluralize }}</td>
-                    <td>
-                        {% if day == "Monday" %}{{ day_hours.Monday }} hour{{ day_hours.Monday|pluralize }}{% endif %}
-                        {% if day == "Tuesday" %}{{ day_hours.Tuesday }} hour{{ day_hours.Tuesday|pluralize }}{% endif %}
-                        {% if day == "Wednesday" %}{{ day_hours.Wednesday }} hour{{ day_hours.Wednesday|pluralize }}{% endif %}
-                        {% if day == "Thursday" %}{{ day_hours.Thursday }} hour{{ day_hours.Thursday|pluralize }}{% endif %}
-                        {% if day == "Friday" %}{{ day_hours.Friday }} hour{{ day_hours.Friday|pluralize }}{% endif %}
-                        {% if day == "Saturday" %}{{ day_hours.Saturday }} hour{{ day_hours.Saturday|pluralize }}{% endif %}
-                        {% if day == "Sunday" %}{{ day_hours.Sunday }} hour{{ day_hours.Sunday|pluralize }}{% endif %}
-                    </td>
+                    <td>{{ blocks|length|add:0 }} hours</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -389,19 +388,19 @@
     <div class="modal-content">
         <span class="close" onclick="closeModal()">&times;</span>
         <h2 class="modal-title">Add Time Block</h2>
-        <form id="timeBlockForm" method="post" action="{% url 'dashboard:add_time_block' %}">
+        <form id="timeBlockForm" method="post">
             {% csrf_token %}
             <div class="form-group">
                 <label for="day" class="form-label">Day of Week</label>
                 <select id="day" name="day_of_week" class="form-control" required>
                     <option value="">Select a day</option>
-                    <option value="monday">Monday</option>
-                    <option value="tuesday">Tuesday</option>
-                    <option value="wednesday">Wednesday</option>
-                    <option value="thursday">Thursday</option>
-                    <option value="friday">Friday</option>
-                    <option value="saturday">Saturday</option>
-                    <option value="sunday">Sunday</option>
+                    <option value="0">Monday</option>
+                    <option value="1">Tuesday</option>
+                    <option value="2">Wednesday</option>
+                    <option value="3">Thursday</option>
+                    <option value="4">Friday</option>
+                    <option value="5">Saturday</option>
+                    <option value="6">Sunday</option>
                 </select>
             </div>
             <div class="form-group">
@@ -430,62 +429,24 @@
 
 <script>
 function openAddModal(day = '') {
-    // Reset modal to add mode
-    document.querySelector('.modal-title').textContent = 'Add Time Block';
-    
-    // Reset form action
-    const form = document.getElementById('timeBlockForm');
-    form.action = '{% url "dashboard:add_time_block" %}';
-    
-    // Reset and populate form
-    form.reset();
-    if (day) {
-        document.getElementById('day').value = day.toLowerCase();
-    }
-    
-    // Enable day selection
-    document.getElementById('day').disabled = false;
-    
-    // Reset submit button text
-    document.querySelector('button[type="submit"]').textContent = 'Save Time Block';
-    
-    // Show modal
     document.getElementById('timeBlockModal').style.display = 'block';
+    document.getElementById('timeBlockForm').reset();
+    if (day) {
+        const dayMap = {
+            'monday': '0', 'tuesday': '1', 'wednesday': '2', 'thursday': '3',
+            'friday': '4', 'saturday': '5', 'sunday': '6'
+        };
+        document.getElementById('day').value = dayMap[day] || '';
+    }
 }
 
 function closeModal() {
     document.getElementById('timeBlockModal').style.display = 'none';
-    
-    // Reset form state
-    const form = document.getElementById('timeBlockForm');
-    form.reset();
-    form.action = '{% url "dashboard:add_time_block" %}';
-    document.getElementById('day').disabled = false;
-    document.querySelector('.modal-title').textContent = 'Add Time Block';
-    document.querySelector('button[type="submit"]').textContent = 'Save Time Block';
 }
 
-function editTimeBlock(id, day, startTime, endTime) {
-    // Update modal title
-    document.querySelector('.modal-title').textContent = 'Edit Time Block';
-    
-    // Update form action to edit URL
-    const form = document.getElementById('timeBlockForm');
-    form.action = `/dashboard/time-blocks/edit/${id}/`;
-    
-    // Populate form fields
-    document.getElementById('day').value = day;
-    document.getElementById('start_time').value = startTime;
-    document.getElementById('end_time').value = endTime;
-    
-    // Disable day selection for editing (can't change day of existing block)
-    document.getElementById('day').disabled = true;
-    
-    // Update submit button text
-    document.querySelector('button[type="submit"]').textContent = 'Update Time Block';
-    
-    // Show modal
-    document.getElementById('timeBlockModal').style.display = 'block';
+function editTimeBlock(id) {
+    // Implement edit functionality
+    console.log('Edit time block:', id);
 }
 
 function deleteTimeBlock(id) {

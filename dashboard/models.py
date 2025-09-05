@@ -54,10 +54,20 @@ class DailySchedule(models.Model):
     tasks_count = models.PositiveIntegerField(default=0)
     moscow_must_count = models.PositiveIntegerField(default=0)
     moscow_should_count = models.PositiveIntegerField(default=0)
+
+    moscow_could_count = models.PositiveIntegerField(default=0)
+    moscow_wont_count = models.PositiveIntegerField(default=0)
     
     # AI generation details
-    ai_prompt_used = models.TextField(help_text="The prompt sent to DeepSeek")
-    ai_response = models.TextField(help_text="Full AI response")
+    ai_prompt_used = models.TextField(help_text="The prompt sent to DeepSeek", blank=True, default="")
+    ai_response = models.TextField(help_text="Full AI response", blank=True, default="")
+    ai_reasoning = models.TextField(help_text="AI reasoning for schedule decisions", blank=True, default="")
+    generation_method = models.CharField(max_length=50, choices=[
+        ('ai', 'AI Generated'),
+        ('custom', 'Custom Schedule'),
+        ('manual', 'Manual Schedule')
+    ], default='custom')
+
     generation_timestamp = models.DateTimeField(auto_now_add=True)
     
     # Status

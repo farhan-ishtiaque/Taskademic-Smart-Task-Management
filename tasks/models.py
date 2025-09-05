@@ -73,6 +73,7 @@ class Task(models.Model):
     focus_category = models.CharField(max_length=10, choices=FOCUS_CATEGORY_CHOICES, default='', blank=True, help_text="Manually assign to 1-3-5 focus categories")
     tags = models.CharField(max_length=200, blank=True, help_text="Comma-separated tags")
     points_awarded = models.IntegerField(default=0)
+    pomodoro_sessions = models.IntegerField(default=1, help_text="Number of Pomodoro sessions needed")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     completed_at = models.DateTimeField(null=True, blank=True)
@@ -99,6 +100,28 @@ class Task(models.Model):
         if self.due_date and self.status not in ['done']:
             return timezone.now() > self.due_date
         return False
+    
+    @property
+    def is_completed(self):
+        """Check if task is completed"""
+        return self.status == 'done'
+    
+    @property
+    def moscow_priority(self):
+        """Get MoSCoW priority as a simple string"""
+        result = self.get_moscow_priority()
+        # The get_moscow_priority already returns a string like 'must', 'should', etc.
+        return result if result in ['must', 'should', 'could', 'wont'] else 'could'
+    
+    def get_moscow_priority_display(self):
+        """Get human-readable MoSCoW priority"""
+        priority_map = {
+            'must': 'Must Have',
+            'should': 'Should Have',
+            'could': 'Could Have',
+            'wont': "Won't Have"
+        }
+        return priority_map.get(self.moscow_priority, 'Could Have')
     
     @property
     def is_assigned(self):

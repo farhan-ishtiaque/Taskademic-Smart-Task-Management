@@ -87,7 +87,7 @@
                             <label class="text-sm font-medium text-gray-900">Task Due Date Reminders</label>
                             <p class="text-sm text-gray-500">Get notified when tasks are due soon</p>
                         </div>
-                        <input type="checkbox" checked
+                        <input type="checkbox" id="task_due_reminders"
                                class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
                     </div>
                     <div class="flex items-center justify-between">
@@ -95,7 +95,7 @@
                             <label class="text-sm font-medium text-gray-900">Weekly Summary</label>
                             <p class="text-sm text-gray-500">Receive weekly productivity reports</p>
                         </div>
-                        <input type="checkbox" checked
+                        <input type="checkbox" id="weekly_summary"
                                class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
                     </div>
                     <div class="flex items-center justify-between">
@@ -103,9 +103,15 @@
                             <label class="text-sm font-medium text-gray-900">Team Updates</label>
                             <p class="text-sm text-gray-500">Get notified about team task updates</p>
                         </div>
-                        <input type="checkbox"
+                        <input type="checkbox" id="team_updates"
                                class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
                     </div>
+                </div>
+                <div class="mt-6">
+                    <button type="button" id="save-preferences" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+                        Save Preferences
+                    </button>
+                    <span id="save-status" class="ml-3 text-sm"></span>
                 </div>
             </div>
         </div>
@@ -153,13 +159,6 @@
             </div>
             <div class="p-6">
                 <div class="space-y-4">
-                    <div>
-                        <h4 class="text-sm font-medium text-gray-900">Export Data</h4>
-                        <p class="text-sm text-gray-500 mb-3">Download all your task data in JSON format</p>
-                        <button class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                            Export Data
-                        </button>
-                    </div>
                     <div class="border-t pt-4">
                         <h4 class="text-sm font-medium text-red-900">Delete Account</h4>
                         <p class="text-sm text-red-600 mb-3">Permanently delete your account and all associated data</p>
@@ -172,4 +171,92 @@
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Load current notification preferences
+    loadNotificationPreferences();
+    
+    // Save preferences when button is clicked
+    document.getElementById('save-preferences').addEventListener('click', saveNotificationPreferences);
+    
+    function loadNotificationPreferences() {
+        fetch('/notifications/preferences/')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('task_due_reminders').checked = data.task_due_reminders;
+                document.getElementById('weekly_summary').checked = data.weekly_summary;
+                document.getElementById('team_updates').checked = data.team_updates;
+            })
+            .catch(error => {
+                console.error('Error loading preferences:', error);
+            });
+    }
+    
+    function saveNotificationPreferences() {
+        const saveButton = document.getElementById('save-preferences');
+        const saveStatus = document.getElementById('save-status');
+        
+        // Disable button and show loading
+        saveButton.disabled = true;
+        saveButton.textContent = 'Saving...';
+        saveStatus.textContent = '';
+        
+        const preferences = {
+            task_due_reminders: document.getElementById('task_due_reminders').checked,
+            weekly_summary: document.getElementById('weekly_summary').checked,
+            team_updates: document.getElementById('team_updates').checked,
+        };
+        
+        fetch('/notifications/preferences/update/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify(preferences)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                saveStatus.textContent = 'Preferences saved successfully!';
+                saveStatus.className = 'ml-3 text-sm text-green-600';
+            } else {
+                saveStatus.textContent = 'Error saving preferences: ' + data.error;
+                saveStatus.className = 'ml-3 text-sm text-red-600';
+            }
+        })
+        .catch(error => {
+            console.error('Error saving preferences:', error);
+            saveStatus.textContent = 'Error saving preferences';
+            saveStatus.className = 'ml-3 text-sm text-red-600';
+        })
+        .finally(() => {
+            // Re-enable button
+            saveButton.disabled = false;
+            saveButton.textContent = 'Save Preferences';
+            
+            // Clear status message after 3 seconds
+            setTimeout(() => {
+                saveStatus.textContent = '';
+            }, 3000);
+        });
+    }
+    
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+});
+</script>
 {% endblock %}

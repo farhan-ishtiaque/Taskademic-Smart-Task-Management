@@ -1,0 +1,353 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Daily Schedule - TaskAdemic{% endblock %}
+
+{% block extra_css %}
+<style>
+    .daily-schedule-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 20px 40px;
+        background: #f8f9fa;
+        min-height: 100vh;
+    }
+
+    .page-header {
+        background: white;
+        border-bottom: 2px solid #e9ecef;
+        padding: 25px 0;
+        margin-bottom: 30px;
+        border-radius: 0;
+    }
+
+    .page-title {
+        font-size: 28px;
+        font-weight: 600;
+        color: #2c3e50;
+        margin: 0;
+    }
+
+    .breadcrumb-nav {
+        display: flex;
+        gap: 15px;
+        margin-top: 8px;
+    }
+
+    .breadcrumb-nav a {
+        color: #667eea;
+        text-decoration: none;
+        font-weight: 500;
+        transition: color 0.2s;
+    }
+
+    .breadcrumb-nav a:hover {
+        color: #5a6fd8;
+        text-decoration: underline;
+    }
+
+    .content-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 30px;
+        margin-bottom: 30px;
+    }
+
+    .main-panel {
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+        padding: 30px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+
+    .sidebar-panel {
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+        padding: 25px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        height: fit-content;
+    }
+
+    .section-title {
+        font-size: 20px;
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #e9ecef;
+    }
+
+    .schedule-status {
+        text-align: center;
+        padding: 40px 20px;
+        background: #f8f9fa;
+        border: 2px dashed #dee2e6;
+        border-radius: 6px;
+        margin: 20px 0;
+    }
+
+    .empty-state-icon {
+        font-size: 48px;
+        color: #6c757d;
+        margin-bottom: 15px;
+    }
+
+    .empty-state-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 8px;
+    }
+
+    .empty-state-text {
+        color: #6c757d;
+        margin-bottom: 20px;
+    }
+
+    .btn-primary-desktop {
+        background: #667eea;
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 4px;
+        font-weight: 500;
+        text-decoration: none;
+        display: inline-block;
+        transition: background-color 0.2s;
+    }
+
+    .btn-primary-desktop:hover {
+        background: #5a6fd8;
+        color: white;
+        text-decoration: none;
+    }
+
+    .btn-secondary-desktop {
+        background: #6c757d;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 4px;
+        font-weight: 500;
+        text-decoration: none;
+        display: inline-block;
+        transition: background-color 0.2s;
+    }
+
+    .btn-secondary-desktop:hover {
+        background: #5a6268;
+        color: white;
+        text-decoration: none;
+    }
+
+    .time-block-item {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        padding: 15px;
+        margin-bottom: 10px;
+        transition: background-color 0.2s;
+    }
+
+    .time-block-item:hover {
+        background: #e9ecef;
+    }
+
+    .schedule-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+    }
+
+    .schedule-table th,
+    .schedule-table td {
+        padding: 12px;
+        text-align: left;
+        border-bottom: 1px solid #dee2e6;
+    }
+
+    .schedule-table th {
+        background: #f8f9fa;
+        font-weight: 600;
+        color: #495057;
+    }
+
+    .schedule-item {
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        padding: 20px;
+        margin-bottom: 15px;
+        transition: box-shadow 0.2s;
+    }
+
+    .schedule-item:hover {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .schedule-time {
+        font-weight: 600;
+        color: #667eea;
+        font-size: 14px;
+        margin-bottom: 5px;
+    }
+
+    .schedule-task {
+        font-weight: 500;
+        color: #2c3e50;
+        margin-bottom: 3px;
+    }
+
+    .schedule-description {
+        color: #6c757d;
+        font-size: 14px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+{% csrf_token %}
+
+<div class="daily-schedule-container">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="page-title">Daily Schedule</h1>
+                <div class="breadcrumb-nav">
+                    <a href="{% url 'dashboard:daily_routine' %}">← Back to Routine</a>
+                    <span>•</span>
+                    <a href="{% url 'dashboard:generate_schedule' %}">Generate Schedule</a>
+                </div>
+            </div>
+            <div>
+                <a href="{% url 'dashboard:generate_schedule' %}" class="btn-primary-desktop">
+                    Generate New Schedule
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="content-grid">
+        <!-- Main Schedule Panel -->
+        <div class="main-panel">
+            <h2 class="section-title">Today's Schedule - {{ today|date:"F d, Y" }}</h2>
+            
+            {% if today_schedule %}
+                <div class="schedule-items">
+                    {% for item in today_schedule %}
+                        <div class="schedule-item">
+                            <div class="schedule-time">{{ item.start_time|time:"H:i" }} - {{ item.end_time|time:"H:i" }}</div>
+                            <div class="schedule-task">{{ item.task.title }}</div>
+                            {% if item.task.description %}
+                                <div class="schedule-description">{{ item.task.description|truncatewords:20 }}</div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="schedule-status">
+                    <div class="empty-state-icon">📅</div>
+                    <div class="empty-state-title">No Schedule</div>
+                    <div class="empty-state-text">No tasks scheduled for today</div>
+                    <div class="empty-state-text">Generate a schedule to organize your day efficiently</div>
+                    <a href="{% url 'dashboard:generate_schedule' %}" class="btn-primary-desktop">
+                        Generate Today's Schedule
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Sidebar Panel -->
+        <div class="sidebar-panel">
+            <h3 class="section-title">Your Available Time Blocks</h3>
+            <p style="color: #6c757d; margin-bottom: 20px;">View your weekly availability schedule</p>
+            
+            {% if time_blocks %}
+                <div class="time-blocks-list">
+                    {% for block in time_blocks %}
+                        <div class="time-block-item">
+                            <strong>{{ block.day|title }}</strong><br>
+                            {{ block.start_time|time:"H:i" }} - {{ block.end_time|time:"H:i" }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="schedule-status">
+                    <div class="empty-state-icon" style="font-size: 32px;">⏰</div>
+                    <div class="empty-state-title" style="font-size: 16px;">No time blocks set up yet</div>
+                    <div class="empty-state-text" style="font-size: 14px;">Set up your weekly availability to start scheduling tasks efficiently.</div>
+                    <a href="{% url 'dashboard:time_blocks' %}" class="btn-secondary-desktop">
+                        Set Up Time Blocks
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Recent Schedules (Optional) -->
+    {% if recent_schedules %}
+    <div class="main-panel" style="margin-top: 30px;">
+        <h2 class="section-title">Recent Schedules</h2>
+        <table class="schedule-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Tasks</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for schedule in recent_schedules %}
+                <tr>
+                    <td>{{ schedule.date|date:"M d, Y" }}</td>
+                    <td>{{ schedule.tasks.count }} tasks</td>
+                    <td>
+                        {% if schedule.completed %}
+                            <span class="badge bg-success">Completed</span>
+                        {% else %}
+                            <span class="badge bg-warning">Pending</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{% url 'dashboard:view_schedule' schedule.date.year schedule.date.month schedule.date.day %}" 
+                           class="btn-secondary-desktop" style="font-size: 12px; padding: 6px 12px;">
+                            View Schedule
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+function markCompleted(taskId) {
+    fetch(`/dashboard/mark-task-completed/${taskId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Error marking task as completed');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error marking task as completed');
+    });
+}
+</script>
+{% endblock %}

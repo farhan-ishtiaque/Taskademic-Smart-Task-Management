@@ -75,7 +75,13 @@ class MoSCoWPriorityPlanner:
             
             now = timezone.now()
             time_diff = due_date - now
-            due_in_days = math.ceil(time_diff.total_seconds() / (24 * 3600))
+            
+            # Calculate days more accurately - same day should be 0 days
+            total_seconds = time_diff.total_seconds()
+            if total_seconds < 0:
+                due_in_days = math.floor(total_seconds / (24 * 3600))  # Negative for overdue
+            else:
+                due_in_days = math.floor(total_seconds / (24 * 3600))  # Use floor instead of ceil
         
         # General urgency ladder (baseline)
         if due_in_days is None:

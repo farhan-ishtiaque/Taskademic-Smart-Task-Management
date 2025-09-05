@@ -351,31 +351,64 @@ function analyticsBoard() {
                 this.priorityChart.destroy();
             }
 
-            const priorityLabels = Object.keys(this.analytics.priority_distribution);
-            const priorityData = Object.values(this.analytics.priority_distribution);
+            // Ensure all priority categories are shown
+            const allPriorities = ['must', 'should', 'could', 'wont'];
+            const priorityData = [];
             const priorityColors = {
-                'low': '#10B981',
-                'medium': '#F59E0B',
-                'high': '#F97316',
-                'urgent': '#DC2626'
+                'must': '#DC2626',     // Red for Must Have
+                'should': '#F59E0B',   // Orange for Should Have  
+                'could': '#10B981',    // Green for Could Have
+                'wont': '#6B7280'      // Gray for Won't Have
             };
+
+            // Build data ensuring all categories are included
+            allPriorities.forEach(priority => {
+                priorityData.push(this.analytics.priority_distribution[priority] || 0);
+            });
 
             this.priorityChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: priorityLabels.map(label => label.toUpperCase()),
+                    labels: allPriorities.map(label => label.toUpperCase()),
                     datasets: [{
                         data: priorityData,
-                        backgroundColor: priorityLabels.map(label => priorityColors[label] || '#6B7280')
+                        backgroundColor: allPriorities.map(label => priorityColors[label]),
+                        borderColor: allPriorities.map(label => priorityColors[label]),
+                        borderWidth: 1
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label.toLowerCase();
+                                    const value = context.raw;
+                                    const priorityNames = {
+                                        'must': 'Must Have',
+                                        'should': 'Should Have',
+                                        'could': 'Could Have',
+                                        'wont': "Won't Have"
+                                    };
+                                    return `${priorityNames[label]}: ${value} task${value !== 1 ? 's' : ''}`;
+                                }
+                            }
+                        }
+                    },
                     scales: {
                         y: {
                             beginAtZero: true,
-                            ticks: { stepSize: 1 }
+                            ticks: { 
+                                stepSize: 1,
+                                callback: function(value) {
+                                    return Number.isInteger(value) ? value : '';
+                                }
+                            }
                         }
                     },
                     plugins: {

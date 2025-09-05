@@ -135,17 +135,32 @@ def task_toggle(request, task_id):
                     'message': f'Task "{task.title}" completed! +10 points',
                     'remove_task': True  # Signal to remove from UI
                 })
+            else:
+                # Task was already completed
+                return JsonResponse({
+                    'success': True, 
+                    'message': f'Task "{task.title}" was already completed',
+                    'remove_task': False
+                })
         else:
             # Mark as incomplete
-            task.status = 'todo'
-            task.completed_at = None
-            task.save()
-            
-            return JsonResponse({
-                'success': True, 
-                'message': f'Task "{task.title}" marked as incomplete',
-                'remove_task': False
-            })
+            if task.status == 'done':
+                task.status = 'todo'
+                task.completed_at = None
+                task.save()
+                
+                return JsonResponse({
+                    'success': True, 
+                    'message': f'Task "{task.title}" marked as incomplete',
+                    'remove_task': False
+                })
+            else:
+                # Task was already incomplete
+                return JsonResponse({
+                    'success': True, 
+                    'message': f'Task "{task.title}" is already incomplete',
+                    'remove_task': False
+                })
             
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
@@ -307,12 +322,17 @@ class TaskViewSet(viewsets.ModelViewSet):
         """
         pk = self.kwargs.get('pk')
         if pk:
+            # First try to get the task by pk directly
             try:
-                # Get the task directly, ensuring user has access
-                task = Task.objects.filter(
-                    Q(user=self.request.user) | Q(team__members=self.request.user)
-                ).get(pk=pk)
-                return task
+                task = Task.objects.get(pk=pk)
+                # Check if user has access
+                if (task.user == self.request.user or 
+                    (task.team and self.request.user in task.team.members.all()) or
+                    task.assigned_to == self.request.user):
+                    return task
+                else:
+                    from django.http import Http404
+                    raise Http404("Task not found or access denied")
             except Task.DoesNotExist:
                 from django.http import Http404
                 raise Http404("Task not found or access denied")
@@ -373,6 +393,11 @@ class TaskViewSet(viewsets.ModelViewSet):
         if response.status_code == 200:
             # Check if task was moved to done - do this asynchronously
             new_status = request.data.get('status')
+            
+            # Send team notifications for status changes (if it's a team task)
+            if old_status != new_status and task.team:
+                self._send_team_task_notification(task, old_status, new_status, request.user)
+            
             if new_status == 'done' and old_status != 'done':
                 # Use threading to handle Google Calendar deletion in background
                 import threading
@@ -401,6 +426,11 @@ class TaskViewSet(viewsets.ModelViewSet):
         if response.status_code == 200:
             # Check if task was moved to done - do this asynchronously
             new_status = request.data.get('status')
+            
+            # Send team notifications for status changes (if it's a team task)
+            if old_status != new_status and task.team:
+                self._send_team_task_notification(task, old_status, new_status, request.user)
+            
             if new_status == 'done' and old_status != 'done':
                 # Use threading to handle Google Calendar deletion in background
                 import threading
@@ -436,12 +466,13 @@ class TaskViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['get'])
     def kanban_board_data(self, request):
-        """Get tasks organized by Kanban board columns"""
-        # Optimized query with minimal data needed for Kanban
+        """Get tasks organized by Kanban board columns (personal tasks only)"""
+        # Optimized query with minimal data needed for Kanban - PERSONAL TASKS ONLY
         all_tasks = Task.objects.filter(
-            Q(user=request.user) | Q(team__members=request.user),
+            user=request.user,  # Only personal tasks, not team tasks
+            team__isnull=True,  # Exclude team tasks
             status__in=['todo', 'in_progress', 'review', 'done']
-        ).distinct().select_related('user', 'assigned_to').only(
+        ).select_related('user', 'assigned_to').only(
             'id', 'title', 'description', 'status', 'priority', 'due_date', 
             'user_id', 'assigned_to_id', 'created_at'
         )
@@ -541,13 +572,19 @@ class TaskViewSet(viewsets.ModelViewSet):
             return Response({'error': 'No permission to change status'}, status=status.HTTP_403_FORBIDDEN)
         
         new_status = request.data.get('status')
+        
         if new_status not in ['todo', 'in_progress', 'review', 'done']:
             return Response({'error': 'Invalid status'}, status=status.HTTP_400_BAD_REQUEST)
         
+        old_status = task.status
         task.status = new_status
         if new_status == 'done' and not task.completed_at:
             task.completed_at = timezone.now()
         task.save()
+        
+        # Send team notifications for status changes (if it's a team task)
+        if old_status != new_status and task.team:
+            self._send_team_task_notification(task, old_status, new_status, request.user)
         
         return Response({
             'message': f'Task status changed to {new_status}',
@@ -556,8 +593,13 @@ class TaskViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['get'])
     def moscow_prioritized(self, request):
-        """Get tasks organized by MoSCoW priority"""
-        tasks = self.get_queryset().filter(status__in=['todo', 'in_progress'])
+        """Get tasks organized by MoSCoW priority (personal tasks only)"""
+        # Get only personal tasks, not team tasks
+        tasks = Task.objects.filter(
+            user=request.user,
+            team__isnull=True,  # Exclude team tasks
+            status__in=['todo', 'in_progress']
+        )
         
         data = {
             'must': tasks.filter(priority='must'),
@@ -576,9 +618,11 @@ class TaskViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['get'])
     def overdue_tasks(self, request):
-        """Get overdue tasks"""
+        """Get overdue tasks (personal tasks only)"""
         now = timezone.now()
-        overdue_tasks = self.get_queryset().filter(
+        overdue_tasks = Task.objects.filter(
+            user=request.user,
+            team__isnull=True,  # Exclude team tasks
             due_date__lt=now,
             status__in=['todo', 'in_progress']
         )
@@ -588,9 +632,11 @@ class TaskViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['get'])
     def today_tasks(self, request):
-        """Get tasks due today"""
+        """Get tasks due today (personal tasks only)"""
         today = timezone.now().date()
-        today_tasks = self.get_queryset().filter(
+        today_tasks = Task.objects.filter(
+            user=request.user,
+            team__isnull=True,  # Exclude team tasks
             due_date__date=today
         )
         
@@ -626,6 +672,46 @@ class TaskViewSet(viewsets.ModelViewSet):
         }
         
         return Response(data)
+
+    def _send_team_task_notification(self, task, old_status, new_status, moved_by_user):
+        """Send notifications to team members when a task status changes"""
+        from notifications.models import Notification
+        from notifications.models import NotificationPreferences
+        
+        # Get all team members except the user who moved the task
+        team_members = task.team.members.exclude(id=moved_by_user.id)
+        
+        # Status display mapping
+        status_display = {
+            'todo': 'To Do',
+            'in_progress': 'In Progress',
+            'review': 'Review',
+            'done': 'Done'
+        }
+        
+        old_status_display = status_display.get(old_status, old_status.title())
+        new_status_display = status_display.get(new_status, new_status.title())
+        
+        # Create notifications for each team member (if they have team updates enabled)
+        for member in team_members:
+            # Check if user has team update notifications enabled
+            try:
+                preferences = NotificationPreferences.objects.get(user=member)
+                if not preferences.team_updates:
+                    continue  # Skip if user has team updates disabled
+            except NotificationPreferences.DoesNotExist:
+                # Default is enabled, so send notification
+                pass
+            
+            # Create notification
+            Notification.objects.create(
+                user=member,
+                title=f'Team Task Moved: {task.title}',
+                message=f'{moved_by_user.get_full_name() or moved_by_user.username} moved "{task.title}" from {old_status_display} to {new_status_display}.',
+                notification_type='team_task_update',
+                team_id=task.team.id if task.team else None,
+                is_read=False
+            )
 
 
 class TimeBlockViewSet(viewsets.ModelViewSet):
@@ -768,3 +854,32 @@ def get_team_members(request, team_id):
         
     except Team.DoesNotExist:
         return Response({'error': 'Team not found'}, status=status.HTTP_404_NOT_FOUND)
+
+
+@login_required
+def get_user_tasks_api(request):
+    """API endpoint to get user's available tasks for scheduling"""
+    if request.method == 'GET':
+        tasks = Task.objects.filter(
+            user=request.user,
+            team__isnull=True,  # Personal tasks only
+            status__in=['todo', 'in_progress']  # Active tasks only
+        ).order_by('-priority', 'due_date')[:20]  # Limit to 20 most relevant tasks
+        
+        task_data = []
+        for task in tasks:
+            task_data.append({
+                'id': task.id,
+                'title': task.title,
+                'description': task.description[:100] if task.description else '',
+                'priority': task.get_priority_display(),
+                'due_date': task.due_date.strftime('%Y-%m-%d %H:%M') if task.due_date else None,
+                'status': task.get_status_display()
+            })
+        
+        return JsonResponse({
+            'success': True,
+            'tasks': task_data
+        })
+    
+    return JsonResponse({'success': False, 'error': 'Invalid request method'}, status=405)

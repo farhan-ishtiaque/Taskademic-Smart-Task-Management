@@ -139,7 +139,7 @@ def team_invite_email(request, team_id):
                 # Check if there's already a pending invite
                 existing_invite = TeamInvite.objects.filter(
                     team=team,
-                    email=email,
+                    email__iexact=email,  # Case-insensitive email lookup
                     is_accepted=False,
                     expires_at__gt=timezone.now()
                 ).first()
@@ -160,7 +160,7 @@ def team_invite_email(request, team_id):
                 
                 # Check if user is registered on the website
                 try:
-                    registered_user = User.objects.filter(email=email).first()
+                    registered_user = User.objects.filter(email__iexact=email).first()  # Case-insensitive lookup
                     if registered_user:
                         print(f"DEBUG: User {email} is registered, sending notification")
                         # User is registered - send in-app notification

@@ -127,7 +127,7 @@ The Taskademic Team
         if not self.is_valid:
             return False, "Invitation has expired or already been accepted"
         
-        if user.email != self.email:
+        if user.email.lower() != self.email.lower():  # Case-insensitive comparison
             return False, "Email doesn't match the invitation"
         
         # Add user to team

@@ -8,6 +8,7 @@ from django.views.decorators.http import require_http_methods
 from datetime import timedelta, datetime, date
 from tasks.models import Task, TimeBlock
 from .daily_routine import daily_routine
+from priority_analyzer.signals import MoSCoWCacheService
 from .moscow_matrix import moscow_matrix
 from .focus_timer import focus_timer
 from .models import ScheduledTask, DailySchedule
@@ -20,32 +21,34 @@ def dashboard_home(request):
     """Main dashboard view"""
     user = request.user
     
-    # Get task statistics
-    user_tasks = Task.objects.filter(user=user)
-    assigned_tasks = Task.objects.filter(assigned_to=user)  # Tasks assigned to current user
+    # Get task statistics - PERSONAL TASKS ONLY (exclude team tasks)
+    user_tasks = Task.objects.filter(user=user, team__isnull=True)
     
-    # Recent tasks (last 7 days) - both owned and assigned
+    # Tasks assigned to me (includes both personal and team tasks assigned to user)
+    assigned_tasks = Task.objects.filter(assigned_to=user)
+    
+    # Recent tasks (last 7 days) - personal tasks + tasks assigned to me
     recent_tasks = Task.objects.filter(
-        Q(user=user) | Q(assigned_to=user),
+        Q(user=user, team__isnull=True) | Q(assigned_to=user),
         created_at__gte=timezone.now() - timedelta(days=7)
     ).order_by('-created_at')[:5]
     
-    # Upcoming tasks (next 7 days) - both owned and assigned
+    # Upcoming tasks (next 7 days) - personal tasks + tasks assigned to me
     upcoming_tasks = Task.objects.filter(
-        Q(user=user) | Q(assigned_to=user),
+        Q(user=user, team__isnull=True) | Q(assigned_to=user),
         due_date__gte=timezone.now(),
         due_date__lte=timezone.now() + timedelta(days=7),
         status__in=['todo', 'in_progress']
     ).order_by('due_date')[:5]
     
-    # Overdue tasks - both owned and assigned
+    # Overdue tasks - personal tasks + tasks assigned to me
     overdue_tasks = Task.objects.filter(
-        Q(user=user) | Q(assigned_to=user),
+        Q(user=user, team__isnull=True) | Q(assigned_to=user),
         due_date__lt=timezone.now(),
         status__in=['todo', 'in_progress']
     ).order_by('due_date')[:5]
     
-    # Task completion rate
+    # Task completion rate (based on personal tasks only)
     total_tasks = user_tasks.count()
     completed_tasks = user_tasks.filter(status='done').count()
     completion_rate = (completed_tasks / total_tasks * 100) if total_tasks > 0 else 0
@@ -53,7 +56,7 @@ def dashboard_home(request):
     # Tasks by status
     task_stats = {
         'total': total_tasks,
-        'assigned_to_me': assigned_tasks.count(),
+        'assigned_to_me': assigned_tasks.filter(status__in=['todo', 'in_progress', 'review']).count(),  # Active assigned tasks (including review)
         'completed': completed_tasks,
         'in_progress': user_tasks.filter(status='in_progress').count(),
         'todo': user_tasks.filter(status='todo').count(),
@@ -72,7 +75,7 @@ def dashboard_home(request):
         'recent_tasks': recent_tasks,
         'upcoming_tasks': upcoming_tasks,
         'overdue_tasks': overdue_tasks,
-        'assigned_tasks': assigned_tasks.filter(status__in=['todo', 'in_progress'])[:5],  # Active assigned tasks
+        'assigned_tasks': assigned_tasks.filter(status__in=['todo', 'in_progress', 'review'])[:5],  # Active assigned tasks (including review)
     }
     
     return render(request, 'dashboard/home.html', context)
@@ -244,9 +247,37 @@ def manage_time_blocks(request):
             'date': day_date,
             'time_blocks': day_blocks
         })
+
+    # Prepare time_blocks_by_day for template
+    time_blocks_by_day = {}
+    day_hours = {}
+    
+    for i, day_name in enumerate(days_names):
+        day_blocks = time_blocks.filter(day_of_week=i)
+        time_blocks_by_day[day_name] = list(day_blocks)
+        
+        # Calculate total hours for this day
+        total_hours = 0
+        for block in day_blocks:
+            # Calculate duration in hours
+            start_datetime = datetime.combine(datetime.today(), block.start_time)
+            end_datetime = datetime.combine(datetime.today(), block.end_time)
+            
+            # Handle overnight blocks (end time next day)
+            if end_datetime <= start_datetime:
+                end_datetime += timedelta(days=1)
+            
+            duration = end_datetime - start_datetime
+            total_hours += duration.total_seconds() / 3600  # Convert to hours
+        
+        day_hours[day_name] = round(total_hours, 1)
     
     context = {
         'days_of_week': days_of_week,
+        'time_blocks_by_day': time_blocks_by_day,
+        'time_blocks': time_blocks,  # Add this for template condition
+        'day_hours': day_hours,  # Add calculated hours
+
     }
     
     return render(request, 'dashboard/time_blocks.html', context)
@@ -447,8 +478,25 @@ def view_schedule(request, year, month, day):
     try:
         target_date = datetime(year, month, day).date()
         
-        # Get the schedule
-        schedule = get_object_or_404(DailySchedule, user=request.user, date=target_date)
+
+        # Try to get the schedule, but don't fail if it doesn't exist
+        try:
+            schedule = DailySchedule.objects.get(user=request.user, date=target_date)
+        except DailySchedule.DoesNotExist:
+            # Create a default schedule object with empty values
+            schedule = DailySchedule(
+                user=request.user,
+                date=target_date,
+                total_available_minutes=0,
+                total_scheduled_minutes=0,
+                total_break_minutes=0,
+                tasks_count=0,
+                moscow_must_count=0,
+                moscow_should_count=0,
+                moscow_could_count=0,
+                ai_response='{}',
+            )
+
         
         # Get scheduled tasks
         scheduled_tasks = ScheduledTask.objects.filter(
@@ -456,6 +504,25 @@ def view_schedule(request, year, month, day):
             scheduled_date=target_date
         ).order_by('start_time')
         
+
+        # Build schedule items from scheduled tasks
+        schedule_items = []
+        for scheduled_task in scheduled_tasks:
+            item = {
+                'start_time': scheduled_task.start_time,
+                'end_time': scheduled_task.end_time,
+                'duration_minutes': scheduled_task.estimated_duration_minutes,
+                'task': scheduled_task.task,
+                'pomodoro_schedule': f"{scheduled_task.pomodoro_sessions} sessions, {scheduled_task.break_minutes}min breaks",
+                'title': scheduled_task.task.title if scheduled_task.task else "Scheduled Item",
+                'description': scheduled_task.task.description if scheduled_task.task else "",
+            }
+            schedule_items.append(item)
+        
+        # Add schedule_items to schedule object
+        schedule.schedule_items = schedule_items
+        
+
         # Get time blocks for this day
         day_number = target_date.weekday()  # Monday=0, Sunday=6
         time_blocks = TimeBlock.objects.filter(
@@ -464,12 +531,57 @@ def view_schedule(request, year, month, day):
             is_available=True
         ).order_by('start_time')
         
+
+        # Get incomplete tasks to show what could be scheduled
+        available_tasks = Task.objects.filter(
+            user=request.user,
+            status__in=['todo', 'in_progress', 'review']  # All non-completed statuses
+        ).order_by('priority', 'due_date')
+        
+        # Apply MoSCoW analysis to tasks
+        result = MoSCoWCacheService.get_moscow_analysis(request.user)
+        
+        # Create task details mapping
+        task_details = {}
+        for log_entry in result['decision_log']:
+            task_id = int(log_entry['id'])
+            task_details[task_id] = {
+                'category': log_entry['final'],
+                'score': log_entry['score'],
+                'task_type': log_entry['type'],
+                'importance': log_entry['importance'],
+                'urgency': log_entry['urgency'],
+                'due_in_days': log_entry['due_in_days'],
+                'reasoning': log_entry['matched_rule']
+            }
+        
+        # Apply MoSCoW analysis to available tasks
+        available_tasks_list = list(available_tasks)
+        for task in available_tasks_list:
+            details = task_details.get(task.id, {})
+            task.moscow_category = details.get('category', 'should')
+            task.moscow_score = details.get('score', 30)
+            task.moscow_task_type = details.get('task_type', 'Regular coursework')
+            task.moscow_reasoning = details.get('reasoning', 'Default classification')
+            task.moscow_due_in_days = details.get('due_in_days')
+        
+        # Apply MoSCoW analysis to scheduled tasks
+        for scheduled_task in scheduled_tasks:
+            if scheduled_task.task:
+                details = task_details.get(scheduled_task.task.id, {})
+                scheduled_task.task.moscow_category = details.get('category', 'should')
+                scheduled_task.task.moscow_score = details.get('score', 30)
+                scheduled_task.task.moscow_task_type = details.get('task_type', 'Regular coursework')
+                scheduled_task.task.moscow_reasoning = details.get('reasoning', 'Default classification')
+                scheduled_task.task.moscow_due_in_days = details.get('due_in_days')
+        
         # Parse AI response
         ai_analysis = None
         try:
-            ai_analysis = json.loads(schedule.ai_response)
+            ai_analysis = json.loads(schedule.ai_response) if hasattr(schedule, 'ai_response') else {}
         except:
-            pass
+            ai_analysis = {}
+
         
         context = {
             'schedule': schedule,
@@ -477,6 +589,11 @@ def view_schedule(request, year, month, day):
             'time_blocks': time_blocks,
             'target_date': target_date,
             'ai_analysis': ai_analysis,
+
+            'available_tasks': available_tasks_list,
+            'has_time_blocks': time_blocks.exists(),
+            'has_tasks': len(available_tasks_list) > 0,
+
         }
         
         return render(request, 'dashboard/view_schedule.html', context)
@@ -619,23 +736,42 @@ def create_custom_schedule(request):
             defaults={
                 'tasks_count': len(task_ids),
                 'total_scheduled_minutes': 0,
+                'total_available_minutes': 0,
                 'total_break_minutes': 0,
                 'moscow_must_count': 0,
                 'moscow_should_count': 0,
                 'moscow_could_count': 0,
                 'moscow_wont_count': 0,
                 'generation_method': 'custom',
-                'ai_reasoning': f'Custom schedule: {schedule_title}'
+                'ai_reasoning': f'Custom schedule: {schedule_title}',
+                'ai_prompt_used': f'Custom schedule created: {schedule_title}',
+                'ai_response': '{"type": "custom", "method": "manual"}'
+
             }
         )
         
         # Clear existing scheduled tasks for this date
-        ScheduledTask.objects.filter(schedule=schedule).delete()
+
+        ScheduledTask.objects.filter(
+            user=request.user,
+            scheduled_date=target_date
+        ).delete()
+        
+        # Get or create a default time block for custom schedules
+        from tasks.models import TimeBlock
+        default_time_block, _ = TimeBlock.objects.get_or_create(
+            user=request.user,
+            day_of_week=target_date.weekday(),
+            start_time=timezone.now().time().replace(hour=9, minute=0, second=0, microsecond=0),
+            end_time=timezone.now().time().replace(hour=17, minute=0, second=0, microsecond=0),
+            defaults={
+                'is_available': True,
+                'description': 'Default time block for custom schedules'
+            }
+        )
         
         # Create scheduled tasks with simple timing
-        current_time = timezone.now().replace(hour=9, minute=0, second=0, microsecond=0)  # Start at 9 AM
-        if target_date != date.today():
-            current_time = current_time.replace(year=target_date.year, month=target_date.month, day=target_date.day)
+        current_time = timezone.now().replace(hour=9, minute=0, second=0, microsecond=0).time()
         
         total_minutes = 0
         moscow_counts = {'must': 0, 'should': 0, 'could': 0, 'wont': 0}
@@ -645,28 +781,43 @@ def create_custom_schedule(request):
             estimated_minutes = 60  # Default 1 hour
             if task.description and len(task.description) > 100:
                 estimated_minutes = 90  # Longer for complex tasks
-            elif task.priority == 'must':
+
+            elif hasattr(task, 'priority') and task.priority == 'high':
                 estimated_minutes = 75  # More time for high priority
+            
+            # Calculate end time
+            start_hour = current_time.hour
+            start_minute = current_time.minute
+            end_minutes_total = start_hour * 60 + start_minute + estimated_minutes
+            end_hour = (end_minutes_total // 60) % 24
+            end_minute = end_minutes_total % 60
+            end_time = timezone.now().time().replace(hour=end_hour, minute=end_minute, second=0, microsecond=0)
             
             # Create scheduled task
             scheduled_task = ScheduledTask.objects.create(
-                schedule=schedule,
+                user=request.user,
                 task=task,
+                time_block=default_time_block,
+                scheduled_date=target_date,
                 start_time=current_time,
-                end_time=current_time + timedelta(minutes=estimated_minutes),
+                end_time=end_time,
                 estimated_duration_minutes=estimated_minutes,
                 pomodoro_sessions=max(1, estimated_minutes // 25),  # Roughly 25min per session
                 break_minutes=5,  # Standard 5min break
-                ai_reasoning=f'Custom schedule item #{i+1}',
-                moscow_priority=task.priority or 'could'
+                ai_reasoning=f'Custom schedule item #{i+1}: {schedule_title}',
+                priority_score=50.0  # Default priority score
             )
             
-            # Update counts
+            # Update counts (simplified priority counting)
             total_minutes += estimated_minutes
-            moscow_counts[task.priority or 'could'] += 1
+            moscow_counts['should'] += 1  # Default to 'should' for custom schedules
             
             # Move to next time slot (with 15min buffer)
-            current_time += timedelta(minutes=estimated_minutes + 15)
+            next_minutes_total = start_hour * 60 + start_minute + estimated_minutes + 15
+            next_hour = (next_minutes_total // 60) % 24
+            next_minute = next_minutes_total % 60
+            current_time = timezone.now().time().replace(hour=next_hour, minute=next_minute, second=0, microsecond=0)
+
         
         # Update schedule totals
         schedule.tasks_count = len(task_ids)
@@ -676,6 +827,8 @@ def create_custom_schedule(request):
         schedule.moscow_should_count = moscow_counts['should']
         schedule.moscow_could_count = moscow_counts['could']
         schedule.moscow_wont_count = moscow_counts['wont']
+        schedule.total_available_minutes = total_minutes + schedule.total_break_minutes
+
         schedule.save()
         
         # Generate schedule URL

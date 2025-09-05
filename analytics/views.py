@@ -17,15 +17,16 @@ def analytics_dashboard(request):
     # Get basic analytics data for initial page load
     user = request.user
     
-    # Basic stats
-    total_tasks = Task.objects.filter(user=user).count()
-    completed_tasks = Task.objects.filter(user=user, status='done').count()
-    pending_tasks = Task.objects.filter(user=user, status__in=['todo', 'in_progress']).count()
+    # Basic stats - personal tasks only
+    total_tasks = Task.objects.filter(user=user, team__isnull=True).count()
+    completed_tasks = Task.objects.filter(user=user, team__isnull=True, status='done').count()
+    pending_tasks = Task.objects.filter(user=user, team__isnull=True, status__in=['todo', 'in_progress']).count()
     
-    # Calculate overdue tasks
+    # Calculate overdue tasks - personal tasks only
     now = timezone.now()
     overdue_tasks = Task.objects.filter(
         user=user,
+        team__isnull=True,  # Exclude team tasks
         due_date__lt=now,
         status__in=['todo', 'in_progress']
     ).count()
@@ -318,12 +319,22 @@ def analytics_api(request):
         if count > 0:
             status_distribution[status] = count
     
-    # Priority distribution
-    priority_distribution = {}
-    for priority, label in Task.PRIORITY_CHOICES:
-        count = Task.objects.filter(user=user, priority=priority).count()
-        if count > 0:
-            priority_distribution[priority] = count
+    # Priority distribution - use MoSCoW priorities with error handling
+    priority_distribution = {'must': 0, 'should': 0, 'could': 0, 'wont': 0}
+    
+    # Get user tasks to calculate MoSCoW distribution
+    user_tasks = Task.objects.filter(user=user)
+    for task in user_tasks:
+        try:
+            moscow_priority = task.moscow_priority  # Use the property that calculates MoSCoW
+            if moscow_priority in priority_distribution:
+                priority_distribution[moscow_priority] += 1
+            else:
+                # Fallback to 'could' for any unexpected values
+                priority_distribution['could'] += 1
+        except Exception:
+            # If there's any error, categorize as 'could'
+            priority_distribution['could'] += 1
     
     # Category distribution
     category_distribution = Task.objects.filter(user=user).values(
