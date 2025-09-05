@@ -131,11 +131,11 @@
                                     </span>
                                 {% else %}
                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
-                                        {% if task.priority == 'urgent' %}bg-red-100 text-red-800
-                                        {% elif task.priority == 'high' %}bg-orange-100 text-orange-800
-                                        {% elif task.priority == 'medium' %}bg-yellow-100 text-yellow-800
-                                        {% else %}bg-green-100 text-green-800{% endif %}">
-                                        {{ task.get_priority_display }}
+                                        {% if task.moscow_category == 'must' %}bg-red-100 text-red-800
+                                        {% elif task.moscow_category == 'should' %}bg-orange-100 text-orange-800
+                                        {% elif task.moscow_category == 'could' %}bg-green-100 text-green-800
+                                        {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                        {{ task.moscow_category|title }}
                                     </span>
                                 {% endif %}
                             </div>

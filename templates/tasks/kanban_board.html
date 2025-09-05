@@ -250,7 +250,9 @@
                         <div class="task-description" x-show="task.description" x-text="task.description"></div>
                         
                         <div class="task-meta">
-                            <span class="priority-badge" :class="'priority-' + task.priority" x-text="task.priority.toUpperCase()"></span>
+                            <span class="priority-badge" 
+                                  :class="getMoscowClass(task.moscow_category)" 
+                                  x-text="task.moscow_category || 'Could Have'"></span>
                             <div class="task-due-date" x-show="task.due_date">
                                 <i class="fas fa-calendar-alt"></i>
                                 <span x-text="formatDate(task.due_date)"></span>
@@ -297,7 +299,9 @@
                         <div class="task-description" x-show="task.description" x-text="task.description"></div>
                         
                         <div class="task-meta">
-                            <span class="priority-badge" :class="'priority-' + task.priority" x-text="task.priority.toUpperCase()"></span>
+                            <span class="priority-badge" 
+                                  :class="getMoscowClass(task.moscow_category)" 
+                                  x-text="task.moscow_category || 'Could Have'"></span>
                             <div class="task-due-date" x-show="task.due_date">
                                 <i class="fas fa-calendar-alt"></i>
                                 <span x-text="formatDate(task.due_date)"></span>
@@ -344,7 +348,9 @@
                         <div class="task-description" x-show="task.description" x-text="task.description"></div>
                         
                         <div class="task-meta">
-                            <span class="priority-badge" :class="'priority-' + task.priority" x-text="task.priority.toUpperCase()"></span>
+                            <span class="priority-badge" 
+                                  :class="getMoscowClass(task.moscow_category)" 
+                                  x-text="task.moscow_category || 'Could Have'"></span>
                             <div class="task-due-date" x-show="task.due_date">
                                 <i class="fas fa-calendar-alt"></i>
                                 <span x-text="formatDate(task.due_date)"></span>
@@ -591,6 +597,22 @@ function kanbanBoard() {
                 });
             } catch (error) {
                 return '';
+            }
+        },
+
+        getMoscowClass(moscowCategory) {
+            const category = moscowCategory || 'Could Have';
+            switch (category) {
+                case 'Must Have':
+                    return 'priority-must-have bg-red-100 text-red-800';
+                case 'Should Have':
+                    return 'priority-should-have bg-orange-100 text-orange-800';
+                case 'Could Have':
+                    return 'priority-could-have bg-blue-100 text-blue-800';
+                case "Won't Have":
+                    return 'priority-wont-have bg-gray-100 text-gray-800';
+                default:
+                    return 'priority-could-have bg-blue-100 text-blue-800';
             }
         },
 

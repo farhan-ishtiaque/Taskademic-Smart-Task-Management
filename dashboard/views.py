@@ -48,6 +48,40 @@ def dashboard_home(request):
         status__in=['todo', 'in_progress']
     ).order_by('due_date')[:5]
     
+    # Get MoSCoW analysis for tasks
+    from priority_analyzer.signals import MoSCoWCacheService
+    result = MoSCoWCacheService.get_moscow_analysis(request.user)
+    
+    # Create task details mapping
+    task_details = {}
+    for log_entry in result['decision_log']:
+        task_id = int(log_entry['id'])
+        task_details[task_id] = {
+            'category': log_entry['final'],
+            'score': log_entry['score'],
+            'task_type': log_entry['type'],
+            'importance': log_entry['importance'],
+            'urgency': log_entry['urgency'],
+            'due_in_days': log_entry['due_in_days'],
+            'reasoning': log_entry['matched_rule']
+        }
+    
+    # Apply MoSCoW analysis to task lists
+    def apply_moscow_analysis(task_list):
+        for task in task_list:
+            details = task_details.get(task.id, {})
+            task.moscow_category = details.get('category', 'should')
+            task.moscow_score = details.get('score', 30)
+            task.moscow_task_type = details.get('task_type', 'Regular coursework')
+            task.moscow_reasoning = details.get('reasoning', 'Default classification')
+            task.moscow_due_in_days = details.get('due_in_days')
+        return task_list
+    
+    recent_tasks = apply_moscow_analysis(list(recent_tasks))
+    upcoming_tasks = apply_moscow_analysis(list(upcoming_tasks))
+    overdue_tasks = apply_moscow_analysis(list(overdue_tasks))
+    assigned_tasks_list = apply_moscow_analysis(list(assigned_tasks.filter(status__in=['todo', 'in_progress', 'review'])[:5]))
+    
     # Task completion rate (based on personal tasks only)
     total_tasks = user_tasks.count()
     completed_tasks = user_tasks.filter(status='done').count()
@@ -60,22 +94,24 @@ def dashboard_home(request):
         'completed': completed_tasks,
         'in_progress': user_tasks.filter(status='in_progress').count(),
         'todo': user_tasks.filter(status='todo').count(),
-        'overdue': overdue_tasks.count(),
+        'overdue': len(overdue_tasks),  # Fixed: use len() for list instead of count()
         'completion_rate': round(completion_rate, 1)
     }
     
-    # Tasks by priority
-    priority_stats = dict(
-        user_tasks.values('priority').annotate(count=Count('id')).values_list('priority', 'count')
-    )
+    # Tasks by priority (now using MoSCoW categories)
+    moscow_stats = {'must': 0, 'should': 0, 'could': 0, 'wont': 0}
+    for task_id, details in task_details.items():
+        if Task.objects.filter(id=task_id, user=user, team__isnull=True).exists():
+            category = details.get('category', 'should')
+            moscow_stats[category] = moscow_stats.get(category, 0) + 1
     
     context = {
         'task_stats': task_stats,
-        'priority_stats': priority_stats,
+        'priority_stats': moscow_stats,  # Now using MoSCoW categories
         'recent_tasks': recent_tasks,
         'upcoming_tasks': upcoming_tasks,
         'overdue_tasks': overdue_tasks,
-        'assigned_tasks': assigned_tasks.filter(status__in=['todo', 'in_progress', 'review'])[:5],  # Active assigned tasks (including review)
+        'assigned_tasks': assigned_tasks_list,
     }
     
     return render(request, 'dashboard/home.html', context)
@@ -761,6 +797,19 @@ def create_custom_schedule(request):
         
         # Create scheduled tasks with simple timing
         current_time = timezone.now().replace(hour=9, minute=0, second=0, microsecond=0).time()
+        
+        # Get or create a default time block for custom schedules
+        from tasks.models import TimeBlock
+        default_time_block, _ = TimeBlock.objects.get_or_create(
+            user=request.user,
+            day_of_week=target_date.weekday(),
+            start_time=timezone.now().time().replace(hour=9, minute=0, second=0, microsecond=0),
+            end_time=timezone.now().time().replace(hour=17, minute=0, second=0, microsecond=0),
+            defaults={
+                'is_available': True,
+                'description': 'Default time block for custom schedules'
+            }
+        )
         
         total_minutes = 0
         moscow_counts = {'must': 0, 'should': 0, 'could': 0, 'wont': 0}
