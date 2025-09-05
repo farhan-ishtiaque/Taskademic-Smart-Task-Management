@@ -860,22 +860,56 @@ def get_team_members(request, team_id):
 def get_user_tasks_api(request):
     """API endpoint to get user's available tasks for scheduling"""
     if request.method == 'GET':
+        from django.db.models import Case, When, IntegerField
+        from priority_analyzer.signals import MoSCoWCacheService
+        
+        # Get tasks first
         tasks = Task.objects.filter(
             user=request.user,
             team__isnull=True,  # Personal tasks only
             status__in=['todo', 'in_progress']  # Active tasks only
-        ).order_by('-priority', 'due_date')[:20]  # Limit to 20 most relevant tasks
+        )[:20]  # Limit to 20 most relevant tasks
         
+        # Get MoSCoW analysis for these tasks
+        result = MoSCoWCacheService.get_moscow_analysis(request.user)
+        
+        # Create task details mapping from MoSCoW analysis
+        task_details = {}
+        for log_entry in result['decision_log']:
+            task_id = int(log_entry['id'])
+            task_details[task_id] = {
+                'category': log_entry['final'],
+                'score': log_entry['score'],
+                'task_type': log_entry['type'],
+                'importance': log_entry['importance'],
+                'urgency': log_entry['urgency'],
+                'due_in_days': log_entry['due_in_days'],
+                'reasoning': log_entry['matched_rule']
+            }
+        
+        # Apply MoSCoW analysis and prepare task data
         task_data = []
         for task in tasks:
+            details = task_details.get(task.id, {})
+            moscow_category = details.get('category', 'should')
+            
+            # Add moscow category to task for ordering
+            task.moscow_category = moscow_category
+            
             task_data.append({
                 'id': task.id,
                 'title': task.title,
                 'description': task.description[:100] if task.description else '',
-                'priority': task.get_priority_display(),
+                'priority': moscow_category.title(),  # Use MoSCoW category instead of basic priority
+                'original_priority': task.get_priority_display(),  # Keep original for reference
                 'due_date': task.due_date.strftime('%Y-%m-%d %H:%M') if task.due_date else None,
-                'status': task.get_status_display()
+                'status': task.get_status_display(),
+                'moscow_score': details.get('score', 30)
             })
+        
+        # Sort by MoSCoW category priority (Must=4, Should=3, Could=2, Won't=1)
+        priority_order = {'must': 4, 'should': 3, 'could': 2, 'wont': 1}
+        task_data.sort(key=lambda x: priority_order.get(x['priority'].lower(), 0), reverse=True)
         
         return JsonResponse({
             'success': True,

@@ -428,9 +428,21 @@
     <!-- Page Header -->
     <div class="page-header">
         <div>
-            <h1 class="page-title">Schedule for {{ target_date|date:"F d, Y" }}</h1>
-            <p class="page-subtitle">Optimized daily task schedule with modern design</p>
-
+            <h1 class="page-title">
+                {% if actual_schedule_type == 'ai' %}
+                    🤖 AI Generated Schedule
+                {% else %}
+                    📅 Custom Schedule
+                {% endif %}
+                for {{ target_date|date:"F d, Y" }}
+            </h1>
+            <p class="page-subtitle">
+                {% if actual_schedule_type == 'ai' %}
+                    AI-optimized daily task schedule with smart time management
+                {% else %}
+                    Your manually crafted daily task schedule
+                {% endif %}
+            </p>
         </div>
     </div>
 
