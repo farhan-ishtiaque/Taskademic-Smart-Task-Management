@@ -363,7 +363,9 @@
             <div class="mb-6">
                 <label class="block text-sm font-medium text-gray-700 mb-2">Select Tasks to Schedule</label>
                 <div id="customTasksList" class="space-y-2 max-h-48 overflow-y-auto border border-gray-200 rounded-lg p-3">
+
                     <p class="text-gray-500 text-sm">Tasks will be loaded dynamically. <a href="{% url 'tasks:create' %}" class="text-green-600 hover:text-green-800">Create some tasks first</a> if you haven't already.</p>
+
                 </div>
             </div>
             
@@ -398,6 +400,7 @@ function openCustomScheduleModal() {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     document.getElementById('customScheduleDate').value = tomorrow.toISOString().split('T')[0];
+
     
     // Load available tasks
     loadAvailableTasks();
@@ -432,6 +435,7 @@ function loadAvailableTasks() {
         console.error('Error loading tasks:', error);
         tasksList.innerHTML = '<p class="text-red-500 text-sm">Error loading tasks. Please try again.</p>';
     });
+
 }
 
 function closeCustomScheduleModal() {
@@ -508,6 +512,7 @@ document.getElementById('customScheduleForm').addEventListener('submit', functio
     
     // Create custom schedule (simplified version)
     fetch('/dashboard/custom-schedule/', {
+
         method: 'POST',
         headers: {
             'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || '',

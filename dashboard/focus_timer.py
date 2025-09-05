@@ -16,9 +16,11 @@ def focus_timer(request):
     # Get today's date
     today = timezone.now().date()
     
+
     # First, try to get today's scheduled tasks (from AI Scheduler or Custom Scheduler)
     # Exclude completed tasks from the focus timer
     scheduled_tasks = ScheduledTask.objects.filter(
+
         user=request.user,
         scheduled_date=today,
         task__status__in=['todo', 'in_progress', 'review']  # Exclude completed tasks
@@ -30,7 +32,7 @@ def focus_timer(request):
         daily_schedule = DailySchedule.objects.get(user=request.user, date=today)
     except DailySchedule.DoesNotExist:
         pass
-    
+
     # Apply MoSCoW analysis to scheduled tasks
     if scheduled_tasks.exists():
         result = MoSCoWCacheService.get_moscow_analysis(request.user)
@@ -106,6 +108,7 @@ def focus_timer(request):
             'today': today,
             'all_tasks_count': len(user_tasks),
         }
+
     
     return render(request, 'dashboard/focus_timer.html', context)
 
