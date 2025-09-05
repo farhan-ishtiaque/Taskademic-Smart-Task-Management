@@ -818,7 +818,24 @@ def create_custom_schedule(request):
                 'is_available': True
             }
         )
+
+        # Create scheduled tasks with simple timing
+        current_time = timezone.now().replace(hour=9, minute=0, second=0, microsecond=0).time()
         
+        # Get or create a default time block for custom schedules
+        from tasks.models import TimeBlock
+        default_time_block, _ = TimeBlock.objects.get_or_create(
+            user=request.user,
+            day_of_week=target_date.weekday(),
+            start_time=timezone.now().time().replace(hour=9, minute=0, second=0, microsecond=0),
+            end_time=timezone.now().time().replace(hour=17, minute=0, second=0, microsecond=0),
+            defaults={
+                'is_available': True,
+                'description': 'Default time block for custom schedules'
+            }
+        )
+        
+
         total_minutes = 0
         moscow_counts = {'must': 0, 'should': 0, 'could': 0, 'wont': 0}
         

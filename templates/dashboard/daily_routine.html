@@ -350,6 +350,7 @@
         </div>
         
         <form id="customScheduleForm">
+
             <div class="mb-6">
                 <label for="customScheduleDate" class="block text-sm font-medium text-gray-700 mb-2">Select Date</label>
                 <input type="date" id="customScheduleDate" name="target_date" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500" required>
@@ -358,22 +359,8 @@
             <div class="mb-6">
                 <label class="block text-sm font-medium text-gray-700 mb-2">Select Tasks and Set Schedule</label>
                 <div id="customTasksList" class="space-y-3 max-h-96 overflow-y-auto border border-gray-200 rounded-lg p-3">
+
                     <p class="text-gray-500 text-sm">Tasks will be loaded dynamically. <a href="{% url 'tasks:create' %}" class="text-green-600 hover:text-green-800">Create some tasks first</a> if you haven't already.</p>
-                </div>
-            </div>
-            
-            <div class="mb-6">
-                <h4 class="text-sm font-medium text-gray-700 mb-3">Schedule Options</h4>
-                <div class="space-y-3">
-                    <div class="flex items-center">
-                        <input type="radio" id="simpleSchedule" name="scheduleType" value="simple" class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300" checked>
-                        <label for="simpleSchedule" class="ml-2 text-sm text-gray-900">Simple Schedule (Tasks only)</label>
-                    </div>
-                    <div class="flex items-center">
-                        <input type="radio" id="timeBlockSchedule" name="scheduleType" value="time_blocks" class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300">
-                        <label for="timeBlockSchedule" class="ml-2 text-sm text-gray-900">Use Time Blocks</label>
-                        <a href="{% url 'dashboard:manage_time_blocks' %}" class="ml-2 text-xs text-blue-600 hover:text-blue-800">(Manage Time Blocks)</a>
-                    </div>
                 </div>
             </div>
             
@@ -389,6 +376,7 @@
 // Custom Schedule Modal Functions
 function openCustomScheduleModal() {
     document.getElementById('customScheduleModal').classList.remove('hidden');
+
     
     // Set today's date as default
     const today = new Date();
@@ -399,6 +387,7 @@ function openCustomScheduleModal() {
     
     // Set today's date again after reset
     document.getElementById('customScheduleDate').value = today.toISOString().split('T')[0];
+
     
     // Load available tasks
     loadAvailableTasks();
@@ -418,29 +407,75 @@ function loadAvailableTasks() {
     .then(response => response.json())
     .then(data => {
         if (data.success && data.tasks && data.tasks.length > 0) {
-            tasksList.innerHTML = data.tasks.map(task => `
-                <div class="task-item border border-gray-200 rounded-lg p-3 mb-3">
-                    <div class="flex items-center mb-2">
-                        <input type="checkbox" id="custom-task-${task.id}" value="${task.id}" class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded" onchange="toggleTaskScheduling(${task.id})">
-                        <label for="custom-task-${task.id}" class="ml-2 text-sm font-medium text-gray-900">${task.title}</label>
-                        <span class="ml-auto text-xs px-2 py-1 rounded-full ${task.priority === 'high' ? 'bg-red-100 text-red-800' : task.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'}">${task.priority}</span>
+
+            // Tasks are already sorted by MoSCoW priority from the backend
+            
+            tasksList.innerHTML = data.tasks.map(task => {
+                // Calculate days left
+                let dueDateInfo = '';
+                if (task.due_date) {
+                    const dueDate = new Date(task.due_date);
+                    const today = new Date();
+                    const diffTime = dueDate - today;
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    
+                    let dueDateClass = 'text-gray-500';
+                    let daysLeftText = '';
+                    
+                    if (diffDays < 0) {
+                        dueDateClass = 'text-red-600 font-medium';
+                        daysLeftText = `Overdue by ${Math.abs(diffDays)} day${Math.abs(diffDays) !== 1 ? 's' : ''}`;
+                    } else if (diffDays === 0) {
+                        dueDateClass = 'text-orange-600 font-medium';
+                        daysLeftText = 'Due today';
+                    } else if (diffDays === 1) {
+                        dueDateClass = 'text-yellow-600 font-medium';
+                        daysLeftText = 'Due tomorrow';
+                    } else {
+                        dueDateClass = 'text-gray-500';
+                        daysLeftText = `${diffDays} days left`;
+                    }
+                    
+                    dueDateInfo = `
+                        <div class="text-xs ${dueDateClass}">
+                            ${dueDate.toLocaleDateString()} • ${daysLeftText}
+                        </div>
+                    `;
+                }
+                
+                // MoSCoW category color coding (using actual MoSCoW analysis results)
+                let priorityClass = 'bg-gray-100 text-gray-600';
+                const moscowCategory = task.moscow_category || 'Could Have';
+                
+                if (moscowCategory === 'Must Have') {
+                    priorityClass = 'bg-red-100 text-red-700';
+                } else if (moscowCategory === 'Should Have') {
+                    priorityClass = 'bg-orange-100 text-orange-700';
+                } else if (moscowCategory === 'Could Have') {
+                    priorityClass = 'bg-blue-100 text-blue-700';
+                } else if (moscowCategory === "Won't Have") {
+                    priorityClass = 'bg-gray-100 text-gray-600';
+                }
+                
+                return `
+                    <div class="flex items-start p-3 border border-gray-200 rounded-lg hover:bg-gray-50">
+                        <input type="checkbox" id="custom-task-${task.id}" value="${task.id}" class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded mt-1">
+                        <div class="ml-3 flex-1 min-w-0">
+                            <label for="custom-task-${task.id}" class="text-sm font-medium text-gray-900 cursor-pointer">
+                                ${task.title}
+                            </label>
+                            ${task.description ? `<div class="text-xs text-gray-500 mt-1">${task.description.substring(0, 80)}${task.description.length > 80 ? '...' : ''}</div>` : ''}
+                            ${dueDateInfo}
+                        </div>
+                        <div class="ml-2 flex-shrink-0">
+                            <span class="px-2 py-1 text-xs font-medium rounded ${priorityClass}">
+                                ${moscowCategory}
+                            </span>
+                        </div>
                     </div>
-                    <div id="task-schedule-${task.id}" class="task-schedule hidden grid grid-cols-1 md:grid-cols-2 gap-3 mt-3 pt-3 border-t border-gray-100">
-                        <div>
-                            <label class="block text-xs font-medium text-gray-700 mb-1">Start Time</label>
-                            <input type="time" id="start-time-${task.id}" class="w-full text-sm border border-gray-300 rounded px-2 py-1 focus:ring-1 focus:ring-green-500 focus:border-green-500" value="09:00">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-medium text-gray-700 mb-1">Duration (minutes)</label>
-                            <input type="number" id="duration-${task.id}" class="w-full text-sm border border-gray-300 rounded px-2 py-1 focus:ring-1 focus:ring-green-500 focus:border-green-500" value="60" min="15" max="480" step="15">
-                        </div>
-                        <div class="md:col-span-2">
-                            <label class="block text-xs font-medium text-gray-700 mb-1">Notes (optional)</label>
-                            <input type="text" id="notes-${task.id}" class="w-full text-sm border border-gray-300 rounded px-2 py-1 focus:ring-1 focus:ring-green-500 focus:border-green-500" placeholder="Add any notes for this task...">
-                        </div>
-                    </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
+
         } else {
             tasksList.innerHTML = '<p class="text-gray-500 text-sm">No tasks available. <a href="/tasks/create/" class="text-green-600 hover:text-green-800">Create some tasks first</a>.</p>';
         }
@@ -524,6 +559,7 @@ document.getElementById('aiScheduleForm').addEventListener('submit', function(e)
 document.getElementById('customScheduleForm').addEventListener('submit', function(e) {
     e.preventDefault();
     
+
     const scheduleDate = document.getElementById('customScheduleDate').value;
     const scheduleType = document.querySelector('input[name="scheduleType"]:checked').value;
     const submitBtn = this.querySelector('button[type="submit"]');
@@ -548,6 +584,7 @@ document.getElementById('customScheduleForm').addEventListener('submit', functio
             notes: notes
         });
     });
+
     
     if (selectedTasks.length === 0) {
         showNotification('Please select at least one task', 'error');
@@ -556,6 +593,7 @@ document.getElementById('customScheduleForm').addEventListener('submit', functio
         return;
     }
     
+
     // Validate that all selected tasks have valid times
     const invalidTasks = selectedTasks.filter(task => !task.start_time || !task.duration || task.duration < 15);
     if (invalidTasks.length > 0) {
@@ -566,6 +604,7 @@ document.getElementById('customScheduleForm').addEventListener('submit', functio
     }
     
     // Create custom schedule with detailed timing
+
     fetch('/dashboard/custom-schedule/', {
         method: 'POST',
         headers: {
@@ -576,16 +615,18 @@ document.getElementById('customScheduleForm').addEventListener('submit', functio
             date: scheduleDate,
             title: 'Custom Schedule',
             tasks: selectedTasks,
-            type: scheduleType
+            type: 'simple'  // Always use simple since the options don't matter
         })
     }).then(response => response.json())
       .then(data => {
           if (data.success) {
+
               showNotification('Schedule created successfully!', 'success');
               closeCustomScheduleModal();
               // Redirect to the schedule view page
               setTimeout(() => {
                   window.location.href = data.schedule_url;
+
               }, 1500);
           } else {
               showNotification(data.error || 'Failed to create schedule', 'error');
