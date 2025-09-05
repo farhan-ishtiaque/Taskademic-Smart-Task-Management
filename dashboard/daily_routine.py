@@ -14,13 +14,50 @@ def daily_routine(request):
     # Get today's schedule if it exists
     today_schedule = None
     scheduled_tasks = []
+    schedule_type = None
     try:
-        today_schedule = DailySchedule.objects.get(user=request.user, date=today)
-        scheduled_tasks = ScheduledTask.objects.filter(
-            user=request.user,
-            scheduled_date=today
-        ).select_related('task', 'time_block').order_by('start_time')
-    except DailySchedule.DoesNotExist:
+        # Get the latest schedule for today (in case multiple exist)
+        today_schedule = DailySchedule.objects.filter(
+            user=request.user, 
+            date=today
+        ).order_by('-generation_timestamp').first()
+        
+        if today_schedule:
+            # Get all scheduled tasks for today first
+            all_scheduled_tasks = ScheduledTask.objects.filter(
+                user=request.user,
+                scheduled_date=today
+            ).select_related('task', 'time_block').order_by('start_time')
+            
+            print(f"DEBUG: Found {all_scheduled_tasks.count()} total scheduled tasks for {today}")
+            
+            # Determine the primary schedule type
+            if all_scheduled_tasks.exists():
+                schedule_types = set(all_scheduled_tasks.values_list('schedule_type', flat=True))
+                print(f"DEBUG: Schedule types found: {schedule_types}")
+                
+                if 'ai' in schedule_types:
+                    schedule_type = 'ai'
+                    # Show only AI generated tasks
+                    scheduled_tasks = all_scheduled_tasks.filter(schedule_type='ai')
+                    print(f"DEBUG: Using AI schedule with {scheduled_tasks.count()} tasks")
+                elif 'custom' in schedule_types:
+                    schedule_type = 'custom'
+                    # Show only custom tasks
+                    scheduled_tasks = all_scheduled_tasks.filter(schedule_type='custom')
+                    print(f"DEBUG: Using custom schedule with {scheduled_tasks.count()} tasks")
+                else:
+                    # Fallback - show all tasks
+                    schedule_type = 'mixed'
+                    scheduled_tasks = all_scheduled_tasks
+                    print(f"DEBUG: Using mixed schedule with {scheduled_tasks.count()} tasks")
+            else:
+                print(f"DEBUG: No scheduled tasks found for today")
+        else:
+            print(f"DEBUG: No DailySchedule found for {today}")
+            
+    except Exception as e:
+        print(f"DEBUG: Error getting today's schedule: {e}")
         pass
     
     # Get latest schedule (within last 7 days) if today's doesn't exist
@@ -83,6 +120,7 @@ def daily_routine(request):
         'today': today,
         'today_schedule': today_schedule,
         'scheduled_tasks': scheduled_tasks,
+        'schedule_type': schedule_type,  # Add schedule type for consistency
         'latest_schedule': latest_schedule,
         'latest_scheduled_tasks': latest_scheduled_tasks,
         'overdue_tasks': overdue_tasks,

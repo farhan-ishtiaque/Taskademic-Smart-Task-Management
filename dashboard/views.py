@@ -129,6 +129,8 @@ def settings_view(request):
         last_name = request.POST.get('last_name', '').strip()
         email = request.POST.get('email', '').strip()
         
+        # Note: Server timezone (Asia/Dhaka) is used for calendar sync
+        
         # Validate email
         if email and email != user.email:
             from django.contrib.auth.models import User

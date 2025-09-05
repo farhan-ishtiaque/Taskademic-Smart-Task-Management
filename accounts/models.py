@@ -42,7 +42,15 @@ class UserProfile(models.Model):
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):
     if created:
-        UserProfile.objects.create(user=instance)
+        UserProfile.objects.create(
+            user=instance,
+            preferred_technique='pomodoro',
+            study_hours_per_day=4,
+            timezone='UTC',
+            total_points=0,
+            level=1,
+            streak_count=0
+        )
 
 @receiver(post_save, sender=User)
 def save_user_profile(sender, instance, **kwargs):

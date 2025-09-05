@@ -274,7 +274,7 @@ function analyticsBoard() {
             }
 
             const labels = this.analytics.completion_trend.map(item => 
-                new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'Asia/Dhaka' })
             );
             const data = this.analytics.completion_trend.map(item => item.completed);
 
