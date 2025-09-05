@@ -167,21 +167,8 @@ def logout_view(request):
 
 @login_required
 def profile_view(request):
-    """User profile view"""
-    from tasks.models import Task
-    
-    # Get task counts for the user
-    completed_tasks_count = Task.objects.filter(user=request.user, status='done').count()
-    in_progress_tasks_count = Task.objects.filter(user=request.user, status='in_progress').count()
-    total_tasks_count = Task.objects.filter(user=request.user).count()
-    
-    context = {
-        'completed_tasks_count': completed_tasks_count,
-        'in_progress_tasks_count': in_progress_tasks_count,
-        'total_tasks_count': total_tasks_count,
-    }
-    
-    return render(request, 'accounts/profile.html', context)
+    """User profile view - display only"""
+    return render(request, 'accounts/profile.html')
 
 
 @api_view(['GET', 'PUT'])

@@ -17,6 +17,7 @@ class TaskSerializer(serializers.ModelSerializer):
     is_overdue = serializers.BooleanField(read_only=True)
     is_assigned = serializers.BooleanField(read_only=True)
     assignment_status = serializers.CharField(read_only=True)
+    moscow_category = serializers.SerializerMethodField()
     
     class Meta:
         model = Task
@@ -24,9 +25,40 @@ class TaskSerializer(serializers.ModelSerializer):
             'id', 'title', 'description', 'due_date', 'reminder_minutes',
             'priority', 'status', 'category', 'tags', 'points_awarded',
             'created_at', 'updated_at', 'completed_at', 'user', 'assigned_to',
-            'assigned_to_display', 'tag_list', 'is_overdue', 'is_assigned', 'assignment_status'
+            'assigned_to_display', 'tag_list', 'is_overdue', 'is_assigned', 'assignment_status',
+            'moscow_category'
         ]
         read_only_fields = ('user', 'points_awarded', 'created_at', 'updated_at', 'completed_at')
+    
+    def get_moscow_category(self, obj):
+        """Get MoSCoW category for the task"""
+        # Get the actual MoSCoW analysis instead of basic priority
+        from priority_analyzer.signals import MoSCoWCacheService
+        
+        # Get user from context
+        request = self.context.get('request')
+        if not request or not request.user:
+            return 'Should Have'
+            
+        try:
+            # Get the full MoSCoW analysis for the user
+            result = MoSCoWCacheService.get_moscow_analysis(request.user)
+            
+            # Find this task in the decision log
+            for log_entry in result.get('decision_log', []):
+                if int(log_entry['id']) == obj.id:
+                    return log_entry['final']
+        except Exception:
+            pass
+        
+        # Fallback based on task content analysis
+        title_lower = obj.title.lower()
+        if 'exam' in title_lower or 'quiz' in title_lower or 'test' in title_lower:
+            return 'Must Have'
+        elif 'assignment' in title_lower or 'project' in title_lower:
+            return 'Should Have'
+        else:
+            return 'Could Have'
     
     def get_assigned_to_display(self, obj):
         if obj.assigned_to:
